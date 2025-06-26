@@ -1,4 +1,4 @@
-# 🤖 Social Debate AI
+# Social Debate AI
 
 *English | [中文](#chinese-version)*
 
@@ -9,16 +9,16 @@ A deep learning-based multi-agent social debate system that integrates RAG, GNN,
 ![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-red.svg)
 ![Flask](https://img.shields.io/badge/Flask-2.0+-lightgrey.svg)
 
-## ✨ Key Features
+## Key Features
 
-- 🎯 **Multi-Agent Debate** - 3 AI Agents with different stances and personalities engage in dynamic debates
-- 📚 **RAG Enhancement** - Based on FAISS/Chroma vector databases, supporting hybrid retrieval and reranking
-- 🔗 **GNN Social Network** - Supervised learning to predict persuasion success rate with multi-task learning architecture
-- 🎮 **RL Strategy Learning** - PPO reinforcement learning with real environment interaction and 4 dynamic debate strategies
-- 🌐 **Web Interface** - Modern Flask + Bootstrap 5 responsive interface
-- ⚡ **Parallel Processing** - Asynchronous architecture with three modules analyzing in parallel
+- **Multi-Agent Debate** - 3 AI Agents with different stances and personalities engage in dynamic debates
+- **RAG Enhancement** - Based on FAISS/Chroma vector databases, supporting hybrid retrieval and reranking
+- **GNN Social Network** - Supervised learning to predict persuasion success rate with multi-task learning architecture
+- **RL Strategy Learning** - PPO reinforcement learning with real environment interaction and 4 dynamic debate strategies
+- **Web Interface** - Modern Flask + Bootstrap 5 responsive interface
+- **Parallel Processing** - Asynchronous architecture with three modules analyzing in parallel
 
-## 🏗️ System Architecture
+## System Architecture
 
 ```mermaid
 flowchart TD
@@ -48,7 +48,7 @@ flowchart TD
     style C fill:#FFFFE0
 ```
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Requirements
 - Python 3.8+
@@ -94,7 +94,7 @@ python run_flask.py
 
 Visit http://localhost:5000 to start using!
 
-## 🎓 Training Models
+## Training Models
 
 ### Train All Models
 ```bash
@@ -116,7 +116,7 @@ python train_all.py --rag-chroma  # Chroma vector index
 
 For detailed training guide, see [docs/TRAINING_GUIDE.md](docs/TRAINING_GUIDE.md)
 
-## 📊 Technical Details
+## Technical Details
 
 ### RAG System
 - **Vector Database**: FAISS + Chroma
@@ -152,7 +152,7 @@ For detailed training guide, see [docs/TRAINING_GUIDE.md](docs/TRAINING_GUIDE.md
   - Highly persuaded for 3 consecutive rounds (>0.5)
 - **Victory Determination**: Comprehensive consideration of stance firmness, persuasion ability, and resistance
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 Social_Debate_AI/
@@ -179,7 +179,7 @@ Social_Debate_AI/
 └── tests/                # Test Suite
 ```
 
-## 📚 Documentation
+## Documentation
 
 ### User Guides
 - [Quick Start Guide](docs/QUICKSTART.md) - 5-minute tutorial
@@ -196,7 +196,7 @@ Social_Debate_AI/
 - [RL Module](docs/RL_MODULE.md) - Reinforcement Learning detailed documentation
 - [RAG Module](docs/RAG_MODULE.md) - Retrieval Augmented Generation detailed documentation
 
-## 🎮 Usage Examples
+## Usage Examples
 
 ### 1. Set Debate Topic
 Enter your discussion topic in the Web UI, for example:
@@ -216,7 +216,7 @@ The system automatically:
 - Determines if any agent has been persuaded to surrender
 - Provides final victory determination and detailed analysis
 
-## 🔧 Configuration
+## Configuration
 
 Main configuration files are located in the `configs/` directory:
 
@@ -225,7 +225,7 @@ Main configuration files are located in the `configs/` directory:
 - `gnn.yaml` - GNN model configuration
 - `rl.yaml` - RL training configuration
 
-## 📊 Dataset
+## Dataset
 
 This project uses the Reddit ChangeMyView dataset:
 
@@ -237,7 +237,7 @@ This project uses the Reddit ChangeMyView dataset:
 - 18,561 unsuccessful persuasion cases
 - Rich metadata annotations
 
-## 🤝 Contributing
+## Contributing
 
 We welcome code contributions, issue reports, and suggestions!
 
@@ -247,26 +247,22 @@ We welcome code contributions, issue reports, and suggestions!
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - Reddit ChangeMyView community for providing high-quality dataset
 - PyTorch team for the deep learning framework
 - LangChain team for RAG toolchain
 - All contributors and users for their support
 
----
-
-⭐ If this project helps you, please give us a Star!
-
----
+如果這個專案對您有幫助，請給我們一個 Star！
 
 ## Chinese Version
 
-# 🤖 Social Debate AI
+# Social Debate AI
 
 *[English](#social-debate-ai) | 中文*
 
@@ -277,16 +273,16 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-red.svg)
 ![Flask](https://img.shields.io/badge/Flask-2.0+-lightgrey.svg)
 
-## ✨ 核心特色
+## 核心特色
 
-- 🎯 **多智能體辯論** - 3個具有不同立場和性格的AI Agent進行動態辯論
-- 📚 **RAG檢索增強** - 基於 FAISS/Chroma 向量資料庫，支援混合檢索和重排序
-- 🔗 **GNN社會網絡** - 監督式學習預測說服成功率，多任務學習架構
-- 🎮 **RL策略學習** - PPO強化學習，真實環境互動，4種辯論策略動態選擇
-- 🌐 **Web介面** - 現代化的 Flask + Bootstrap 5 響應式界面
-- ⚡ **並行處理** - 異步架構，三大模組並行分析
+- **多智能體辯論** - 3個具有不同立場和性格的AI Agent進行動態辯論
+- **RAG檢索增強** - 基於 FAISS/Chroma 向量資料庫，支援混合檢索和重排序
+- **GNN社會網絡** - 監督式學習預測說服成功率，多任務學習架構
+- **RL策略學習** - PPO強化學習，真實環境互動，4種辯論策略動態選擇
+- **Web介面** - 現代化的 Flask + Bootstrap 5 響應式界面
+- **並行處理** - 異步架構，三大模組並行分析
 
-## 🏗️ 系統架構
+## 系統架構
 
 ```mermaid
 flowchart TD
@@ -316,7 +312,7 @@ flowchart TD
     style C fill:#FFFFE0
 ```
 
-## 🚀 快速開始
+## 快速開始
 
 ### 環境要求
 - Python 3.8+
@@ -362,7 +358,7 @@ python run_flask.py
 
 訪問 http://localhost:5000 即可開始使用！
 
-## 🎓 訓練模型
+## 訓練模型
 
 ### 訓練所有模型
 ```bash
@@ -384,7 +380,7 @@ python train_all.py --rag-chroma  # Chroma 向量索引
 
 詳細訓練指南請見 [docs/TRAINING_GUIDE.md](docs/TRAINING_GUIDE.md)
 
-## 📊 技術細節
+## 技術細節
 
 ### RAG 系統
 - **向量資料庫**: FAISS + Chroma
@@ -420,7 +416,7 @@ python train_all.py --rag-chroma  # Chroma 向量索引
   - 連續3回合被高度說服(>0.5)
 - **勝負判定**: 綜合考慮立場堅定度、說服他人能力、抗壓能力
 
-## 📁 專案結構
+## 專案結構
 
 ```
 Social_Debate_AI/
@@ -447,7 +443,7 @@ Social_Debate_AI/
 └── tests/                # 測試套件
 ```
 
-## 📚 文檔導覽
+## 文檔導覽
 
 ### 使用指南
 - [快速開始指南](docs/QUICKSTART.md) - 5分鐘上手教程
@@ -464,7 +460,7 @@ Social_Debate_AI/
 - [RL 模組說明](docs/RL_MODULE.md) - 強化學習詳細文檔
 - [RAG 模組說明](docs/RAG_MODULE.md) - 檢索增強生成詳細文檔
 
-## 🎮 使用示例
+## 使用示例
 
 ### 1. 設置辯論主題
 在 Web UI 中輸入您想討論的主題，例如：
@@ -484,7 +480,7 @@ Social_Debate_AI/
 - 判定是否有 Agent 被說服投降
 - 最終給出勝負判定和詳細分析
 
-## 🔧 配置說明
+## 配置說明
 
 主要配置文件位於 `configs/` 目錄：
 
@@ -493,7 +489,7 @@ Social_Debate_AI/
 - `gnn.yaml` - GNN 模型配置
 - `rl.yaml` - RL 訓練配置
 
-## 📊 數據集
+## 數據集
 
 本專案使用 Reddit ChangeMyView 數據集：
 
@@ -505,7 +501,7 @@ Social_Debate_AI/
 - 18,561 個未成功說服案例
 - 豐富的元數據標註
 
-## 🤝 貢獻指南
+## 貢獻指南
 
 歡迎貢獻代碼、報告問題或提出建議！
 
@@ -515,11 +511,11 @@ Social_Debate_AI/
 4. 推送到分支 (`git push origin feature/AmazingFeature`)
 5. 開啟 Pull Request
 
-## 📄 授權
+## 授權
 
 本專案採用 MIT 授權 - 詳見 [LICENSE](LICENSE) 文件
 
-## 🙏 致謝
+## 致謝
 
 - Reddit ChangeMyView 社區提供的高質量數據集
 - PyTorch 團隊的深度學習框架
@@ -528,4 +524,4 @@ Social_Debate_AI/
 
 ---
 
-⭐ 如果這個專案對您有幫助，請給我們一個 Star！
+如果這個專案對您有幫助，請給我們一個 Star！

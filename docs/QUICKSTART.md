@@ -1,16 +1,16 @@
-# 🚀 Quick Start Guide
+# Quick Start Guide
 
 *English | [中文](#chinese-version)*
 
 Get Social Debate AI up and running in 5 minutes!
 
-## 📋 Prerequisites
+## Prerequisites
 
 - Python 3.8+
 - 8GB+ RAM
 - Git
 
-## 🔧 Installation Steps
+## Installation Steps
 
 ### 1. Clone the Project
 ```bash
@@ -42,7 +42,7 @@ cp env.example .env
 # Edit .env file, add your OpenAI API Key
 ```
 
-## 🎮 Quick Run
+## Quick Run
 
 ### Method 1: Use Web UI (Recommended)
 ```bash
@@ -65,7 +65,7 @@ Open your browser and visit http://localhost:5000
 python quick_demo.py
 ```
 
-## 📚 Using Web UI
+## Using Web UI
 
 ### 1. Initialize System
 - Open http://localhost:5000
@@ -96,7 +96,7 @@ The system evaluates debate performance through:
 
 For detailed scoring mechanism, see [Debate Scoring System Documentation](DEBATE_SCORING_SYSTEM.md)
 
-## 🎓 Training Models (Optional)
+## Training Models (Optional)
 
 If you have raw data and want to train your own models:
 
@@ -112,7 +112,7 @@ python train_all.py --all --demo
 python train_all.py --all
 ```
 
-## 🔍 Verify Installation
+## Verify Installation
 
 Run system integrity test:
 ```bash
@@ -128,7 +128,7 @@ Expected output:
 ✅ System Integration Test Passed
 ```
 
-## ❓ FAQ
+## FAQ
 
 ### Q: Can I run without GPU?
 A: Yes! The system will automatically use CPU. Training will be slower, but inference speed impact is minimal.
@@ -142,13 +142,13 @@ A: Edit `configs/debate.yaml` file to adjust rounds, agent count, etc.
 ### Q: System using too much memory?
 A: You can reduce batch size in config files or use `--demo` mode.
 
-## 📖 Next Steps
+## Next Steps
 
 - Check [Training Guide](TRAINING_GUIDE.md) to learn model training
 - Check [API Documentation](API_REFERENCE.md) to integrate into your applications
 - Check [Deployment Guide](DEPLOYMENT.md) for production deployment
 
-## 🆘 Need Help?
+## Need Help?
 
 - Submit [GitHub Issue](https://github.com/your-username/Social_Debate_AI/issues)
 - Email us at your-email@example.com
@@ -156,25 +156,25 @@ A: You can reduce batch size in config files or use `--demo` mode.
 
 ---
 
-🎉 Congratulations! You've successfully run Social Debate AI. Start exploring the world of intelligent debate!
+恭喜！您已成功運行 Social Debate AI。開始探索智能辯論的世界吧！
 
 ---
 
 ## Chinese Version
 
-# 🚀 快速開始指南
+# 快速開始指南
 
 *[English](#quick-start-guide) | 中文*
 
 5 分鐘內啟動並運行 Social Debate AI！
 
-## 📋 前置要求
+## 前置要求
 
 - Python 3.8+
 - 8GB+ RAM
 - Git
 
-## 🔧 安裝步驟
+## 安裝步驟
 
 ### 1. 克隆專案
 ```bash
@@ -206,7 +206,7 @@ cp env.example .env
 # 編輯 .env 文件，添加您的 OpenAI API Key
 ```
 
-## 🎮 快速運行
+## 快速運行
 
 ### 方式一：使用 Web UI（推薦）
 ```bash
@@ -229,7 +229,7 @@ python run_flask.py
 python quick_demo.py
 ```
 
-## 📚 使用 Web UI
+## 使用 Web UI
 
 ### 1. 初始化系統
 - 打開 http://localhost:5000
@@ -260,7 +260,7 @@ python quick_demo.py
 
 詳細評分機制請參考[辯論評分系統文檔](DEBATE_SCORING_SYSTEM.md)
 
-## 🎓 訓練模型（可選）
+## 訓練模型（可選）
 
 如果您有原始數據並想訓練自己的模型：
 
@@ -276,7 +276,7 @@ python train_all.py --all --demo
 python train_all.py --all
 ```
 
-## 🔍 驗證安裝
+## 驗證安裝
 
 運行系統測試：
 ```bash
@@ -292,7 +292,7 @@ python test_system_integrity.py
 ✅ 系統整合測試通過
 ```
 
-## ❓ 常見問題
+## 常見問題
 
 ### Q: 沒有 GPU 可以運行嗎？
 A: 可以！系統會自動使用 CPU。訓練會慢一些，但推理速度影響不大。
@@ -306,13 +306,13 @@ A: 編輯 `configs/debate.yaml` 文件，可以調整回合數、Agent 數量等
 ### Q: 系統佔用太多記憶體？
 A: 可以在配置文件中減小批次大小，或使用 `--demo` 模式。
 
-## 📖 下一步
+## 下一步
 
 - 查看[訓練指南](TRAINING_GUIDE.md)了解如何訓練模型
 - 查看[API 文檔](API_REFERENCE.md)了解如何集成到您的應用
 - 查看[部署指南](DEPLOYMENT.md)了解生產環境部署
 
-## 🆘 需要幫助？
+## 需要幫助？
 
 - 提交 [GitHub Issue](https://github.com/your-username/Social_Debate_AI/issues)
 - 發送郵件至 your-email@example.com
@@ -320,4 +320,4 @@ A: 可以在配置文件中減小批次大小，或使用 `--demo` 模式。
 
 ---
 
-🎉 恭喜！您已經成功運行 Social Debate AI。開始探索智能辯論的世界吧！ 
+恭喜！您已經成功運行 Social Debate AI。開始探索智能辯論的世界吧！ 

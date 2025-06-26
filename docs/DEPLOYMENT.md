@@ -1,10 +1,10 @@
-# 🚀 Social Debate AI Deployment Guide
+# Social Debate AI Deployment Guide
 
 *English | [中文](#chinese-version)*
 
 This guide explains how to deploy Social Debate AI to production environments.
 
-## 📋 Deployment Options
+## Deployment Options
 
 ### 1. Local Deployment
 - Suitable for personal use and testing
@@ -20,7 +20,7 @@ This guide explains how to deploy Social Debate AI to production environments.
 - Containerized deployment
 - Easy to scale
 
-## 🏠 Local Production Deployment
+## Local Production Deployment
 
 ### 1. Environment Setup
 
@@ -98,7 +98,7 @@ server {
 }
 ```
 
-## ☁️ AWS EC2 Deployment
+## AWS EC2 Deployment
 
 ### 1. Create EC2 Instance
 
@@ -171,7 +171,7 @@ sudo systemctl enable social-debate
 sudo systemctl status social-debate
 ```
 
-## 🐳 Docker Deployment
+## Docker Deployment
 
 ### 1. Create Dockerfile
 
@@ -283,7 +283,7 @@ key = Fernet.generate_key()
 cipher_suite = Fernet(key)
 ```
 
-## 📊 Monitoring and Logging
+## Monitoring and Logging
 
 ### 1. Application Logging
 
@@ -330,7 +330,7 @@ sentry_sdk.init(
 )
 ```
 
-## 🚦 Performance Optimization
+## Performance Optimization
 
 ### 1. Cache Configuration
 
@@ -367,7 +367,7 @@ engine = create_engine(
 
 Use Cloudflare or other CDN services to accelerate static resources.
 
-## 📈 Scaling Strategy
+## Scaling Strategy
 
 ### 1. Horizontal Scaling
 
@@ -396,7 +396,7 @@ redis_client = Redis(host='localhost', port=6379, db=0)
 redis_client.set(f'debate:{debate_id}', json.dumps(debate_state))
 ```
 
-## 🔧 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
@@ -415,7 +415,7 @@ redis_client.set(f'debate:{debate_id}', json.dumps(debate_state))
    - Implement request queuing
    - Limit concurrent connections
 
-## 📝 Deployment Checklist
+## Deployment Checklist
 
 - [ ] Environment variables configured completely
 - [ ] HTTPS certificate installed
@@ -428,19 +428,19 @@ redis_client.set(f'debate:{debate_id}', json.dumps(debate_state))
 
 ---
 
-💡 **Tip**: Please validate all configurations in a test environment before deployment!
+**Tip**: Please validate all configurations in a test environment before deployment!
 
 ---
 
 ## Chinese Version
 
-# 🚀 Social Debate AI 部署指南
+# Social Debate AI 部署指南
 
 *[English](#social-debate-ai-deployment-guide) | 中文*
 
 本指南說明如何將 Social Debate AI 部署到生產環境。
 
-## 📋 部署選項
+## 部署選項
 
 ### 1. 本地部署
 - 適合個人使用和測試
@@ -456,7 +456,7 @@ redis_client.set(f'debate:{debate_id}', json.dumps(debate_state))
 - 容器化部署
 - 易於擴展
 
-## 🏠 本地生產部署
+## 本地生產部署
 
 ### 1. 環境準備
 
@@ -534,7 +534,7 @@ server {
 }
 ```
 
-## ☁️ AWS EC2 部署
+## AWS EC2 部署
 
 ### 1. 創建 EC2 實例
 
@@ -607,7 +607,7 @@ sudo systemctl enable social-debate
 sudo systemctl status social-debate
 ```
 
-## 🐳 Docker 部署
+## Docker 部署
 
 ### 1. 創建 Dockerfile
 
@@ -719,7 +719,7 @@ key = Fernet.generate_key()
 cipher_suite = Fernet(key)
 ```
 
-## 📊 監控和日誌
+## 監控和日誌
 
 ### 1. 應用日誌
 
@@ -766,7 +766,7 @@ sentry_sdk.init(
 )
 ```
 
-## 🚦 性能優化
+## 性能優化
 
 ### 1. 緩存配置
 
@@ -803,7 +803,7 @@ engine = create_engine(
 
 使用 Cloudflare 或其他 CDN 服務加速靜態資源。
 
-## 📈 擴展策略
+## 擴展策略
 
 ### 1. 水平擴展
 
@@ -832,7 +832,7 @@ redis_client = Redis(host='localhost', port=6379, db=0)
 redis_client.set(f'debate:{debate_id}', json.dumps(debate_state))
 ```
 
-## 🔧 故障排除
+## 故障排除
 
 ### 常見問題
 
@@ -851,7 +851,7 @@ redis_client.set(f'debate:{debate_id}', json.dumps(debate_state))
    - 實現請求排隊
    - 限制並發數
 
-## 📝 部署檢查清單
+## 部署檢查清單
 
 - [ ] 環境變數配置完整
 - [ ] HTTPS 證書已安裝
@@ -864,4 +864,4 @@ redis_client.set(f'debate:{debate_id}', json.dumps(debate_state))
 
 ---
 
-💡 **提示**：部署前請先在測試環境驗證所有配置！ 
+**提示**：部署前請先在測試環境驗證所有配置！ 

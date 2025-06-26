@@ -1,10 +1,10 @@
-# 📚 Social Debate AI Training Guide
+# Social Debate AI Training Guide
 
 *English | [中文](#chinese-version)*
 
 This guide provides detailed instructions on how to train the three core models of Social Debate AI: RAG, GNN, and RL.
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [Environment Setup](#environment-setup)
 - [Quick Training](#quick-training)
@@ -14,7 +14,7 @@ This guide provides detailed instructions on how to train the three core models 
 - [Training Monitoring](#training-monitoring)
 - [FAQ](#faq)
 
-## 🔧 Environment Setup
+## Environment Setup
 
 ### 1. Hardware Requirements
 - **Minimum**: 8GB RAM, 4-core CPU
@@ -47,7 +47,7 @@ cp env.example .env
 OPENAI_API_KEY=sk-your-api-key-here
 ```
 
-## 🚀 Quick Training
+## Quick Training
 
 ### Train All Models (Recommended)
 ```bash
@@ -75,7 +75,7 @@ python train_all.py --rag-chroma  # Chroma vector index (complete)
 python train_all.py --rag-both    # Build both indexes
 ```
 
-## 📚 RAG System Training
+## RAG System Training
 
 RAG (Retrieval-Augmented Generation) system is responsible for retrieving relevant evidence to support debates.
 
@@ -115,7 +115,7 @@ indexing:
     min_length: 50   # Minimum text length
 ```
 
-## 🔗 GNN Model Training
+## GNN Model Training
 
 GNN (Graph Neural Network) model uses supervised learning to predict persuasion success rate and optimal strategies.
 
@@ -161,7 +161,7 @@ model:
   dropout: 0.1         # Dropout rate
 ```
 
-## 🎮 RL Model Training
+## RL Model Training
 
 RL (Reinforcement Learning) model uses PPO algorithm to learn optimal debate strategies.
 
@@ -213,7 +213,7 @@ environment:
   diversity_bonus: 0.1 # Strategy diversity reward
 ```
 
-## 📊 Training Monitoring
+## Training Monitoring
 
 ### 1. Check Training Status
 ```bash
@@ -241,7 +241,7 @@ nvidia-smi -l 1
 watch -n 1 nvidia-smi
 ```
 
-## ❓ FAQ
+## FAQ
 
 ### Q1: CUDA out of memory
 **Solution**:
@@ -267,14 +267,14 @@ watch -n 1 nvidia-smi
 - Adjust learning rate
 - Ensure data quality
 
-## 🎯 Training Recommendations
+## Training Recommendations
 
 1. **First Use**: Train with default parameters to familiarize with the process
 2. **Optimize Results**: Gradually adjust parameters and observe changes
 3. **Production Deployment**: Use complete dataset and more training epochs
 4. **Regular Updates**: Retrain periodically as new data accumulates
 
-## 📈 Advanced Training
+## Advanced Training
 
 ### 1. Custom Dataset
 ```python
@@ -298,21 +298,21 @@ CUDA_VISIBLE_DEVICES=0,1 python train_all.py --all
 
 ---
 
-💡 **Tip**: If you encounter issues during training, check log files or submit an Issue.
+**Tip**: If you encounter issues during training, check log files or submit an Issue.
 
-📧 **Support**: For assistance, contact your-email@example.com
+**Support**: For assistance, contact your-email@example.com
 
 ---
 
 ## Chinese Version
 
-# 📚 Social Debate AI 訓練指南
+# Social Debate AI 訓練指南
 
 *[English](#social-debate-ai-training-guide) | 中文*
 
 本指南詳細說明如何訓練 Social Debate AI 系統的三大核心模型：RAG、GNN 和 RL。
 
-## 📋 目錄
+## 目錄
 
 - [環境準備](#環境準備)
 - [快速訓練](#快速訓練)
@@ -322,7 +322,7 @@ CUDA_VISIBLE_DEVICES=0,1 python train_all.py --all
 - [訓練監控](#訓練監控)
 - [常見問題](#常見問題)
 
-## 🔧 環境準備
+## 環境準備
 
 ### 1. 硬體要求
 - **最低配置**：8GB RAM, 4核 CPU
@@ -355,7 +355,7 @@ cp env.example .env
 OPENAI_API_KEY=sk-your-api-key-here
 ```
 
-## 🚀 快速訓練
+## 快速訓練
 
 ### 訓練所有模型（推薦）
 ```bash
@@ -383,7 +383,7 @@ python train_all.py --rag-chroma  # Chroma 向量索引（完整）
 python train_all.py --rag-both    # 兩種索引都構建
 ```
 
-## 📚 RAG 系統訓練
+## RAG 系統訓練
 
 RAG (Retrieval-Augmented Generation) 系統負責檢索相關證據支持辯論。
 
@@ -423,7 +423,7 @@ indexing:
     min_length: 50   # 最短文本長度
 ```
 
-## 🔗 GNN 模型訓練
+## GNN 模型訓練
 
 GNN (Graph Neural Network) 模型使用監督式學習預測說服成功率和最佳策略。
 
@@ -469,7 +469,7 @@ model:
   dropout: 0.1         # Dropout 率
 ```
 
-## 🎮 RL 模型訓練
+## RL 模型訓練
 
 RL (Reinforcement Learning) 模型使用 PPO 算法學習最佳辯論策略。
 
@@ -521,7 +521,7 @@ environment:
   diversity_bonus: 0.1 # 策略多樣性獎勵
 ```
 
-## 📊 訓練監控
+## 訓練監控
 
 ### 1. 檢查訓練狀態
 ```bash
@@ -549,7 +549,7 @@ nvidia-smi -l 1
 watch -n 1 nvidia-smi
 ```
 
-## ❓ 常見問題
+## 常見問題
 
 ### Q1: CUDA out of memory
 **解決方案**：
@@ -575,14 +575,14 @@ watch -n 1 nvidia-smi
 - 調整學習率
 - 確保數據質量
 
-## 🎯 訓練建議
+## 訓練建議
 
 1. **首次使用**：先用默認參數訓練，熟悉流程
 2. **優化效果**：逐步調整參數，觀察效果變化
 3. **生產部署**：使用完整數據集和更多訓練輪數
 4. **定期更新**：隨著新數據積累，定期重新訓練
 
-## 📈 進階訓練
+## 進階訓練
 
 ### 1. 自定義數據集
 ```python
@@ -606,6 +606,6 @@ CUDA_VISIBLE_DEVICES=0,1 python train_all.py --all
 
 ---
 
-💡 **提示**：訓練過程中如遇到問題，請查看日誌文件或提交 Issue。
+**提示**：訓練過程中如遇到問題，請查看日誌文件或提交 Issue。
 
-📧 **支援**：如需協助，請聯繫 your-email@example.com 
+**支援**：如需協助，請聯繫 your-email@example.com 

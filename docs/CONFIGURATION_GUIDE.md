@@ -4,7 +4,7 @@
 
 This guide provides detailed explanations of all configuration files in the Social Debate AI system.
 
-## 📁 Configuration Files Overview
+## Configuration Files Overview
 
 The system uses YAML format configuration files, located in the `configs/` directory:
 
@@ -14,7 +14,7 @@ The system uses YAML format configuration files, located in the `configs/` direc
 - **rl.yaml** - Reinforcement Learning configuration
 - **rag.yaml** - Retrieval Augmented Generation configuration
 
-## 🔧 system.yaml - System Overall Configuration
+## system.yaml - System Overall Configuration
 
 ### Basic Settings
 ```yaml
@@ -41,7 +41,7 @@ modules:
 - CPU thread limit
 - memory usage limit
 
-## 🎯 debate.yaml - Debate System Configuration
+## debate.yaml - Debate System Configuration
 
 ### Agent Settings
 ```yaml
@@ -75,7 +75,7 @@ strategy_fusion:
     personality: 0.3             # Personality preference weight
 ```
 
-## 🧠 gnn.yaml - GNN Configuration
+## gnn.yaml - GNN Configuration
 
 ### Model Architecture
 ```yaml
@@ -106,7 +106,7 @@ training:
     min_delta: 0.001
 ```
 
-## 🎮 rl.yaml - PPO Reinforcement Learning Configuration
+## rl.yaml - PPO Reinforcement Learning Configuration
 
 ### PPO Algorithm Parameters
 ```yaml
@@ -135,7 +135,7 @@ policy_network:
   num_strategies: 4              # Number of strategies
 ```
 
-## 📚 rag.yaml - RAG Configuration
+## rag.yaml - RAG Configuration
 
 ### Hybrid Retrieval
 ```yaml
@@ -167,7 +167,7 @@ optimization:
     type: "IVF"                 # Index type
 ```
 
-## 🔄 Configuration Update Process
+## Configuration Update Process
 
 ### 1. Modify Configuration
 Edit the corresponding YAML file, ensuring correct syntax.
@@ -181,7 +181,7 @@ python scripts/validate_configs.py
 - Development mode: Automatic hot reload
 - Production mode: Requires service restart
 
-## 💡 Best Practices
+## Best Practices
 
 ### 1. Environment-specific Configuration
 Create configurations for different environments:
@@ -214,7 +214,7 @@ config = ConfigLoader.load("debate")
 ConfigLoader.validate(config)
 ```
 
-## 🔍 Debug Configuration
+## Debug Configuration
 
 ### Enable Debug Logging
 ```yaml
@@ -234,7 +234,7 @@ monitoring:
     interval: 10  # More frequent monitoring
 ```
 
-## 📊 Configuration Examples
+## Configuration Examples
 
 ### Quick Test Configuration
 ```yaml
@@ -310,7 +310,7 @@ For more detailed information, please refer to the dedicated documentation for e
 - **rl.yaml** - 強化學習配置
 - **rag.yaml** - 檢索增強生成配置
 
-## 🔧 system.yaml - 系統總體配置
+## system.yaml - 系統總體配置
 
 ### 基本設定
 ```yaml
@@ -337,7 +337,7 @@ modules:
 - CPU 線程數限制
 - 記憶體使用上限
 
-## 🎯 debate.yaml - 辯論系統配置
+## debate.yaml - 辯論系統配置
 
 ### Agent 設定
 ```yaml
@@ -402,7 +402,7 @@ training:
     min_delta: 0.001
 ```
 
-## 🎮 rl.yaml - PPO 強化學習配置
+## rl.yaml - PPO 強化學習配置
 
 ### PPO 算法參數
 ```yaml
@@ -431,7 +431,7 @@ policy_network:
   num_strategies: 4              # 策略數量
 ```
 
-## 📚 rag.yaml - RAG 配置
+## rag.yaml - RAG 配置
 
 ### 混合檢索
 ```yaml
@@ -477,7 +477,7 @@ python scripts/validate_configs.py
 - 開發模式：自動熱重載
 - 生產模式：需要重啟服務
 
-## 💡 最佳實踐
+## 最佳實踐
 
 ### 1. 環境特定配置
 為不同環境創建配置：
@@ -510,7 +510,7 @@ config = ConfigLoader.load("debate")
 ConfigLoader.validate(config)
 ```
 
-## 🔍 調試配置
+## 調試配置
 
 ### 啟用調試日誌
 ```yaml
@@ -530,7 +530,7 @@ monitoring:
     interval: 10  # 更頻繁的監控
 ```
 
-## 📊 配置範例
+## 配置範例
 
 ### 快速測試配置
 ```yaml

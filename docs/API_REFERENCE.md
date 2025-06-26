@@ -1,16 +1,16 @@
-# 📡 Social Debate AI API Reference
+# Social Debate AI API Reference
 
 *English | [中文](#chinese-version)*
 
 This document provides detailed specifications for all Flask Web API endpoints and usage methods.
 
-## 🌐 Basic Information
+## Basic Information
 
 - **Base URL**: `http://localhost:5000`
 - **Content Type**: `application/json`
 - **Authentication**: None (will be added in future versions)
 
-## 📋 API Endpoint List
+## API Endpoint List
 
 ### System Management
 
@@ -34,7 +34,7 @@ This document provides detailed specifications for all Flask Web API endpoints a
 |--------|----------|-------------|
 | GET | `/api/export` | Export debate records |
 
-## 🔍 Detailed Endpoint Specifications
+## Detailed Endpoint Specifications
 
 ### 1. Initialize System
 
@@ -274,7 +274,7 @@ curl http://localhost:5000/api/export -o debate_export.json
 }
 ```
 
-## 🔧 Error Handling
+## Error Handling
 
 All API endpoints use a unified error format:
 
@@ -290,7 +290,7 @@ Common HTTP Status Codes:
 - `400 Bad Request` - Invalid request parameters
 - `500 Internal Server Error` - Server internal error
 
-## 💻 Usage Examples
+## Usage Examples
 
 ### Python Example
 
@@ -375,7 +375,7 @@ async function runDebate() {
 }
 ```
 
-## 🔒 Security Considerations
+## Security Considerations
 
 1. **Cross-Origin Requests (CORS)**
    - Default allows all origins
@@ -389,7 +389,7 @@ async function runDebate() {
    - Currently no limits
    - Recommended to add in production
 
-## 🚀 Future Plans
+## Future Plans
 
 - Add WebSocket support for real-time updates
 - Implement user authentication and authorization
@@ -399,25 +399,25 @@ async function runDebate() {
 
 ---
 
-📝 **Note**: This API documentation corresponds to version 1.0, future versions may change.
+**Note**: This API documentation corresponds to version 1.0, future versions may change.
 
 ---
 
 ## Chinese Version
 
-# 📡 Social Debate AI API 參考
+# Social Debate AI API Reference
 
 *[English](#social-debate-ai-api-reference) | 中文*
 
 本文檔詳細說明 Flask Web API 的所有端點和使用方法。
 
-## 🌐 基礎信息
+## 基礎信息
 
 - **基礎 URL**: `http://localhost:5000`
 - **內容類型**: `application/json`
 - **認證**: 暫無（未來版本將添加）
 
-## 📋 API 端點列表
+## API 端點列表
 
 ### 系統管理
 
@@ -441,7 +441,7 @@ async function runDebate() {
 |------|------|------|
 | GET | `/api/export` | 導出辯論記錄 |
 
-## 🔍 詳細端點說明
+## 詳細端點說明
 
 ### 1. 初始化系統
 
@@ -681,7 +681,7 @@ curl http://localhost:5000/api/export -o debate_export.json
 }
 ```
 
-## 🔧 錯誤處理
+## 錯誤處理
 
 所有 API 端點都使用統一的錯誤格式：
 
@@ -697,7 +697,7 @@ curl http://localhost:5000/api/export -o debate_export.json
 - `400 Bad Request` - 請求參數錯誤
 - `500 Internal Server Error` - 服務器內部錯誤
 
-## 💻 使用範例
+## 使用範例
 
 ### Python 範例
 
@@ -782,7 +782,7 @@ async function runDebate() {
 }
 ```
 
-## 🔒 安全注意事項
+## 安全注意事項
 
 1. **跨域請求 (CORS)**
    - 預設允許所有來源
@@ -796,7 +796,7 @@ async function runDebate() {
    - 目前無限制
    - 建議生產環境添加
 
-## 🚀 未來計劃
+## 未來計劃
 
 - 添加 WebSocket 支援實時更新
 - 實現用戶認證和授權
@@ -806,4 +806,4 @@ async function runDebate() {
 
 ---
 
-📝 **注意**：本 API 文檔對應版本 1.0，後續版本可能有所變更。 
+**注意**：本 API 文檔對應版本 1.0，後續版本可能有所變更。 

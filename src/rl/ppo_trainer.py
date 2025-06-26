@@ -10,105 +10,10 @@ import numpy as np
 from collections import deque
 import random
 from typing import List, Tuple
+from dataclasses import dataclass
+from torch.distributions import Categorical
+import matplotlib.pyplot as plt
 
-class PolicyNet(nn.Module):
-    def __init__(self, state_dim=768, action_dim=4):
-        super().__init__()
-        self.fc1 = nn.Linear(state_dim, 256)
-        self.fc2 = nn.Linear(256, 128)
-        self.policy = nn.Linear(128, action_dim)
-        self.value = nn.Linear(128, 1)
-        
-    def forward(self, x):
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        policy = F.softmax(self.policy(x), dim=-1)
-        value = self.value(x)
-        return policy, value
-
-class DebateEnv:
-    def __init__(self):
-        self.strategies = ['aggressive', 'defensive', 'analytical', 'empathetic']
-        self.reset()
-    
-    def reset(self):
-        self.round = 0
-        self.state = torch.randn(768)
-        return self.state
-    
-    def step(self, action):
-        self.round += 1
-        reward = random.uniform(0.3, 0.9) if action == 2 else random.uniform(0.2, 0.7)
-        done = self.round >= 5
-        self.state = torch.randn(768)
-        return self.state, reward, done
-
-class PPOTrainer:
-    def __init__(self):
-        self.net = PolicyNet()
-        self.optimizer = optim.Adam(self.net.parameters(), lr=3e-4)
-        self.env = DebateEnv()
-        self.memory = deque(maxlen=5000)
-        
-    def collect_data(self, episodes=5):
-        experiences = []
-        for _ in range(episodes):
-            state = self.env.reset()
-            episode_data = []
-            
-            while True:
-                policy, value = self.net(state.unsqueeze(0))
-                action = torch.multinomial(policy, 1).item()
-                next_state, reward, done = self.env.step(action)
-                
-                episode_data.append({
-                    'state': state,
-                    'action': action,
-                    'reward': reward,
-                    'value': value.item(),
-                    'done': done
-                })
-                
-                state = next_state
-                if done:
-                    break
-            
-            experiences.extend(episode_data)
-        return experiences
-    
-    def update(self, experiences):
-        if len(experiences) < 10:
-            return
-            
-        states = torch.stack([exp['state'] for exp in experiences])
-        actions = torch.tensor([exp['action'] for exp in experiences])
-        rewards = torch.tensor([exp['reward'] for exp in experiences])
-        
-        returns = []
-        R = 0
-        for r in reversed(rewards):
-            R = r + 0.99 * R
-            returns.insert(0, R)
-        returns = torch.tensor(returns)
-        
-        policies, values = self.net(states)
-        action_probs = policies.gather(1, actions.unsqueeze(1))
-        
-        advantages = returns - values.squeeze()
-        policy_loss = -(torch.log(action_probs.squeeze()) * advantages.detach()).mean()
-        value_loss = F.mse_loss(values.squeeze(), returns)
-        
-        total_loss = policy_loss + 0.5 * value_loss
-        
-        self.optimizer.zero_grad()
-        total_loss.backward()
-        self.optimizer.step()
-        
-        return total_loss.item()
-    
-    def train(self, iterations=100):
-        losses = []
-        for i in range(iterations):
 @dataclass
 class DebateTransition:
     """Debate transition record"""
@@ -331,6 +236,7 @@ class PPOTrainer:
         returns = torch.tensor([t.return_value for t in trajectories])
         advantages = torch.tensor([t.advantage for t in trajectories])
         
+        total_losses = []
         # PPO update
         for _ in range(self.update_epochs):
             # Forward pass
@@ -356,23 +262,28 @@ class PPOTrainer:
             
             # Total loss
             total_loss = actor_loss + 0.5 * critic_loss - 0.01 * entropy
+            total_losses.append(total_loss.item())
             
             # Update
             self.optimizer.zero_grad()
             total_loss.backward()
             torch.nn.utils.clip_grad_norm_(self.network.parameters(), 0.5)
             self.optimizer.step()
+        
+        return np.mean(total_losses)
     
     def train(self, num_iterations=1000, episodes_per_iteration=10):
         """Training main loop"""
         print("Starting PPO training...")
         
+        losses = []
         for iteration in range(num_iterations):
             # Collect data
             trajectories = self.collect_trajectory(episodes_per_iteration)
             
-            # Update policy
-            self.update_policy(trajectories)
+            # Update policy and get loss
+            loss = self.update_policy(trajectories)
+            losses.append(loss)
             
             # Print progress
             if iteration % 50 == 0:
@@ -381,6 +292,7 @@ class PPOTrainer:
                 print(f"Iteration {iteration}: Avg Reward = {avg_reward:.3f}, Avg Length = {avg_length:.1f}")
         
         print("Training completed!")
+        return losses
     
     def save_model(self, path):
         """Save model"""
@@ -391,6 +303,10 @@ class PPOTrainer:
             'episode_lengths': self.episode_lengths
         }, path)
         print(f"Model saved to {path}")
+    
+    def save(self, path):
+        """Save model (backward compatibility alias)"""
+        self.save_model(path)
     
     def load_model(self, path):
         """Load model"""

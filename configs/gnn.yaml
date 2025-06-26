@@ -1,0 +1,112 @@
+# GNN (Graph Neural Network) 配置
+
+# 模型架構
+model:
+  # 監督式學習架構
+  architecture: "PersuasionGNN"
+  
+  # 維度設定
+  input_dim: 770         # BERT (768) + 論證特徵 (2)
+  hidden_dim: 256       # 隱藏層維度
+  output_dim: 128       # 嵌入向量維度
+  
+  # 網路層數
+  num_layers: 3
+  
+  # 正則化
+  dropout: 0.2
+  
+  # 激活函數
+  activation: "relu"
+  
+  # 圖卷積類型
+  conv_type: "GraphSAGE"  # 使用 GraphSAGE
+  
+  # 注意力機制
+  attention:
+    enabled: true
+    heads: 4
+    concat: false
+
+# 訓練設定
+training:
+  # 基本參數
+  epochs: 50
+  learning_rate: 0.001
+  batch_size: 32
+  
+  # 優化器
+  optimizer: "adam"
+  weight_decay: 0.0001
+  
+  # 學習率調度
+  scheduler:
+    type: "step"
+    step_size: 10
+    gamma: 0.5
+  
+  # 早停
+  early_stopping:
+    patience: 10
+    min_delta: 0.001
+    
+  # 多任務權重
+  task_weights:
+    delta_prediction: 0.5    # Delta 預測權重
+    quality_regression: 0.3  # 品質分數權重
+    strategy_classification: 0.2  # 策略分類權重
+
+# 說服力預測設定
+persuasion_prediction:
+  # 策略類別
+  strategies:
+    - aggressive    # 積極攻擊型
+    - defensive     # 防禦反駁型
+    - analytical    # 分析論證型
+    - empathetic    # 同理說服型
+  
+  # 論證特徵提取
+  argument_features:
+    causal_markers: ["because", "therefore", "thus", "hence", "consequently"]
+    contrast_markers: ["however", "but", "although", "despite", "nevertheless"]
+    evidence_markers: ["studies show", "research indicates", "data suggests", "according to"]
+    example_markers: ["for example", "for instance", "such as", "like"]
+    emphasis_markers: ["indeed", "in fact", "clearly", "obviously", "certainly"]
+
+# 社會影響力計算
+social_influence:
+  # 影響力計算方法
+  method: "model_based"  # 基於模型預測
+  
+  # 權重分配
+  weights:
+    delta_probability: 0.7
+    quality_score: 0.3
+
+# 模型保存設定
+checkpointing:
+  save_dir: "data/models"
+  model_name: "gnn_persuasion.pt"
+  save_best_only: true
+  monitor_metric: "delta_accuracy"
+
+# 評估設定
+evaluation:
+  # 評估指標
+  metrics:
+    - delta_accuracy
+    - delta_f1_score
+    - strategy_accuracy
+    - quality_mse
+  
+  # 測試集比例
+  test_split: 0.2
+  
+  # 隨機種子
+  random_seed: 42
+
+# 日誌設定
+logging:
+  level: "INFO"
+  log_dir: "logs/gnn"
+  tensorboard: false

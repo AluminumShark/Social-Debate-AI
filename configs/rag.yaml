@@ -1,0 +1,134 @@
+# RAG (Retrieval-Augmented Generation) 配置
+
+# Chroma 向量資料庫設定
+chroma:
+  # 索引路徑
+  persist_directory: "data/chroma/social_debate"
+  collection_name: "social_debate_collection"
+  
+  # 嵌入模型設定
+  embedding:
+    model: "text-embedding-3-small"
+    dimension: 1536
+    batch_size: 500
+  
+  # 檢索參數
+  retrieval:
+    top_k: 8
+    score_threshold: 0.0
+    include_metadata: true
+
+# 簡化檢索器設定（備用）
+simple_retriever:
+  index_path: "src/rag/data/rag/simple_index.json"
+  top_k: 3
+  use_fuzzy_match: true
+
+# 證據選擇設定
+evidence_selection:
+  # 評分權重
+  weights:
+    relevance: 0.4
+    quality: 0.3
+    similarity: 0.3
+  
+  # 證據類型優先級
+  type_preference:
+    - "research"
+    - "expert_opinion"
+    - "case_study"
+    - "statistics"
+    - "anecdotal"
+
+# 索引構建設定
+indexing:
+  # 數據源
+  data_source: "data/raw/pairs.jsonl"
+  
+  # 文檔處理
+  chunk_size: 1000
+  chunk_overlap: 200
+  min_chunk_length: 100
+  
+  # 元數據提取
+  extract_metadata: true
+  metadata_fields:
+    - "submission_id"
+    - "score"
+    - "author"
+    - "created_utc"
+    - "delta_awarded"
+  
+  # 品質過濾
+  quality_filter:
+    min_score: 10
+    min_length: 50
+    max_length: 5000
+
+# 快取設定
+cache:
+  enabled: true
+  ttl: 3600  # 秒
+  max_size: 1000
+
+# 混合檢索設定
+hybrid_retrieval:
+  # 啟用混合檢索
+  enabled: true
+  
+  # 檢索方法權重
+  weights:
+    vector_search: 0.7    # 向量相似度檢索
+    bm25: 0.3            # BM25 關鍵詞檢索
+  
+  # BM25 參數
+  bm25_params:
+    k1: 1.2
+    b: 0.75
+
+# 重排序設定
+reranking:
+  # 啟用重排序
+  enabled: true
+  
+  # 重排序模型
+  model: "cross-encoder/ms-marco-MiniLM-L-6-v2"
+  
+  # 重排序參數
+  top_k_rerank: 20      # 重排序前 K 個結果
+  final_top_k: 5        # 最終返回結果數
+
+# 進階功能
+advanced_features:
+  # 上下文感知檢索
+  context_aware:
+    enabled: true
+    context_window: 3   # 考慮前 N 輪對話
+    
+  # 個性化檢索
+  personalization:
+    enabled: false
+    user_profile_weight: 0.2
+    
+  # 多語言支援
+  multilingual:
+    enabled: false
+    languages: ["en", "zh", "es"]
+
+# 效能優化
+optimization:
+  # 批次處理
+  batch_processing:
+    enabled: true
+    batch_size: 32
+    
+  # GPU 加速
+  gpu_acceleration:
+    enabled: true
+    device: "cuda:0"
+    
+  # 索引優化
+  index_optimization:
+    type: "IVF"         # IVF, HNSW, LSH
+    nlist: 100          # IVF 參數
+    nprobe: 10          # 搜索參數

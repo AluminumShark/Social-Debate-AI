@@ -1,0 +1,105 @@
+# 辯論系統配置
+debate:
+  # 最大回合數
+  max_rounds: 5
+  
+  # 參與的 Agent
+  agents:
+    - Agent_A
+    - Agent_B
+    - Agent_C
+  
+  # 預設辯論主題
+  default_topic: "人工智慧是否應該由政府監管？"
+  
+  # Agent 初始設定
+  agent_configs:
+    Agent_A:
+      initial_stance: 0.8    # 支持立場
+      initial_conviction: 0.7
+      personality: "analytical"
+      strategy_preference:   # 策略偏好
+        analytical: 0.4
+        empathetic: 0.3
+        defensive: 0.2
+        aggressive: 0.1
+    Agent_B:
+      initial_stance: -0.6   # 反對立場
+      initial_conviction: 0.6
+      personality: "aggressive"
+      strategy_preference:
+        aggressive: 0.4
+        defensive: 0.3
+        analytical: 0.2
+        empathetic: 0.1
+    Agent_C:
+      initial_stance: 0.0    # 中立立場
+      initial_conviction: 0.5
+      personality: "empathetic"
+      strategy_preference:
+        empathetic: 0.4
+        analytical: 0.3
+        defensive: 0.2
+        aggressive: 0.1
+  
+  # 勝負判定設定
+  victory_conditions:
+    surrender_threshold: 0.4      # 信念低於此值可能投降
+    stance_neutral_threshold: 0.2 # 立場接近中立的閾值
+    consecutive_persuasion: 3     # 連續被說服的回合數
+    
+  # 說服力計算
+  persuasion_factors:
+    base_persuasion: 0.3         # 基礎說服力
+    strategy_bonus: 0.2          # 策略加成
+    evidence_bonus: 0.3          # 證據加成
+    social_influence: 0.2        # 社會影響力加成
+
+# GPT 設定
+gpt:
+  model: "gpt-3.5-turbo"
+  temperature: 0.7
+  max_tokens: 500
+  system_prompt: |
+    你是一個參與公共議題辯論的智能體。
+    請根據你的立場和策略，提出有說服力的論點。
+    使用理性、邏輯和證據來支持你的觀點。
+
+# 並行處理設定
+parallel:
+  max_workers: 4
+  timeout: 30  # 秒
+  
+  # 模組並行設定
+  module_priorities:
+    rl: 1      # 優先級最高
+    gnn: 2
+    rag: 3
+
+# 策略融合設定
+strategy_fusion:
+  # 融合方法
+  method: "weighted_average"  # weighted_average, voting, adaptive
+  
+  # 權重分配
+  weights:
+    rl_policy: 0.4      # RL 策略權重
+    gnn_suggestion: 0.3 # GNN 建議權重
+    personality: 0.3    # 個性偏好權重
+  
+  # 自適應調整
+  adaptive:
+    enabled: true
+    learning_rate: 0.1
+
+# 日誌設定
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  
+  # 分模組日誌
+  module_logging:
+    rl: "DEBUG"
+    gnn: "INFO"
+    rag: "INFO"
+    orchestrator: "DEBUG"

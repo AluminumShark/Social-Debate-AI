@@ -1,0 +1,152 @@
+# RL (Reinforcement Learning) 配置
+
+# PPO 算法設定
+ppo:
+  # 訓練參數
+  episodes: 1000          # 訓練回合數
+  max_steps: 50           # 每回合最大步數
+  batch_size: 64          # 批次大小
+  
+  # PPO 超參數
+  learning_rate: 3e-4     # 學習率
+  gamma: 0.99             # 折扣因子
+  clip_epsilon: 0.2       # PPO 裁剪參數
+  value_loss_coef: 0.5    # 價值損失係數
+  entropy_coef: 0.01      # 熵正則化係數
+  
+  # 優化設定
+  update_epochs: 4        # 每次更新的 epoch 數
+  gae_lambda: 0.95        # GAE lambda
+
+# Actor-Critic 網路架構
+policy_network:
+  # 網路維度
+  state_dim: 901          # 768 (BERT) + 1 (立場) + 1 (信念) + 1 (回合) + 128 (社會) + 2 (歷史)
+  hidden_size: 256
+  
+  # 策略設定
+  num_strategies: 4
+  strategies:
+    - name: "aggressive"
+      id: 0
+      description: "積極攻擊型 - 直接挑戰對方論點"
+    - name: "defensive"
+      id: 1
+      description: "防禦反駁型 - 鞏固自己的論點"
+    - name: "analytical"
+      id: 2
+      description: "分析論證型 - 理性分析各方觀點"
+    - name: "empathetic"
+      id: 3
+      description: "同理說服型 - 理解對方立場"
+  
+  # Dropout
+  dropout: 0.1
+
+# 辯論環境設定
+environment:
+  # 獎勵設計
+  reward_scale: 1.0           # 獎勵縮放
+  persuasion_bonus: 5         # 說服成功獎勵
+  surrender_penalty: -3       # 投降懲罰
+  diversity_bonus: 0.1        # 策略多樣性獎勵
+  
+  # 終止條件
+  max_rounds: 10              # 最大回合數
+  conviction_threshold: 0.3   # 信念閾值（投降條件）
+  stance_threshold: 0.2       # 立場閾值（中立條件）
+  
+  # 狀態轉移
+  stance_momentum: 0.8        # 立場變化動量
+  conviction_decay: 0.05      # 信念衰減率
+
+# 訓練設定
+training:
+  # 基本參數
+  save_frequency: 100         # 每 N 個 episode 保存
+  log_frequency: 10           # 每 N 個 episode 記錄
+  evaluation_episodes: 50     # 評估用的 episode 數
+  
+  # GPU 設定
+  device: "auto"  # auto, cuda, cpu
+  
+  # 優化器設定
+  optimizer:
+    type: "adam"
+    eps: 1e-5
+  
+  # 梯度裁剪
+  gradient_clipping: 0.5
+  
+  # 隨機種子
+  seed: 42
+
+# 經驗回放設定
+experience_replay:
+  # 緩衝區大小
+  buffer_size: 10000
+  
+  # 採樣設定
+  sample_size: 64
+  
+  # 優先經驗回放
+  prioritized:
+    enabled: false
+    alpha: 0.6
+    beta: 0.4
+
+# 評估設定
+evaluation:
+  # 評估指標
+  metrics:
+    - "average_reward"      # 平均獎勵
+    - "win_rate"           # 勝率
+    - "persuasion_rate"    # 說服成功率
+    - "strategy_diversity" # 策略多樣性
+    - "episode_length"     # 平均回合長度
+  
+  # 評估頻率
+  eval_frequency: 100      # 每 N 個 episode 評估一次
+  
+  # 報告生成
+  generate_report: true
+  report_format: ["json", "png"]
+
+# 推理設定
+inference:
+  # 探索策略
+  exploration:
+    enabled: true
+    method: "epsilon_greedy"  # epsilon_greedy, boltzmann
+    epsilon: 0.1
+    temperature: 1.0
+    decay_rate: 0.995
+    min_epsilon: 0.01
+  
+  # 策略選擇
+  strategy_selection:
+    # 考慮因素
+    consider_history: true    # 考慮歷史策略
+    consider_opponent: true   # 考慮對手特徵
+    consider_context: true    # 考慮對話上下文
+
+# 模型保存設定
+checkpointing:
+  save_dir: "data/models/ppo"
+  save_best_only: false      # PPO 通常保存多個檢查點
+  save_frequency: 100        # 每 N 個 episode
+  keep_last_n: 5            # 保留最近 N 個檢查點
+  
+  # 保存內容
+  save_items:
+    - "actor_model"
+    - "critic_model"
+    - "optimizer_state"
+    - "training_stats"
+
+# 日誌設定
+logging:
+  level: "INFO"
+  log_dir: "logs/ppo"
+  tensorboard: true
+  wandb: false              # 可選：使用 Weights & Biases

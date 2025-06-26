@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Debate AI - 智能辯論系統</title>
+    
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- AOS Animation -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modern-style.css') }}">
+</head>
+<body>
+    <!-- 背景動畫 -->
+    <div class="animated-bg">
+        <div class="gradient-bg"></div>
+        <div class="particle-bg"></div>
+    </div>
+
+    <!-- 主容器 -->
+    <div class="main-container">
+        <!-- 頂部導航 -->
+        <nav class="top-nav">
+            <div class="nav-container">
+                <div class="brand">
+                    <i class="fas fa-brain brand-icon"></i>
+                    <span class="brand-text">Social Debate AI</span>
+                </div>
+                <div class="nav-actions">
+                    <button class="nav-btn" onclick="showAbout()">
+                        <i class="fas fa-info-circle"></i>
+                        <span>關於</span>
+                    </button>
+                    <button class="nav-btn" onclick="toggleTheme()">
+                        <i class="fas fa-moon" id="themeIcon"></i>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- 主要內容區 -->
+        <div class="content-wrapper">
+            <div class="container-fluid">
+                <div class="row">
+                    <!-- 左側面板 -->
+                    <div class="col-lg-4 col-xl-3">
+                        <!-- 控制面板 -->
+                        <div class="control-panel" data-aos="fade-right">
+                            <h3 class="panel-title">
+                                <i class="fas fa-cog"></i> 辯論控制台
+                            </h3>
+                            
+                            <!-- 主題設置 -->
+                            <div class="control-section">
+                                <label class="control-label">辯論主題</label>
+                                <div class="input-group modern-input">
+                                    <input type="text" 
+                                           id="topicInput" 
+                                           class="form-control" 
+                                           placeholder="輸入你想討論的主題..."
+                                           value="人工智能是否應該受到政府監管？">
+                                    <button class="btn btn-primary" onclick="setTopic()">
+                                        <i class="fas fa-arrow-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- 控制按鈕 -->
+                            <div class="control-actions">
+                                <button class="action-btn primary" onclick="startDebate()" id="startBtn">
+                                    <i class="fas fa-play"></i>
+                                    <span>開始辯論</span>
+                                </button>
+                                <button class="action-btn secondary" onclick="nextRound()" id="nextBtn" disabled>
+                                    <i class="fas fa-forward"></i>
+                                    <span>下一回合</span>
+                                </button>
+                                <button class="action-btn danger" onclick="resetDebate()">
+                                    <i class="fas fa-redo"></i>
+                                    <span>重新開始</span>
+                                </button>
+                            </div>
+                            
+                            <!-- 狀態顯示 -->
+                            <div class="status-display">
+                                <div class="status-item">
+                                    <span class="status-label">當前回合</span>
+                                    <span class="status-value" id="currentRound">0</span>
+                                </div>
+                                <div class="status-item">
+                                    <span class="status-label">辯論狀態</span>
+                                    <span class="status-value" id="debateStatus">準備中</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- AI 代理狀態 -->
+                        <div class="agents-panel" data-aos="fade-right" data-aos-delay="100">
+                            <h3 class="panel-title">
+                                <i class="fas fa-users"></i> AI 代理狀態
+                            </h3>
+                            
+                            <!-- Agent A -->
+                            <div class="agent-card" id="agentA">
+                                <div class="agent-header">
+                                    <div class="agent-avatar support">
+                                        <i class="fas fa-user-tie"></i>
+                                    </div>
+                                    <div class="agent-info">
+                                        <h5>支持者 A</h5>
+                                        <p>積極支持立場</p>
+                                    </div>
+                                </div>
+                                <div class="agent-stats">
+                                    <div class="stat-bar">
+                                        <label>立場強度</label>
+                                        <div class="progress">
+                                            <div class="progress-bar bg-success" id="stanceA" style="width: 80%">
+                                                <span>+0.8</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="stat-bar">
+                                        <label>信念堅定</label>
+                                        <div class="progress">
+                                            <div class="progress-bar bg-info" id="convictionA" style="width: 70%">
+                                                <span>0.7</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Agent B -->
+                            <div class="agent-card" id="agentB">
+                                <div class="agent-header">
+                                    <div class="agent-avatar oppose">
+                                        <i class="fas fa-user-shield"></i>
+                                    </div>
+                                    <div class="agent-info">
+                                        <h5>反對者 B</h5>
+                                        <p>堅決反對立場</p>
+                                    </div>
+                                </div>
+                                <div class="agent-stats">
+                                    <div class="stat-bar">
+                                        <label>立場強度</label>
+                                        <div class="progress">
+                                            <div class="progress-bar bg-danger" id="stanceB" style="width: 30%">
+                                                <span>-0.6</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="stat-bar">
+                                        <label>信念堅定</label>
+                                        <div class="progress">
+                                            <div class="progress-bar bg-info" id="convictionB" style="width: 60%">
+                                                <span>0.6</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Agent C -->
+                            <div class="agent-card" id="agentC">
+                                <div class="agent-header">
+                                    <div class="agent-avatar neutral">
+                                        <i class="fas fa-user-graduate"></i>
+                                    </div>
+                                    <div class="agent-info">
+                                        <h5>中立者 C</h5>
+                                        <p>理性分析立場</p>
+                                    </div>
+                                </div>
+                                <div class="agent-stats">
+                                    <div class="stat-bar">
+                                        <label>立場強度</label>
+                                        <div class="progress">
+                                            <div class="progress-bar bg-warning" id="stanceC" style="width: 50%">
+                                                <span>0.0</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="stat-bar">
+                                        <label>信念堅定</label>
+                                        <div class="progress">
+                                            <div class="progress-bar bg-info" id="convictionC" style="width: 50%">
+                                                <span>0.5</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 右側辯論區 -->
+                    <div class="col-lg-8 col-xl-9">
+                        <div class="debate-area" data-aos="fade-left">
+                            <!-- 辯論標題 -->
+                            <div class="debate-header">
+                                <h2 class="debate-title">
+                                    <i class="fas fa-comments"></i> 智能辯論進行中
+                                </h2>
+                                <div class="debate-topic" id="topicDisplay">
+                                    請設置辯論主題以開始
+                                </div>
+                            </div>
+
+                            <!-- 辯論內容 -->
+                            <div class="debate-content" id="debateContent">
+                                <!-- 歡迎畫面 -->
+                                <div class="welcome-screen">
+                                    <div class="welcome-icon">
+                                        <i class="fas fa-robot"></i>
+                                    </div>
+                                    <h3>歡迎使用 Social Debate AI</h3>
+                                    <p>這是一個多智能體辯論系統，三個 AI 代理將從不同角度討論你提出的主題</p>
+                                    <div class="feature-list">
+                                        <div class="feature-item">
+                                            <i class="fas fa-brain"></i>
+                                            <span>深度學習驅動的論點生成</span>
+                                        </div>
+                                        <div class="feature-item">
+                                            <i class="fas fa-chart-line"></i>
+                                            <span>實時立場和信念追蹤</span>
+                                        </div>
+                                        <div class="feature-item">
+                                            <i class="fas fa-sync"></i>
+                                            <span>動態策略調整和互動</span>
+                                        </div>
+                                    </div>
+                                    <p class="mt-4">輸入一個主題，點擊"開始辯論"來見證 AI 的思辨能力！</p>
+                                </div>
+                            </div>
+
+                            <!-- 辯論控制欄 -->
+                            <div class="debate-controls">
+                                <button class="control-btn" onclick="exportDebate()">
+                                    <i class="fas fa-download"></i> 導出記錄
+                                </button>
+                                <button class="control-btn" onclick="showStats()">
+                                    <i class="fas fa-chart-bar"></i> 查看統計
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 簡化的載入指示器 -->
+    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+        <div class="loading-content">
+            <div class="loading-spinner">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+            <p class="loading-text" id="loadingText">處理中...</p>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="{{ url_for('static', filename='js/modern-app.js') }}"></script>
+    
+    <script>
+        // 初始化 AOS 動畫
+        AOS.init({
+            duration: 800,
+            once: true
+        });
+    </script>
+</body>
+</html> 

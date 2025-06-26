@@ -1,0 +1,171 @@
+# Social Debate AI 系統總體配置
+
+# 系統版本
+version: "2.0.0"
+
+# 系統模式
+mode: "production"  # development, production, debug
+
+# 模組啟用設定
+modules:
+  rl:
+    enabled: true
+    type: "ppo"  # ppo, dqn, a2c
+    config_file: "configs/rl.yaml"
+    
+  gnn:
+    enabled: true
+    type: "supervised"  # supervised, unsupervised
+    config_file: "configs/gnn.yaml"
+    
+  rag:
+    enabled: true
+    type: "hybrid"  # simple, chroma, hybrid
+    config_file: "configs/rag.yaml"
+
+# 資源管理
+resources:
+  # GPU 設定
+  gpu:
+    enabled: true
+    device: "cuda:0"
+    memory_fraction: 0.8
+    
+  # CPU 設定
+  cpu:
+    max_threads: 8
+    affinity: null
+    
+  # 記憶體設定
+  memory:
+    max_usage_gb: 16
+    cache_size_gb: 2
+
+# API 設定
+api:
+  # OpenAI API
+  openai:
+    api_key_env: "OPENAI_API_KEY"
+    max_retries: 3
+    timeout: 30
+    
+  # 其他 API（未來擴展）
+  huggingface:
+    enabled: false
+    api_key_env: "HF_API_KEY"
+
+# 資料路徑
+paths:
+  # 資料目錄
+  data_dir: "data"
+  raw_data: "data/raw"
+  processed_data: "data/processed"
+  
+  # 模型目錄
+  models_dir: "data/models"
+  checkpoints_dir: "data/checkpoints"
+  
+  # 日誌目錄
+  logs_dir: "logs"
+  
+  # 快取目錄
+  cache_dir: "cache"
+
+# 效能監控
+monitoring:
+  # 系統監控
+  system_metrics:
+    enabled: true
+    interval: 60  # 秒
+    
+  # 模型監控
+  model_metrics:
+    enabled: true
+    track_latency: true
+    track_accuracy: true
+    
+  # 警報設定
+  alerts:
+    enabled: false
+    email: null
+    slack_webhook: null
+
+# 安全設定
+security:
+  # API 安全
+  api_security:
+    rate_limiting: true
+    max_requests_per_minute: 60
+    
+  # 資料安全
+  data_security:
+    encryption: false
+    anonymization: true
+    
+  # 模型安全
+  model_security:
+    adversarial_detection: false
+    output_filtering: true
+
+# 實驗追蹤
+experiment_tracking:
+  # 使用的工具
+  tool: "tensorboard"  # tensorboard, mlflow, wandb, none
+  
+  # 追蹤設定
+  track_hyperparameters: true
+  track_metrics: true
+  track_artifacts: true
+  
+  # 實驗命名
+  experiment_name_format: "{module}_{timestamp}"
+
+# 部署設定
+deployment:
+  # 服務器設定
+  server:
+    host: "0.0.0.0"
+    port: 5000
+    workers: 4
+    
+  # 負載均衡
+  load_balancing:
+    enabled: false
+    strategy: "round_robin"
+    
+  # 自動擴展
+  auto_scaling:
+    enabled: false
+    min_instances: 1
+    max_instances: 10
+
+# 備份與恢復
+backup:
+  # 自動備份
+  auto_backup:
+    enabled: true
+    frequency: "daily"  # hourly, daily, weekly
+    retention_days: 30
+    
+  # 備份內容
+  backup_items:
+    - models
+    - configs
+    - logs
+    
+  # 備份位置
+  backup_location: "backups/"
+
+# 開發設定
+development:
+  # 除錯模式
+  debug: false
+  
+  # 熱重載
+  hot_reload: true
+  
+  # 測試設定
+  testing:
+    unit_tests: true
+    integration_tests: true
+    coverage_threshold: 80 

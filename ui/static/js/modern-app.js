@@ -193,6 +193,9 @@ async function runDebateRound() {
         const response = await fetch('/api/debate_round', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                topic: state.topic || '預設辯論主題'
+            }),
             // 添加超時控制
             signal: AbortSignal.timeout(60000)  // 60秒超時
         });
@@ -218,8 +221,18 @@ async function runDebateRound() {
             // 檢查是否結束
             if (data.debate_ended) {
                 state.debating = false;
+                console.log('Debate ended, summary:', data.summary);
                 if (data.summary) {
                     showDebateResult(data.summary);
+                } else {
+                    // 如果沒有摘要，顯示基本結束訊息
+                    const endDiv = document.createElement('div');
+                    endDiv.className = 'debate-result text-center py-5';
+                    endDiv.innerHTML = `
+                        <h3>辯論結束</h3>
+                        <p class="lead">辯論已完成，但無法生成詳細摘要</p>
+                    `;
+                    elements.debateContent.appendChild(endDiv);
                 }
                 showMessage('辯論已結束！', 'info');
             } else {

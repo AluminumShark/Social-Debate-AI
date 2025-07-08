@@ -23,11 +23,11 @@ if __name__ == '__main__':
         print_banner()
         
         print("Loading Flask app...")
-        from ui.app import app, init_system
+        from ui.app import app, initialize_system
         print("Flask app loaded")
         
         print("Initializing system...")
-        init_result = init_system()
+        init_result = initialize_system()
         
         if init_result:
             print("System initialized successfully")

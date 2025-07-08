@@ -1,4 +1,19 @@
 # Social Debate AI 系統總體配置
+#
+# API Key 配置說明：
+# =================
+# 1. 直接設定（不建議用於生產環境）：
+#    api.openai.api_key: "your-api-key-here"
+#
+# 2. 環境變數（建議使用）：
+#    設定環境變數 OPENAI_API_KEY=your-api-key
+#    或修改 api.openai.api_key_env 使用不同的環境變數名稱
+#
+# 3. 從文件讀取：
+#    api.openai.api_key_file: "path/to/your/api-key.txt"
+#
+# 系統會按照以上順序嘗試載入 API key
+#
 
 # 系統版本
 version: "2.0.0"
@@ -45,14 +60,27 @@ resources:
 api:
   # OpenAI API
   openai:
-    api_key_env: "OPENAI_API_KEY"
+    # API Key 設定（擇一使用）
+    api_key: ""  # 直接在此設定 API key（不建議用於生產環境）
+    api_key_env: "OPENAI_API_KEY"  # 從環境變數讀取（建議使用）
+    api_key_file: ""  # 從檔案讀取 API key（可選）
+    
+    # 連線設定
     max_retries: 3
     timeout: 30
+    base_url: "https://api.openai.com/v1"  # API 基礎 URL
+    
+    # 模型設定
+    default_model: "gpt-3.5-turbo"
+    max_tokens: 2048
+    temperature: 0.7
     
   # 其他 API（未來擴展）
   huggingface:
     enabled: false
+    api_key: ""
     api_key_env: "HF_API_KEY"
+    api_key_file: ""
 
 # 資料路徑
 paths:

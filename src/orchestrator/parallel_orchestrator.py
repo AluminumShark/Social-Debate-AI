@@ -93,9 +93,9 @@ class AgentState:
         attack_effect = max(0, attack_score - attack_resistance)
         
         # Update stance (persuasion moves towards neutral, attack polarizes)
-        if persuasion_score > 0.6:  # Persuaded
-            self.current_stance *= (1.0 - persuasion_effect * 0.3)
-            self.conviction *= 0.85  # Conviction weakens more
+        if persuasion_score > 0.5:  # Persuaded (降低閾值)
+            self.current_stance *= (1.0 - persuasion_effect * 0.2)  # 減少立場改變幅度
+            self.conviction *= 0.9  # 信念減弱更慢
         
         if attack_effect > 0.3:  # Attacked
             self.current_stance *= (1.0 + attack_effect * 0.2)  # Stance becomes more extreme
@@ -111,23 +111,23 @@ class AgentState:
         if len(self.attack_history) > 10:
             self.attack_history.pop(0)
         
-        # Check if should surrender (relaxed conditions)
-        if len(self.persuasion_history) >= 2:
-            recent_persuasion = sum(self.persuasion_history[-2:]) / 2
-            # Condition 1: High persuasion + Low conviction
-            if recent_persuasion > 0.6 and self.conviction < 0.4:
+        # Check if should surrender (much stricter conditions)
+        if len(self.persuasion_history) >= 4:  # 需要至少4輪歷史
+            recent_persuasion = sum(self.persuasion_history[-4:]) / 4
+            # Condition 1: Extremely high persuasion + Extremely low conviction
+            if recent_persuasion > 0.65 and self.conviction < 0.25:
                 self.has_surrendered = True
-                print(f"{self.agent_id} surrendered (persuaded)")
-            # Condition 2: Stance already close to neutral
-            elif abs(self.current_stance) < 0.2 and self.conviction < 0.5:
+                print(f"{self.agent_id} surrendered (highly persuaded)")
+            # Condition 2: Stance extremely close to neutral + very low conviction
+            elif abs(self.current_stance) < 0.1 and self.conviction < 0.3:
                 self.has_surrendered = True
-                print(f"{self.agent_id} surrendered (stance wavered)")
-            # Condition 3: Consistently highly persuaded
-            elif len(self.persuasion_history) >= 3:
-                consecutive_high = all(score > 0.5 for score in self.persuasion_history[-3:])
-                if consecutive_high:
+                print(f"{self.agent_id} surrendered (stance neutralized)")
+            # Condition 3: Consistently highly persuaded for many rounds
+            elif len(self.persuasion_history) >= 5:
+                consecutive_high = all(score > 0.6 for score in self.persuasion_history[-5:])
+                if consecutive_high and self.conviction < 0.4:
                     self.has_surrendered = True
-                    print(f"{self.agent_id} surrendered (consistently persuaded)")
+                    print(f"{self.agent_id} surrendered (overwhelmingly persuaded)")
 
 @dataclass
 class DebateRound:
@@ -722,10 +722,10 @@ Please express your viewpoint:"""
         attack_count = sum(1 for indicator in attack_indicators if indicator in response_lower)
         evidence_count = sum(1 for indicator in evidence_indicators if indicator in response_lower)
         
-        # Adjust score calculation to make it easier to get non-zero scores
-        persuasion_score = min(1.0, persuasion_count * 0.3)
-        attack_score = min(1.0, attack_count * 0.4)
-        evidence_score = min(1.0, evidence_count * 0.35)
+        # Adjust score calculation to be more balanced
+        persuasion_score = min(0.7, persuasion_count * 0.1)  # 進一步降低說服力係數，最高70%
+        attack_score = min(0.6, attack_count * 0.15)  # 進一步降低攻擊力係數，最高60%
+        evidence_score = min(0.5, evidence_count * 0.15)  # 進一步降低證據係數，最高50%
         
         # Length score
         word_count = len(response.split())
@@ -749,7 +749,13 @@ Please express your viewpoint:"""
         # Get all previous historical records
         all_history = []
         for past_round in self.debate_history:
-            for response in past_round.history:
+            # Handle both DebateRound objects and dict formats
+            if hasattr(past_round, 'history'):
+                responses = past_round.history
+            else:
+                responses = past_round.get('responses', [])
+            
+            for response in responses:
                 all_history.append(f"{response['agent_id']}: {response['content']}")
         
         # Current round responses

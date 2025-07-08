@@ -18,31 +18,34 @@ class PersuasionGNN(nn.Module):
         # GraphSAGE layers
         self.conv1 = tgnn.SAGEConv(input_dim, hidden_dim)
         self.conv2 = tgnn.SAGEConv(hidden_dim, hidden_dim)
-        self.conv3 = tgnn.SAGEConv(hidden_dim, hidden_dim)
+        self.conv3 = tgnn.SAGEConv(hidden_dim, 128)
         
         # Attention layer
-        self.attention = tgnn.GATConv(hidden_dim, hidden_dim, heads=4, concat=False)
+        self.attention = tgnn.GATConv(128, 128, heads=4, concat=False)
         
         # Dropout
         self.dropout = nn.Dropout(0.3)
         
-        # Multi-task heads
+        # Multi-task heads - 調整結構以匹配檢查點 (0, 1, 2, 3)
         self.delta_head = nn.Sequential(
-            nn.Linear(hidden_dim, 64),
-            nn.ReLU(),
-            nn.Linear(64, 1)
+            nn.Linear(128, 64),     # 第0層
+            nn.ReLU(),              # 第1層
+            nn.Dropout(0.3),        # 第2層
+            nn.Linear(64, 1)        # 第3層
         )
         
         self.quality_head = nn.Sequential(
-            nn.Linear(hidden_dim, 64),
-            nn.ReLU(),
-            nn.Linear(64, 1)
+            nn.Linear(128, 64),     # 第0層
+            nn.ReLU(),              # 第1層
+            nn.Dropout(0.3),        # 第2層
+            nn.Linear(64, 1)        # 第3層
         )
         
         self.strategy_head = nn.Sequential(
-            nn.Linear(hidden_dim, 64),
-            nn.ReLU(),
-            nn.Linear(64, num_strategies)
+            nn.Linear(128, 64),     # 第0層
+            nn.ReLU(),              # 第1層
+            nn.Dropout(0.3),        # 第2層
+            nn.Linear(64, num_strategies)  # 第3層
         )
     
     def forward(self, x, edge_index, batch=None):

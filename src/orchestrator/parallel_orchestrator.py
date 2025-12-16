@@ -7,9 +7,7 @@ import asyncio
 from concurrent.futures import ThreadPoolExecutor
 import time
 from dataclasses import dataclass
-from typing import Dict, List, Any, Optional
-from pathlib import Path
-import sys
+from typing import Dict, List
 import random
 import numpy as np
 
@@ -34,10 +32,8 @@ except ImportError:
 
 # Try to import required modules
 try:
-    from rl.policy_network import select_strategy as _select_strategy, choose_snippet as _choose_snippet, PolicyNetwork as _PolicyNetwork
+    from rl.policy_network import select_strategy as _select_strategy, choose_snippet as _choose_snippet
     from gnn.social_encoder import social_vec as _social_vec, get_social_influence_score, predict_persuasion
-    from rag.retriever import create_enhanced_retriever as _create_enhanced_retriever
-    from utils.config_loader import ConfigLoader as _ConfigLoader
     
     # Create wrapper functions
     def select_strategy(query: str, context: str = "", social_context: List[float] = None) -> str:
@@ -473,12 +469,11 @@ class ParallelOrchestrator:
         print(f"[COMPLETE] Parallel analysis completed ({analysis_time:.2f}s)")
         
         # 2. Fuse results
-        print(f"[FUSE] Starting result fusion...")
+        print("[FUSE] Starting result fusion...")
         fused_results = self.fuse_analysis_results(analysis_results, agent_id)
-        print(f"[OK] Fusion completed")
+        print("[OK] Fusion completed")
         
         # 3. Build prompt
-        agent_state = self.agent_states[agent_id]
         recent_history = history[-4:] if history else []
         
         # Analyze target agent weaknesses
@@ -497,12 +492,12 @@ class ParallelOrchestrator:
         
         # Check if response is truncated (check if it ends with period, question mark, or exclamation mark)
         if response and not response.rstrip().endswith(('。', '！', '？', '.', '!', '?')):
-            print(f"[WARN] Detected response may be truncated, attempting to complete...")
+            print("[WARN] Detected response may be truncated, attempting to complete...")
             # If response is truncated, add ending
             response += ". In conclusion, based on the above analysis, I maintain my position."
         
-        # 5. Evaluate response effectiveness
-        response_effects = self._evaluate_response(response, target_agents)
+        # 5. Evaluate response effectiveness (for logging)
+        self._evaluate_response(response, target_agents)
         
         total_time = time.time() - analysis_start
         print(f"[TIME] Agent {agent_id} total processing time: {total_time:.2f}s")

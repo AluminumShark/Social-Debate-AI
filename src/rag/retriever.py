@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import List, Dict, Optional
 from langchain_community.vectorstores import Chroma
 from langchain_openai import OpenAIEmbeddings
-import numpy as np
 
 class EnhancedRetriever:
     def __init__(self):

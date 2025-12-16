@@ -4,9 +4,6 @@ RL policy network interface
 
 import torch
 import torch.nn as nn
-import numpy as np
-from typing import Optional
-import random
 from pathlib import Path
 
 # Strategy mappings
@@ -116,24 +113,38 @@ def choose_snippet(state_text, pool):
     
     return best_snippet if best_snippet else pool[0].get('content', 'No evidence available')
 
-class PolicyNetwork:
-    def predict_quality(self, text):
-        # Simple quality estimation based on text features
-        words = text.split()
+
+def predict_quality(text):
+    """
+    Simple heuristic-based quality predictor.
+    
+    Args:
+        text: The text to evaluate
         
-        # Length factor (prefer moderate length)
-        length_score = min(len(words) / 50, 1.0) if len(words) < 100 else 0.8
-        
-        # Complexity factor (sentence variety)
-        sentences = text.split('.')
-        complexity_score = min(len(sentences) / 5, 1.0)
-        
-        # Evidence factor (keywords)
-        evidence_words = ['research', 'study', 'data', 'according', 'evidence']
-        evidence_score = sum(1 for word in evidence_words if word in text.lower()) / 10
-        
-        quality = (length_score * 0.4 + complexity_score * 0.3 + evidence_score * 0.3)
-        return min(quality, 1.0)
+    Returns:
+        Quality score between 0.0 and 1.0
+    """
+    # Simple quality estimation based on text features
+    words = text.split()
+    
+    # Length factor (prefer moderate length)
+    length_score = min(len(words) / 50, 1.0) if len(words) < 100 else 0.8
+    
+    # Complexity factor (sentence variety)
+    sentences = text.split('.')
+    complexity_score = min(len(sentences) / 5, 1.0)
+    
+    # Evidence factor (keywords)
+    evidence_words = ['research', 'study', 'data', 'according', 'evidence']
+    evidence_score = sum(1 for word in evidence_words if word in text.lower()) / 10
+    
+    quality = (length_score * 0.4 + complexity_score * 0.3 + evidence_score * 0.3)
+    return min(quality, 1.0)
+
+
+# Add predict_quality to PolicyNetwork for backward compatibility
+PolicyNetwork.predict_quality = staticmethod(predict_quality)
+
 
 def get_policy_network(model_path=None):
     return _load_model()

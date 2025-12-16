@@ -7,7 +7,6 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from src.rl.ppo_trainer import PPOTrainer
-import torch
 import numpy as np
 import matplotlib.pyplot as plt
 import argparse
@@ -63,7 +62,7 @@ def main():
         
         plot_training(losses, output_dir / "training_curve.png")
         
-        print(f"Training complete")
+        print("Training complete")
         print(f"Final loss: {losses[-1]:.3f}")
         print(f"Model saved: {model_path}")
 

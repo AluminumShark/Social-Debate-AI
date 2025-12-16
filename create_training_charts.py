@@ -5,9 +5,7 @@ Social Debate AI 訓練收斂圖表生成器
 
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.patches as patches
 from pathlib import Path
-import json
 from datetime import datetime
 import warnings
 warnings.filterwarnings('ignore')

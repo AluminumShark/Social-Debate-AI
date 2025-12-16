@@ -2,18 +2,16 @@
 GNN training for persuasion prediction
 """
 
+from typing import List, Tuple, Dict
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch_geometric.nn as gnn
-from torch_geometric.data import Data, DataLoader
+from torch_geometric.data import Data
 from pathlib import Path
 import json
 import numpy as np
 from tqdm import tqdm
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, f1_score
-import networkx as nx
 from transformers import AutoTokenizer, AutoModel
 
 class PersuasionGNN(nn.Module):
@@ -151,7 +149,7 @@ class PersuasionDataset:
                             'score': delta_comment.get('score', 0)
                         })
                         
-                except Exception as e:
+                except Exception:
                     continue
         
         if not interactions:

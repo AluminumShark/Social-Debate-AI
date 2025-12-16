@@ -1,16 +1,18 @@
 """
 Flask web application for Social Debate AI
+Supports both legacy ParallelOrchestrator and new LangGraph orchestrator
 """
 
-import json
 import time
 import asyncio
-from flask import Flask, render_template, request, jsonify, redirect, url_for
+import os
+from flask import Flask, render_template, request, jsonify
 from pathlib import Path
 
 # Import core modules
 try:
     from src.orchestrator.parallel_orchestrator import ParallelOrchestrator
+    from src.orchestrator.langgraph_orchestrator import create_langgraph_orchestrator
     from src.utils.config_loader import ConfigLoader
     print("Core modules loaded successfully")
 except ImportError as e:
@@ -21,10 +23,12 @@ app = Flask(__name__)
 
 # Global variables
 orchestrator = None
+langgraph_orchestrator = None
 config = None
+USE_LANGGRAPH = os.environ.get('USE_LANGGRAPH', 'true').lower() == 'true'
 
 def initialize_system():
-    global orchestrator, config
+    global orchestrator, langgraph_orchestrator, config, USE_LANGGRAPH
     
     try:
         # Load configuration
@@ -38,11 +42,22 @@ def initialize_system():
         else:
             print("Using default configuration")
         
-        # Initialize orchestrator
+        # Initialize orchestrators
+        if USE_LANGGRAPH:
+            print("Initializing LangGraph orchestrator...")
+            try:
+                langgraph_orchestrator = create_langgraph_orchestrator()
+                print("LangGraph orchestrator initialized successfully")
+            except Exception as e:
+                print(f"LangGraph initialization failed: {e}")
+                print("Falling back to parallel orchestrator")
+                USE_LANGGRAPH = False
+        
+        # Always initialize legacy orchestrator as fallback
         print("Initializing parallel orchestrator...")
         orchestrator = ParallelOrchestrator()
         
-        # Initialize agents
+        # Initialize agents for legacy orchestrator
         agent_configs = []
         for agent_name in ['Agent_A', 'Agent_B', 'Agent_C']:
             agent_configs.append({
@@ -53,6 +68,7 @@ def initialize_system():
         
         orchestrator.initialize_agents(agent_configs)
         print("System initialization complete")
+        print(f"Using {'LangGraph' if USE_LANGGRAPH and langgraph_orchestrator else 'Legacy'} orchestrator")
         
         return True
         
@@ -65,15 +81,13 @@ def index():
     """Main page"""
     return render_template('index.html', 
                          title="Social Debate AI",
-                         description="AI-powered debate simulation system")
+                         description="AI-powered debate simulation system",
+                         use_langgraph=USE_LANGGRAPH and langgraph_orchestrator is not None)
 
 @app.route('/api/debate', methods=['POST'])
 def start_debate():
-    """Start debate"""
-    global orchestrator
-    
-    if not orchestrator:
-        return jsonify({'error': 'System not initialized'}), 500
+    """Start debate - full automated run"""
+    global orchestrator, langgraph_orchestrator
     
     data = request.get_json()
     topic = data.get('topic', '').strip()
@@ -85,121 +99,277 @@ def start_debate():
     if len(topic) > 200:
         topic = topic[:200] + "..."
     
+    # Check if system is initialized
+    if config is None:
+        return jsonify({'error': 'System not initialized. Please call /api/init first.'}), 500
+    
     try:
         print(f"Starting debate on topic: {topic}")
-        
-        # Run debate simulation
         max_rounds = config.get('debate', {}).get('max_rounds', 5)
-        agent_order = ['Agent_A', 'Agent_B', 'Agent_C']
         
-        debate_results = []
-        
-        # Execute debate rounds
-        for round_num in range(1, max_rounds + 1):
-            print(f"Round {round_num}")
-            
-            # Create event loop for async operations
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            
-            try:
-                debate_round = loop.run_until_complete(
-                    orchestrator.run_debate_round(round_num, topic, agent_order)
-                )
-                
-                # Convert to serializable format
-                round_data = {
-                    'round': round_num,
-                    'topic': topic,
-                    'agents': {}
-                }
-                
-                for agent_id, state in debate_round.agent_states.items():
-                    round_data['agents'][agent_id] = {
-                        'stance': round(state.current_stance, 2),
-                        'conviction': round(state.conviction, 2),
-                        'has_surrendered': state.has_surrendered
-                    }
-                
-                # Add responses from history
-                if debate_round.history:
-                    round_data['responses'] = debate_round.history
-                
-                debate_results.append(round_data)
-                
-                # Check if any agent surrendered
-                if any(state.has_surrendered for state in debate_round.agent_states.values()):
-                    print(f"Debate ended early due to surrender in round {round_num}")
-                    break
-                    
-            finally:
-                loop.close()
-        
-        # Generate summary
-        summary = orchestrator.get_debate_summary()
-        
-        return jsonify({
-            'success': True,
-            'topic': topic,
-            'rounds': debate_results,
-            'summary': summary
-        })
+        # Use LangGraph if available
+        if USE_LANGGRAPH and langgraph_orchestrator:
+            return _run_langgraph_debate(topic, max_rounds)
+        else:
+            return _run_legacy_debate(topic, max_rounds)
         
     except Exception as e:
         print(f"Debate execution failed: {str(e)}")
         return jsonify({'error': f'Debate failed: {str(e)}'}), 500
+
+
+def _run_langgraph_debate(topic: str, max_rounds: int):
+    """Run debate using LangGraph orchestrator"""
+    global langgraph_orchestrator
+    
+    agent_configs = [
+        {'id': 'Agent_A', 'initial_stance': 0.8, 'initial_conviction': 0.7},
+        {'id': 'Agent_B', 'initial_stance': -0.6, 'initial_conviction': 0.7},
+        {'id': 'Agent_C', 'initial_stance': 0.0, 'initial_conviction': 0.7}
+    ]
+    
+    # Run the debate
+    results = langgraph_orchestrator.run_debate(
+        topic=topic,
+        agent_configs=agent_configs,
+        max_rounds=max_rounds
+    )
+    
+    # Initialize per-round state tracking from initial configs
+    # We reconstruct state evolution by applying effects from history
+    running_states = {}
+    for config in agent_configs:
+        running_states[config['id']] = {
+            'current_stance': config['initial_stance'],
+            'conviction': config['initial_conviction'],
+            'has_surrendered': False,
+            'persuasion_history': [],
+            'attack_history': []
+        }
+    
+    # Format for API response
+    debate_results = []
+    current_round = 1
+    round_responses = []
+    
+    for response in results.get('history', []):
+        # Update running states based on response effects
+        speaker_id = response.get('agent_id')
+        effects = response.get('effects', {})
+        persuasion_score = effects.get('persuasion_score', 0.5)
+        attack_score = effects.get('attack_score', 0.3)
+        
+        # Apply effects to other agents (not the speaker)
+        for agent_id, state in running_states.items():
+            if agent_id != speaker_id and not state['has_surrendered']:
+                # Update persuasion/attack history
+                state['persuasion_history'].append(persuasion_score)
+                state['attack_history'].append(attack_score)
+                
+                # Keep last 10
+                if len(state['persuasion_history']) > 10:
+                    state['persuasion_history'] = state['persuasion_history'][-10:]
+                if len(state['attack_history']) > 10:
+                    state['attack_history'] = state['attack_history'][-10:]
+                
+                # Update stance based on effects
+                conviction = state['conviction']
+                current_stance = state['current_stance']
+                
+                persuasion_effect = persuasion_score * (1.0 - conviction)
+                if persuasion_score > 0.5:
+                    current_stance *= (1.0 - persuasion_effect * 0.2)
+                    conviction *= 0.9
+                
+                attack_resistance = conviction * 0.8
+                attack_effect = max(0, attack_score - attack_resistance)
+                if attack_effect > 0.3:
+                    current_stance *= (1.0 + attack_effect * 0.2)
+                    conviction = min(1.0, conviction * 1.1)
+                
+                state['current_stance'] = current_stance
+                state['conviction'] = conviction
+                
+                # Check surrender conditions
+                if len(state['persuasion_history']) >= 4:
+                    recent_persuasion = sum(state['persuasion_history'][-4:]) / 4
+                    if recent_persuasion > 0.65 and conviction < 0.25:
+                        state['has_surrendered'] = True
+                    elif abs(current_stance) < 0.1 and conviction < 0.3:
+                        state['has_surrendered'] = True
+                    elif len(state['persuasion_history']) >= 5:
+                        consecutive_high = all(s > 0.6 for s in state['persuasion_history'][-5:])
+                        if consecutive_high and conviction < 0.4:
+                            state['has_surrendered'] = True
+        
+        round_responses.append(response)
+        
+        # Check if round complete (all 3 agents spoke)
+        if len(round_responses) >= 3:
+            round_data = {
+                'round': current_round,
+                'topic': topic,
+                'responses': round_responses,
+                'agents': {}
+            }
+            
+            # Capture current state snapshot for this round
+            for agent_id, state in running_states.items():
+                round_data['agents'][agent_id] = {
+                    'stance': round(state['current_stance'], 2),
+                    'conviction': round(state['conviction'], 2),
+                    'has_surrendered': state['has_surrendered']
+                }
+            
+            debate_results.append(round_data)
+            round_responses = []
+            current_round += 1
+    
+    # Append any remaining incomplete round (e.g., early surrender or max rounds reached)
+    if round_responses:
+        round_data = {
+            'round': current_round,
+            'topic': topic,
+            'responses': round_responses,
+            'agents': {}
+        }
+        
+        # Use current running states for incomplete round
+        for agent_id, state in running_states.items():
+            round_data['agents'][agent_id] = {
+                'stance': round(state['current_stance'], 2),
+                'conviction': round(state['conviction'], 2),
+                'has_surrendered': state['has_surrendered']
+            }
+        
+        debate_results.append(round_data)
+    
+    return jsonify({
+        'success': True,
+        'topic': topic,
+        'rounds': debate_results,
+        'summary': results.get('summary', {}),
+        'orchestrator': 'langgraph',
+        'elapsed_time': results.get('elapsed_time', 0)
+    })
+
+
+def _run_legacy_debate(topic: str, max_rounds: int):
+    """Run debate using legacy parallel orchestrator"""
+    global orchestrator
+    
+    if not orchestrator:
+        return jsonify({'error': 'System not initialized'}), 500
+    
+    agent_order = ['Agent_A', 'Agent_B', 'Agent_C']
+    debate_results = []
+    
+    # Execute debate rounds
+    for round_num in range(1, max_rounds + 1):
+        print(f"Round {round_num}")
+        
+        # Create event loop for async operations
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
+        try:
+            debate_round = loop.run_until_complete(
+                orchestrator.run_debate_round(round_num, topic, agent_order)
+            )
+            
+            # Convert to serializable format
+            round_data = {
+                'round': round_num,
+                'topic': topic,
+                'agents': {}
+            }
+            
+            for agent_id, state in debate_round.agent_states.items():
+                round_data['agents'][agent_id] = {
+                    'stance': round(state.current_stance, 2),
+                    'conviction': round(state.conviction, 2),
+                    'has_surrendered': state.has_surrendered
+                }
+            
+            # Add responses from history
+            if debate_round.history:
+                round_data['responses'] = debate_round.history
+            
+            debate_results.append(round_data)
+            
+            # Check if any agent surrendered
+            if any(state.has_surrendered for state in debate_round.agent_states.values()):
+                print(f"Debate ended early due to surrender in round {round_num}")
+                break
+                
+        finally:
+            loop.close()
+    
+    # Generate summary
+    summary = orchestrator.get_debate_summary()
+    
+    return jsonify({
+        'success': True,
+        'topic': topic,
+        'rounds': debate_results,
+        'summary': summary,
+        'orchestrator': 'legacy'
+    })
+
 
 @app.route('/api/health')
 def health_check():
     """System health check"""
     return jsonify({
         'status': 'ok',
-        'system_ready': orchestrator is not None,
+        'system_ready': orchestrator is not None or langgraph_orchestrator is not None,
+        'orchestrator_type': 'langgraph' if (USE_LANGGRAPH and langgraph_orchestrator) else 'legacy',
         'timestamp': time.time()
     })
 
 @app.route('/api/init', methods=['POST'])
 def init_system():
-    """初始化系統"""
-    global orchestrator
+    """Initialize system"""
+    global orchestrator, langgraph_orchestrator
     
-    if orchestrator:
+    if orchestrator or langgraph_orchestrator:
         return jsonify({
             'success': True,
-            'message': '系統已初始化'
+            'message': 'System already initialized',
+            'orchestrator_type': 'langgraph' if (USE_LANGGRAPH and langgraph_orchestrator) else 'legacy'
         })
     
     try:
-        # 重新初始化系統
         init_result = initialize_system()
         
         if init_result:
             return jsonify({
                 'success': True,
-                'message': '系統初始化成功'
+                'message': 'System initialized successfully',
+                'orchestrator_type': 'langgraph' if (USE_LANGGRAPH and langgraph_orchestrator) else 'legacy'
             })
         else:
             return jsonify({
                 'success': False,
-                'message': '系統初始化失敗'
+                'message': 'System initialization failed'
             }), 500
             
     except Exception as e:
         print(f"Init failed: {str(e)}")
         return jsonify({
             'success': False,
-            'message': f'初始化錯誤: {str(e)}'
+            'message': f'Initialization error: {str(e)}'
         }), 500
 
 @app.route('/api/set_topic', methods=['POST'])
 def set_topic():
-    """設置辯論主題"""
-    global orchestrator
+    """Set debate topic"""
+    global orchestrator, langgraph_orchestrator
     
-    if not orchestrator:
+    if not orchestrator and not langgraph_orchestrator:
         return jsonify({
             'success': False,
-            'message': '系統尚未初始化'
+            'message': 'System not initialized'
         }), 500
     
     data = request.get_json()
@@ -208,28 +378,28 @@ def set_topic():
     if not topic:
         return jsonify({
             'success': False,
-            'message': '主題不能為空'
+            'message': 'Topic cannot be empty'
         }), 400
     
     try:
-        # 重置辯論狀態
-        orchestrator.agent_states = {}
-        orchestrator.debate_history = []
-        
-        # 重新初始化代理
-        agent_configs = []
-        for agent_name in ['Agent_A', 'Agent_B', 'Agent_C']:
-            agent_configs.append({
-                'id': agent_name,
-                'initial_stance': 0.8 if agent_name == 'Agent_A' else (-0.6 if agent_name == 'Agent_B' else 0.0),
-                'initial_conviction': 0.7
-            })
-        
-        orchestrator.initialize_agents(agent_configs)
+        # Reset legacy orchestrator state
+        if orchestrator:
+            orchestrator.agent_states = {}
+            orchestrator.debate_history = []
+            
+            agent_configs = []
+            for agent_name in ['Agent_A', 'Agent_B', 'Agent_C']:
+                agent_configs.append({
+                    'id': agent_name,
+                    'initial_stance': 0.8 if agent_name == 'Agent_A' else (-0.6 if agent_name == 'Agent_B' else 0.0),
+                    'initial_conviction': 0.7
+                })
+            
+            orchestrator.initialize_agents(agent_configs)
         
         return jsonify({
             'success': True,
-            'message': '主題設置成功',
+            'message': 'Topic set successfully',
             'topic': topic
         })
         
@@ -237,45 +407,51 @@ def set_topic():
         print(f"Set topic failed: {str(e)}")
         return jsonify({
             'success': False,
-            'message': f'設置主題失敗: {str(e)}'
+            'message': f'Failed to set topic: {str(e)}'
         }), 500
 
 @app.route('/api/debate_round', methods=['POST'])
 def debate_round():
-    """執行單回合辯論"""
-    global orchestrator
+    """Execute single debate round"""
+    global orchestrator, langgraph_orchestrator
     
-    if not orchestrator:
+    if not orchestrator and not langgraph_orchestrator:
         return jsonify({
             'success': False,
-            'message': '系統尚未初始化'
+            'message': 'System not initialized'
         }), 500
     
     try:
-        # 獲取當前回合數 - orchestrator 會自動管理 debate_history
+        data = request.get_json() or {}
+        topic = data.get('topic', 'Default debate topic')
+        
+        # For step-by-step, use legacy orchestrator
+        if not orchestrator:
+            return jsonify({
+                'success': False,
+                'message': 'Step-by-step mode requires legacy orchestrator'
+            }), 500
+        
         if not hasattr(orchestrator, 'debate_history'):
             orchestrator.debate_history = []
         current_round = len(orchestrator.debate_history) + 1
-        max_rounds = config.get('debate', {}).get('max_rounds', 5)
+        
+        # Use default if config is not loaded
+        if config is None:
+            max_rounds = 5
+        else:
+            max_rounds = config.get('debate', {}).get('max_rounds', 5)
         
         if current_round > max_rounds:
             return jsonify({
                 'success': False,
-                'message': '已達到最大回合數'
+                'message': 'Maximum rounds reached'
             }), 400
         
-        try:
-            data = request.get_json() or {}
-        except Exception as e:
-            print(f"JSON parse error: {e}")
-            data = {}
-        
-        topic = data.get('topic', '預設辯論主題')
         agent_order = ['Agent_A', 'Agent_B', 'Agent_C']
         
-        print(f"執行第 {current_round} 回合辯論")
+        print(f"Executing round {current_round}")
         
-        # 創建事件循環執行異步操作
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         
@@ -284,7 +460,6 @@ def debate_round():
                 orchestrator.run_debate_round(current_round, topic, agent_order)
             )
             
-            # 轉換為可序列化格式
             round_data = {
                 'round': current_round,
                 'topic': topic,
@@ -298,28 +473,18 @@ def debate_round():
                     'has_surrendered': state.has_surrendered
                 }
             
-            # 添加回應內容
             if debate_round_result.history:
                 round_data['responses'] = debate_round_result.history
             
-            # 注意：不要手動添加到 debate_history，orchestrator 會自己管理
-            # orchestrator.debate_history.append(round_data)
-            
-            # 檢查是否有代理投降
             has_surrender = any(state.has_surrendered for state in debate_round_result.agent_states.values())
             
-            # 如果辯論結束，生成摘要
             summary = None
             if has_surrender or current_round >= max_rounds:
                 try:
                     summary = orchestrator.get_debate_summary()
-                    print(f"Generated summary: {summary}")
                 except Exception as e:
                     print(f"Failed to generate summary: {e}")
-                    summary = {
-                        "message": "無法生成摘要",
-                        "error": str(e)
-                    }
+                    summary = {"message": "Could not generate summary", "error": str(e)}
             
             return jsonify({
                 'success': True,
@@ -340,26 +505,24 @@ def debate_round():
         print(f"Debate round failed: {str(e)}")
         return jsonify({
             'success': False,
-            'message': f'辯論回合執行失敗: {str(e)}'
+            'message': f'Debate round failed: {str(e)}'
         }), 500
 
 @app.route('/api/reset', methods=['POST'])
 def reset_debate():
-    """重置辯論"""
+    """Reset debate"""
     global orchestrator
     
     if not orchestrator:
         return jsonify({
             'success': False,
-            'message': '系統尚未初始化'
+            'message': 'System not initialized'
         }), 500
     
     try:
-        # 清空辯論歷史
         orchestrator.debate_history = []
         orchestrator.agent_states = {}
         
-        # 重新初始化代理
         agent_configs = []
         for agent_name in ['Agent_A', 'Agent_B', 'Agent_C']:
             agent_configs.append({
@@ -372,25 +535,25 @@ def reset_debate():
         
         return jsonify({
             'success': True,
-            'message': '辯論已重置'
+            'message': 'Debate reset successfully'
         })
         
     except Exception as e:
         print(f"Reset failed: {str(e)}")
         return jsonify({
             'success': False,
-            'message': f'重置失敗: {str(e)}'
+            'message': f'Reset failed: {str(e)}'
         }), 500
 
 @app.route('/api/export', methods=['GET'])
 def export_debate():
-    """導出辯論記錄"""
+    """Export debate records"""
     global orchestrator
     
     if not orchestrator:
         return jsonify({
             'success': False,
-            'message': '系統尚未初始化'
+            'message': 'System not initialized'
         }), 500
     
     try:
@@ -401,7 +564,6 @@ def export_debate():
             'export_time': time.time()
         }
         
-        # 轉換代理狀態
         for agent_id, state in orchestrator.agent_states.items():
             export_data['agent_states'][agent_id] = {
                 'stance': state.current_stance,
@@ -418,14 +580,33 @@ def export_debate():
         print(f"Export failed: {str(e)}")
         return jsonify({
             'success': False,
-            'message': f'導出失敗: {str(e)}'
+            'message': f'Export failed: {str(e)}'
         }), 500
+
+@app.route('/api/graph', methods=['GET'])
+def get_graph():
+    """Get LangGraph visualization"""
+    global langgraph_orchestrator
+    
+    if langgraph_orchestrator:
+        return jsonify({
+            'success': True,
+            'graph': langgraph_orchestrator.get_graph_visualization(),
+            'orchestrator': 'langgraph'
+        })
+    else:
+        return jsonify({
+            'success': False,
+            'message': 'LangGraph orchestrator not available'
+        }), 404
 
 @app.route('/debug')
 def debug_info():
     """Debug information page"""
     system_info = {
         'orchestrator_loaded': orchestrator is not None,
+        'langgraph_orchestrator_loaded': langgraph_orchestrator is not None,
+        'use_langgraph': USE_LANGGRAPH,
         'config_loaded': config is not None,
         'config_path': str(Path('configs/debate.yaml').absolute()),
         'agents_initialized': len(orchestrator.agent_states) if orchestrator else 0
@@ -443,4 +624,4 @@ if __name__ == '__main__':
         app.run(debug=True, host='0.0.0.0', port=5000)
     else:
         print("Failed to initialize system")
-        exit(1) 
+        exit(1)

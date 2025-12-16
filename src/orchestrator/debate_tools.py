@@ -92,9 +92,8 @@ def rl_select_strategy(
     try:
         strategy = rl.select_strategy(context, "", social_context)
         
-        # Get quality prediction
-        policy_net = rl.PolicyNetwork()
-        quality_score = policy_net.predict_quality(context)
+        # Get quality prediction using module-level function
+        quality_score = rl.predict_quality(context)
         
         return {
             'strategy': strategy,

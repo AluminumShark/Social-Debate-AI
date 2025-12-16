@@ -159,6 +159,24 @@ def _run_langgraph_debate(topic: str, max_rounds: int):
             round_responses = []
             current_round += 1
     
+    # Append any remaining incomplete round (e.g., early surrender or max rounds reached)
+    if round_responses:
+        round_data = {
+            'round': current_round,
+            'topic': topic,
+            'responses': round_responses,
+            'agents': {}
+        }
+        
+        for agent_id, state in results.get('agent_states', {}).items():
+            round_data['agents'][agent_id] = {
+                'stance': round(state.get('current_stance', 0), 2),
+                'conviction': round(state.get('conviction', 0.7), 2),
+                'has_surrendered': state.get('has_surrendered', False)
+            }
+        
+        debate_results.append(round_data)
+    
     return jsonify({
         'success': True,
         'topic': topic,

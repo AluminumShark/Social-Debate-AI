@@ -3,7 +3,6 @@ LangGraph-based Debate Orchestrator
 Replaces the manual parallel_orchestrator with a declarative graph-based approach
 """
 
-import asyncio
 import time
 from typing import Dict, List, Literal
 from concurrent.futures import ThreadPoolExecutor
@@ -103,12 +102,9 @@ class LangGraphDebateOrchestrator:
         
         print(f"[Analysis] Agent {current_speaker} analyzing...")
         
-        # Run tools in parallel using ThreadPoolExecutor
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        
+        # Run tools in parallel using ThreadPoolExecutor (synchronous, no asyncio needed)
         try:
-            # Create tasks
+            # Submit tasks to thread pool
             rl_future = self.executor.submit(
                 rl_select_strategy.invoke,
                 {"context": context, "social_context": agent_state.get('social_context')}
@@ -143,8 +139,6 @@ class LangGraphDebateOrchestrator:
             rl_result = {'strategy': 'analytical', 'quality_score': 0.5, 'confidence': 0.3}
             gnn_result = {'influence_score': 0.5, 'stance_trend': 0.0, 'persuasion_prediction': {'best_strategy': 'analytical', 'delta_probability': 0.5}}
             rag_result = {'evidence_pool': [], 'best_evidence': 'No evidence available', 'total_evidence': 0}
-        finally:
-            loop.close()
         
         return {
             "rl_result": rl_result,
@@ -334,14 +328,21 @@ Available evidence: {evidence[:500] if evidence else 'None'}"""
                     current_stance *= (1.0 + attack_effect * 0.2)
                     conviction = min(1.0, conviction * 1.1)
                 
-                # Check surrender
+                # Check surrender conditions (matching debate_state.py)
                 has_surrendered = target_state.get('has_surrendered', False)
                 if len(persuasion_history) >= 4:
                     recent_persuasion = sum(persuasion_history[-4:]) / 4
+                    # Condition 1: High persuasion average with very low conviction
                     if recent_persuasion > 0.65 and conviction < 0.25:
                         has_surrendered = True
+                    # Condition 2: Very weak stance with low conviction
                     elif abs(current_stance) < 0.1 and conviction < 0.3:
                         has_surrendered = True
+                    # Condition 3: 5 consecutive high-persuasion rounds with low conviction
+                    elif len(persuasion_history) >= 5:
+                        consecutive_high = all(score > 0.6 for score in persuasion_history[-5:])
+                        if consecutive_high and conviction < 0.4:
+                            has_surrendered = True
                 
                 updated_states[target_id] = {
                     **target_state,
@@ -403,12 +404,25 @@ Available evidence: {evidence[:500] if evidence else 'None'}"""
         return "next_speaker"
     
     def _check_round_complete(self, state: DebateState) -> Literal["continue", "end"]:
-        """Check if debate should continue after advancing turn"""
+        """Check if debate should continue after advancing turn
         
-        if state["current_round"] > state["max_rounds"]:
+        This method is called after _advance_turn_node to determine if the
+        debate should continue with the next speaker or end.
+        
+        Important: We only end when current_round EXCEEDS max_rounds, not when
+        equal. This allows the final round (current_round == max_rounds) to
+        complete with all agents speaking.
+        """
+        
+        current_round = state["current_round"]
+        max_rounds = state["max_rounds"]
+        
+        # Only end if we've exceeded max_rounds (safety check)
+        # When current_round == max_rounds, we still allow that round to execute
+        if current_round > max_rounds:
             return "end"
         
-        # Check for surrender again
+        # Check for surrender
         for agent_id, agent_state in state["agent_states"].items():
             if agent_state.get('has_surrendered', False):
                 return "end"

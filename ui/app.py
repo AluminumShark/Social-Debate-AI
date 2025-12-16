@@ -99,6 +99,10 @@ def start_debate():
     if len(topic) > 200:
         topic = topic[:200] + "..."
     
+    # Check if system is initialized
+    if config is None:
+        return jsonify({'error': 'System not initialized. Please call /api/init first.'}), 500
+    
     try:
         print(f"Starting debate on topic: {topic}")
         max_rounds = config.get('debate', {}).get('max_rounds', 5)
@@ -131,12 +135,73 @@ def _run_langgraph_debate(topic: str, max_rounds: int):
         max_rounds=max_rounds
     )
     
+    # Initialize per-round state tracking from initial configs
+    # We reconstruct state evolution by applying effects from history
+    running_states = {}
+    for config in agent_configs:
+        running_states[config['id']] = {
+            'current_stance': config['initial_stance'],
+            'conviction': config['initial_conviction'],
+            'has_surrendered': False,
+            'persuasion_history': [],
+            'attack_history': []
+        }
+    
     # Format for API response
     debate_results = []
     current_round = 1
     round_responses = []
     
     for response in results.get('history', []):
+        # Update running states based on response effects
+        speaker_id = response.get('agent_id')
+        effects = response.get('effects', {})
+        persuasion_score = effects.get('persuasion_score', 0.5)
+        attack_score = effects.get('attack_score', 0.3)
+        
+        # Apply effects to other agents (not the speaker)
+        for agent_id, state in running_states.items():
+            if agent_id != speaker_id and not state['has_surrendered']:
+                # Update persuasion/attack history
+                state['persuasion_history'].append(persuasion_score)
+                state['attack_history'].append(attack_score)
+                
+                # Keep last 10
+                if len(state['persuasion_history']) > 10:
+                    state['persuasion_history'] = state['persuasion_history'][-10:]
+                if len(state['attack_history']) > 10:
+                    state['attack_history'] = state['attack_history'][-10:]
+                
+                # Update stance based on effects
+                conviction = state['conviction']
+                current_stance = state['current_stance']
+                
+                persuasion_effect = persuasion_score * (1.0 - conviction)
+                if persuasion_score > 0.5:
+                    current_stance *= (1.0 - persuasion_effect * 0.2)
+                    conviction *= 0.9
+                
+                attack_resistance = conviction * 0.8
+                attack_effect = max(0, attack_score - attack_resistance)
+                if attack_effect > 0.3:
+                    current_stance *= (1.0 + attack_effect * 0.2)
+                    conviction = min(1.0, conviction * 1.1)
+                
+                state['current_stance'] = current_stance
+                state['conviction'] = conviction
+                
+                # Check surrender conditions
+                if len(state['persuasion_history']) >= 4:
+                    recent_persuasion = sum(state['persuasion_history'][-4:]) / 4
+                    if recent_persuasion > 0.65 and conviction < 0.25:
+                        state['has_surrendered'] = True
+                    elif abs(current_stance) < 0.1 and conviction < 0.3:
+                        state['has_surrendered'] = True
+                    elif len(state['persuasion_history']) >= 5:
+                        consecutive_high = all(s > 0.6 for s in state['persuasion_history'][-5:])
+                        if consecutive_high and conviction < 0.4:
+                            state['has_surrendered'] = True
+        
         round_responses.append(response)
         
         # Check if round complete (all 3 agents spoke)
@@ -148,11 +213,12 @@ def _run_langgraph_debate(topic: str, max_rounds: int):
                 'agents': {}
             }
             
-            for agent_id, state in results.get('agent_states', {}).items():
+            # Capture current state snapshot for this round
+            for agent_id, state in running_states.items():
                 round_data['agents'][agent_id] = {
-                    'stance': round(state.get('current_stance', 0), 2),
-                    'conviction': round(state.get('conviction', 0.7), 2),
-                    'has_surrendered': state.get('has_surrendered', False)
+                    'stance': round(state['current_stance'], 2),
+                    'conviction': round(state['conviction'], 2),
+                    'has_surrendered': state['has_surrendered']
                 }
             
             debate_results.append(round_data)
@@ -168,11 +234,12 @@ def _run_langgraph_debate(topic: str, max_rounds: int):
             'agents': {}
         }
         
-        for agent_id, state in results.get('agent_states', {}).items():
+        # Use current running states for incomplete round
+        for agent_id, state in running_states.items():
             round_data['agents'][agent_id] = {
-                'stance': round(state.get('current_stance', 0), 2),
-                'conviction': round(state.get('conviction', 0.7), 2),
-                'has_surrendered': state.get('has_surrendered', False)
+                'stance': round(state['current_stance'], 2),
+                'conviction': round(state['conviction'], 2),
+                'has_surrendered': state['has_surrendered']
             }
         
         debate_results.append(round_data)
@@ -368,7 +435,12 @@ def debate_round():
         if not hasattr(orchestrator, 'debate_history'):
             orchestrator.debate_history = []
         current_round = len(orchestrator.debate_history) + 1
-        max_rounds = config.get('debate', {}).get('max_rounds', 5)
+        
+        # Use default if config is not loaded
+        if config is None:
+            max_rounds = 5
+        else:
+            max_rounds = config.get('debate', {}).get('max_rounds', 5)
         
         if current_round > max_rounds:
             return jsonify({

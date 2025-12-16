@@ -226,13 +226,23 @@ def rag_retrieve_evidence(
         results = retriever.retrieve(query=query, top_k=top_k)
         
         # Convert to evidence pool format
+        # Handle both dict-style (EnhancedRetriever) and object-style (SimpleRetriever) results
         evidence_pool = []
         for result in results:
-            evidence_pool.append({
-                'content': result.text,
-                'similarity_score': result.score,
-                'metadata': result.metadata or {}
-            })
+            if isinstance(result, dict):
+                # Dict-style result from EnhancedRetriever
+                evidence_pool.append({
+                    'content': result.get('content', ''),
+                    'similarity_score': result.get('similarity_score', 0.0),
+                    'metadata': result.get('metadata', {})
+                })
+            else:
+                # Object-style result from SimpleRetriever (RetrievalResult dataclass)
+                evidence_pool.append({
+                    'content': result.text,
+                    'similarity_score': result.score,
+                    'metadata': result.metadata or {}
+                })
         
         # Select best evidence
         best_evidence = evidence_pool[0]['content'] if evidence_pool else "No evidence available"

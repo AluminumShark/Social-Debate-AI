@@ -329,8 +329,8 @@ DEBATE_TOOLS = [
 def get_tools_description() -> str:
     """Get description of all available tools"""
     descriptions = []
-    for tool in DEBATE_TOOLS:
-        descriptions.append(f"- {tool.name}: {tool.description}")
+    for t in DEBATE_TOOLS:
+        descriptions.append(f"- {t.name}: {t.description}")
     return "\n".join(descriptions)
 
 

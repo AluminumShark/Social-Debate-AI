@@ -2,12 +2,13 @@
 RAG index builder
 """
 
-import json, os, time, re
+import json
+import os
+import time
 from pathlib import Path
 from tqdm import tqdm
 from dotenv import load_dotenv
 import tiktoken
-from collections import Counter, defaultdict
 
 load_dotenv()
 OPENAI_KEY = os.getenv("OPENAI_API_KEY")
@@ -17,10 +18,10 @@ if not OPENAI_KEY:
     raise SystemExit("Please set OPENAI_API_KEY")
 os.environ["OPENAI_API_KEY"] = OPENAI_KEY
 
-from langchain.schema import Document
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_openai import OpenAIEmbeddings
-from langchain_community.vectorstores import Chroma
+from langchain.schema import Document  # noqa: E402
+from langchain.text_splitter import RecursiveCharacterTextSplitter  # noqa: E402
+from langchain_openai import OpenAIEmbeddings  # noqa: E402
+from langchain_community.vectorstores import Chroma  # noqa: E402
 
 PAIRS_PATH = Path("data/raw/pairs.jsonl")
 DB_BASE_DIR = Path("data/index/enhanced")
@@ -86,7 +87,6 @@ def extract_metadata(submission, comment=None):
         'title': title[:100],
     }
     
-    sentences = len(re.findall(r'[.!?]+', full_text))
     words = len(full_text.split())
     complexity = 'simple' if words < 100 else 'intermediate' if words < 300 else 'complex'
     metadata['complexity'] = complexity
@@ -204,7 +204,7 @@ def build_comprehensive_index():
                     
                     for chunk in splitter.split_text(text):
                         docs.append(Document(page_content=chunk, metadata=meta))
-            except:
+            except (json.JSONDecodeError, KeyError, TypeError):
                 continue
     
     if not docs:
@@ -275,7 +275,7 @@ def build_chroma_index(data_path: str, output_dir: str, max_docs: int = None, ba
                     for chunk in splitter.split_text(pair['delta_comment']['body']):
                         docs.append(Document(page_content=chunk, metadata=comment_meta))
                         
-            except Exception as e:
+            except Exception:
                 continue
     
     if not docs:
@@ -362,7 +362,7 @@ def build_simple_index(data_path: str, output_path: str, max_docs: int = None):
                     }
                     docs.append(comment_doc)
                     
-            except:
+            except (json.JSONDecodeError, KeyError, TypeError):
                 continue
     
     index_data = {

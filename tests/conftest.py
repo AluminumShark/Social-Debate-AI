@@ -3,7 +3,6 @@ Pytest configuration and fixtures for Social Debate AI tests
 """
 
 import sys
-import os
 import pytest
 from pathlib import Path
 

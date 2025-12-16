@@ -5,20 +5,19 @@ Replaces the manual parallel_orchestrator with a declarative graph-based approac
 
 import asyncio
 import time
-from typing import Dict, List, Any, Optional, Literal
+from typing import Dict, List, Literal
 from concurrent.futures import ThreadPoolExecutor
 
 from langgraph.graph import StateGraph, END
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, SystemMessage
 
-from .debate_state import DebateState, AgentState, create_initial_state
+from .debate_state import DebateState, create_initial_state
 from .debate_tools import (
     rl_select_strategy,
     gnn_analyze_social, 
     rag_retrieve_evidence,
-    evaluate_response_effects,
-    DEBATE_TOOLS
+    evaluate_response_effects
 )
 
 # Strategy guidance templates
@@ -451,7 +450,6 @@ Available evidence: {evidence[:500] if evidence else 'None'}"""
             # Log progress
             for node_name, node_state in event.items():
                 if 'current_response' in node_state and node_state['current_response']:
-                    speaker_idx = initial_state.get('current_speaker_index', 0)
                     if isinstance(node_state.get('history'), list) and node_state['history']:
                         latest = node_state['history'][-1] if node_state['history'] else None
                         if latest:

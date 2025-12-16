@@ -5,7 +5,6 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.patches as patches
 from matplotlib.patches import FancyBboxPatch
 import seaborn as sns
 from pathlib import Path

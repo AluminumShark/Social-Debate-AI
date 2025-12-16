@@ -2,7 +2,6 @@
 Unit tests for debate tools (RAG, GNN, RL)
 """
 
-import pytest
 import sys
 from pathlib import Path
 

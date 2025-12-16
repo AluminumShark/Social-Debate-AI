@@ -12,8 +12,8 @@ PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from orchestrator.debate_state import create_initial_state
-from orchestrator.debate_tools import DEBATE_TOOLS
+from orchestrator.debate_state import create_initial_state  # noqa: E402
+from orchestrator.debate_tools import DEBATE_TOOLS  # noqa: E402
 
 
 class TestLangGraphOrchestratorImport:
@@ -45,10 +45,7 @@ class TestLangGraphOrchestratorStructure:
         """Test graph visualization method"""
         from orchestrator.langgraph_orchestrator import LangGraphDebateOrchestrator
         
-        # Create instance without full initialization
-        orchestrator = object.__new__(LangGraphDebateOrchestrator)
-        
-        # The method should exist
+        # The method should exist on the class
         assert callable(getattr(LangGraphDebateOrchestrator, 'get_graph_visualization', None))
 
 

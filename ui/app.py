@@ -3,17 +3,16 @@ Flask web application for Social Debate AI
 Supports both legacy ParallelOrchestrator and new LangGraph orchestrator
 """
 
-import json
 import time
 import asyncio
 import os
-from flask import Flask, render_template, request, jsonify, redirect, url_for
+from flask import Flask, render_template, request, jsonify
 from pathlib import Path
 
 # Import core modules
 try:
     from src.orchestrator.parallel_orchestrator import ParallelOrchestrator
-    from src.orchestrator.langgraph_orchestrator import LangGraphDebateOrchestrator, create_langgraph_orchestrator
+    from src.orchestrator.langgraph_orchestrator import create_langgraph_orchestrator
     from src.utils.config_loader import ConfigLoader
     print("Core modules loaded successfully")
 except ImportError as e:
@@ -29,7 +28,7 @@ config = None
 USE_LANGGRAPH = os.environ.get('USE_LANGGRAPH', 'true').lower() == 'true'
 
 def initialize_system():
-    global orchestrator, langgraph_orchestrator, config
+    global orchestrator, langgraph_orchestrator, config, USE_LANGGRAPH
     
     try:
         # Load configuration

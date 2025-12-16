@@ -9,7 +9,6 @@ import torch.nn.functional as F
 import numpy as np
 from collections import deque
 import random
-from typing import List, Tuple
 from dataclasses import dataclass
 from torch.distributions import Categorical
 import matplotlib.pyplot as plt
@@ -94,7 +93,8 @@ class DebateEnvironment:
     
     def step(self, action):
         """Execute action"""
-        strategy = self.strategies[action]
+        # Get strategy name for potential logging/debugging
+        _ = self.strategies[action]  # noqa: F841
         
         # Simulate opponent response and debate outcome
         reward = self._calculate_reward(action)

@@ -2,14 +2,12 @@
 Unit tests for debate state management
 """
 
-import pytest
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 from orchestrator.debate_state import (
-    DebateState,
     AgentState,
     create_initial_state
 )

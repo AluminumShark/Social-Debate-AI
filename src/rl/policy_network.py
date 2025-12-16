@@ -4,9 +4,6 @@ RL policy network interface
 
 import torch
 import torch.nn as nn
-import numpy as np
-from typing import Optional
-import random
 from pathlib import Path
 
 # Strategy mappings
@@ -116,7 +113,10 @@ def choose_snippet(state_text, pool):
     
     return best_snippet if best_snippet else pool[0].get('content', 'No evidence available')
 
-class PolicyNetwork:
+
+class SimpleQualityPredictor:
+    """Simple heuristic-based quality predictor (non-neural)"""
+    
     def predict_quality(self, text):
         # Simple quality estimation based on text features
         words = text.split()
@@ -134,6 +134,11 @@ class PolicyNetwork:
         
         quality = (length_score * 0.4 + complexity_score * 0.3 + evidence_score * 0.3)
         return min(quality, 1.0)
+
+
+# Add predict_quality to PolicyNetwork for backward compatibility
+PolicyNetwork.predict_quality = SimpleQualityPredictor().predict_quality
+
 
 def get_policy_network(model_path=None):
     return _load_model()

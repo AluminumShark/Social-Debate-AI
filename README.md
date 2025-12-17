@@ -39,43 +39,61 @@
 ## 🏗️ System Architecture
 
 ```mermaid
-%%{init: {'theme': 'base'}}%%
-graph TB
-    subgraph Web["<br/>🌐 Web Interface<br/><br/>"]
-        UI["Bootstrap 5 + Flask"]
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#4f46e5', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4338ca', 'lineColor': '#6366f1', 'secondaryColor': '#10b981', 'tertiaryColor': '#f59e0b'}}}%%
+flowchart TB
+    %% Nodes Configuration
+    classDef web fill:#e0f2fe,stroke:#0ea5e9,stroke-width:2px,color:#0c4a6e;
+    classDef orch fill:#f3e8ff,stroke:#9333ea,stroke-width:2px,color:#581c87;
+    classDef brain fill:#dcfce7,stroke:#22c55e,stroke-width:2px,color:#14532d;
+    classDef gen fill:#ffedd5,stroke:#f97316,stroke-width:2px,color:#7c2d12;
+    classDef agent fill:#fee2e2,stroke:#ef4444,stroke-width:2px,color:#7f1d1d;
+
+    subgraph Presentation["🌐 Presentation Layer"]
+        direction TB
+        UI["🖥️ Bootstrap 5 UI"]:::web
+        API["⚡ Flask API"]:::web
+        UI <--> API
     end
 
-    subgraph Orch["<br/>⚙️ LangGraph Orchestrator<br/><br/>"]
-        SG["StateGraph Engine"]
+    subgraph Core["⚙️ Orchestration Core"]
+        direction TB
+        LG["📊 LangGraph Engine<br/>(State Management)"]:::orch
     end
 
-    subgraph Analysis["<br/>🧠 Parallel Analysis<br/><br/>"]
-        RL["🎮 RL<br/>Strategy"]
-        GNN["🕸️ GNN<br/>Social"]
-        RAG["📚 RAG<br/>Evidence"]
+    subgraph Intelligence["🧠 Intelligence Modules"]
+        direction LR
+        RL["🎮 RL Strategy<br/>(PPO Policy)"]:::brain
+        GNN["🕸️ GNN Social<br/>(GraphSAGE)"]:::brain
+        RAG["📚 RAG Evidence<br/>(FAISS)"]:::brain
     end
 
-    subgraph Gen["<br/>💬 Generation<br/><br/>"]
-        LLM["GPT-3.5/4"]
+    subgraph Generation["🔮 Generation Layer"]
+        direction TB
+        Fusion["🔗 Result Fusion"]:::gen
+        LLM["🤖 LLM Inference<br/>(GPT-3.5/4)"]:::gen
+        Fusion --> LLM
     end
 
-    subgraph Agents["<br/>🤖 Debate Agents<br/><br/>"]
-        A1["🟢 Support<br/>+0.8"]
-        A2["🔴 Oppose<br/>-0.6"]
-        A3["🟡 Neutral<br/>0.0"]
+    subgraph Agents["👥 Debate Agents"]
+        direction LR
+        A1["🟢 Agent A<br/>(Support)"]:::agent
+        A2["🔴 Agent B<br/>(Oppose)"]:::agent
+        A3["🟡 Agent C<br/>(Neutral)"]:::agent
     end
 
-    Web --> Orch
-    Orch --> Analysis
-    RL & GNN & RAG --> Gen
-    Gen --> Agents
-    Agents -.->|feedback| Orch
+    %% Data Flow Connections
+    API <==> LG
+    LG ==> Intelligence
+    Intelligence ==> Fusion
+    LLM ==> Agents
+    Agents -.->|"State Update"| LG
 
-    style Web fill:#0ea5e9,stroke:#0284c7,color:#fff
-    style Orch fill:#8b5cf6,stroke:#7c3aed,color:#fff
-    style Analysis fill:#f97316,stroke:#ea580c,color:#fff
-    style Gen fill:#22c55e,stroke:#16a34a,color:#fff
-    style Agents fill:#ec4899,stroke:#db2777,color:#fff
+    %% Styling
+    style Presentation fill:#f0f9ff,stroke:#bae6fd,color:#0369a1
+    style Core fill:#faf5ff,stroke:#e9d5ff,color:#6b21a8
+    style Intelligence fill:#f0fdf4,stroke:#bbf7d0,color:#15803d
+    style Generation fill:#fff7ed,stroke:#fed7aa,color:#c2410c
+    style Agents fill:#fef2f2,stroke:#fecaca,color:#b91c1c
 ```
 
 ---
@@ -85,29 +103,35 @@ graph TB
 The debate flow is managed by a declarative **StateGraph**:
 
 ```mermaid
-%%{init: {'theme': 'base'}}%%
-flowchart LR
-    S((🚀))
-    S --> A
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#4f46e5', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4338ca', 'lineColor': '#818cf8'}}}%%
+flowchart TB
+    %% Define styles
+    classDef start fill:#10b981,stroke:#059669,stroke-width:2px,color:white;
+    classDef process fill:#eff6ff,stroke:#3b82f6,stroke-width:2px,color:#1e3a8a;
+    classDef decision fill:#fff7ed,stroke:#f97316,stroke-width:2px,color:#9a3412;
+    classDef endNode fill:#ef4444,stroke:#b91c1c,stroke-width:2px,color:white;
 
-    A["⚡ Analyze<br/><small>RL+GNN+RAG</small>"]
-    B["🔀 Fuse"]
-    C["💬 Generate"]
-    D["📝 Update"]
-    E{{"🔄"}}
-    F((🏁))
+    Start(("🚀 Start")):::start
+    End(("🏁 End")):::endNode
 
-    A --> B --> C --> D --> E
-    E -->|"continue"| A
-    E -->|"end"| F
+    subgraph Cycle["🔄 Debate Cycle"]
+        direction TB
+        Analyze["⚡ Parallel Analysis<br/>(RL + GNN + RAG)"]:::process
+        Fuse["🔗 Result Fusion"]:::process
+        Gen["💬 Response Generation"]:::process
+        Update["📝 State Update"]:::process
+        
+        Analyze --> Fuse --> Gen --> Update
+    end
 
-    style S fill:#22c55e,stroke:#16a34a,color:#fff
-    style A fill:#f97316,stroke:#ea580c,color:#fff
-    style B fill:#8b5cf6,stroke:#7c3aed,color:#fff
-    style C fill:#0ea5e9,stroke:#0284c7,color:#fff
-    style D fill:#14b8a6,stroke:#0d9488,color:#fff
-    style E fill:#eab308,stroke:#ca8a04,color:#000
-    style F fill:#ef4444,stroke:#dc2626,color:#fff
+    Check{"❓ Continue?"}:::decision
+
+    Start --> Analyze
+    Update --> Check
+    Check -->|"Yes (Next Turn)"| Analyze
+    Check -->|"No (Max Rounds/Surrender)"| End
+
+    linkStyle default stroke:#6366f1,stroke-width:2px;
 ```
 
 ### 📋 State Schema
@@ -127,24 +151,30 @@ The RL module selects from **4 adaptive strategies**:
 ```mermaid
 %%{init: {'theme': 'base'}}%%
 graph TB
-    subgraph row1[" "]
-        direction LR
-        A["🔥 <b>Aggressive</b><br/><small>Challenge & critique</small>"]
-        B["🛡️ <b>Defensive</b><br/><small>Consolidate & protect</small>"]
-    end
-    
-    subgraph row2[" "]
-        direction LR
-        C["🔬 <b>Analytical</b><br/><small>Logic & evidence</small>"]
-        D["💚 <b>Empathetic</b><br/><small>Connect & persuade</small>"]
+    subgraph Matrix["🎯 Strategy Matrix"]
+        direction TB
+        
+        subgraph Row1[" "]
+            direction LR
+            S1["🔥 Aggressive<br/>(Challenge & Critique)"]:::red
+            S2["🛡️ Defensive<br/>(Consolidate & Protect)"]:::blue
+        end
+        
+        subgraph Row2[" "]
+            direction LR
+            S3["🔬 Analytical<br/>(Logic & Evidence)"]:::purple
+            S4["💚 Empathetic<br/>(Connect & Persuade)"]:::green
+        end
     end
 
-    style A fill:#ef4444,stroke:#dc2626,color:#fff
-    style B fill:#3b82f6,stroke:#2563eb,color:#fff
-    style C fill:#8b5cf6,stroke:#7c3aed,color:#fff
-    style D fill:#22c55e,stroke:#16a34a,color:#fff
-    style row1 fill:transparent,stroke:transparent
-    style row2 fill:transparent,stroke:transparent
+    classDef red fill:#fee2e2,stroke:#ef4444,stroke-width:2px,color:#7f1d1d;
+    classDef blue fill:#dbeafe,stroke:#3b82f6,stroke-width:2px,color:#1e3a8a;
+    classDef purple fill:#f3e8ff,stroke:#9333ea,stroke-width:2px,color:#581c87;
+    classDef green fill:#dcfce7,stroke:#22c55e,stroke-width:2px,color:#14532d;
+    
+    style Matrix fill:#ffffff,stroke:#e5e7eb,color:#374151
+    style Row1 fill:transparent,stroke:transparent
+    style Row2 fill:transparent,stroke:transparent
 ```
 
 ---
@@ -306,13 +336,47 @@ uv run python train_all.py --rag    # Build RAG index
 
 ## 🛠️ Tech Stack
 
-| Category | Technologies |
-|----------|-------------|
-| ⚙️ **Orchestration** | LangGraph · LangChain |
-| 🧠 **ML/DL** | PyTorch · PyTorch Geometric · FAISS |
-| 🤖 **LLM** | OpenAI GPT-3.5/4 |
-| 🌐 **Web** | Flask · Bootstrap 5 · JavaScript |
-| 🛠️ **DevOps** | uv · pytest · ruff |
+```mermaid
+%%{init: {'theme': 'base'}}%%
+block-beta
+    columns 5
+    
+    block:orch:1
+        columns 1
+        A["🔄 LangGraph"]
+        B["🔗 LangChain"]
+    end
+    
+    block:ml:1
+        columns 1
+        C["🔥 PyTorch"]
+        D["📊 PyG"]
+        E["🔍 FAISS"]
+    end
+    
+    block:llm:1
+        columns 1
+        F["🤖 OpenAI<br/>GPT-3.5/4"]
+    end
+    
+    block:web:1
+        columns 1
+        G["🌐 Flask"]
+        H["🎨 Bootstrap 5"]
+    end
+    
+    block:tools:1
+        columns 1
+        I["📦 uv"]
+        J["🧪 pytest"]
+    end
+
+    style orch fill:#818cf8,color:#fff
+    style ml fill:#fb923c,color:#fff
+    style llm fill:#4ade80,color:#fff
+    style web fill:#22d3ee,color:#fff
+    style tools fill:#f472b6,color:#fff
+```
 
 ---
 
@@ -392,43 +456,61 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 ## 🏗️ 系統架構
 
 ```mermaid
-%%{init: {'theme': 'base'}}%%
-graph TB
-    subgraph Web["<br/>🌐 Web 介面<br/><br/>"]
-        UI["Bootstrap 5 + Flask"]
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#4f46e5', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4338ca', 'lineColor': '#6366f1', 'secondaryColor': '#10b981', 'tertiaryColor': '#f59e0b'}}}%%
+flowchart TB
+    %% Nodes Configuration
+    classDef web fill:#e0f2fe,stroke:#0ea5e9,stroke-width:2px,color:#0c4a6e;
+    classDef orch fill:#f3e8ff,stroke:#9333ea,stroke-width:2px,color:#581c87;
+    classDef brain fill:#dcfce7,stroke:#22c55e,stroke-width:2px,color:#14532d;
+    classDef gen fill:#ffedd5,stroke:#f97316,stroke-width:2px,color:#7c2d12;
+    classDef agent fill:#fee2e2,stroke:#ef4444,stroke-width:2px,color:#7f1d1d;
+
+    subgraph Presentation["🌐 展示層"]
+        direction TB
+        UI["🖥️ Bootstrap 5 UI"]:::web
+        API["⚡ Flask API"]:::web
+        UI <--> API
     end
 
-    subgraph Orch["<br/>⚙️ LangGraph 編排器<br/><br/>"]
-        SG["StateGraph 引擎"]
+    subgraph Core["⚙️ 編排核心"]
+        direction TB
+        LG["📊 LangGraph 引擎<br/>(狀態管理)"]:::orch
     end
 
-    subgraph Analysis["<br/>🧠 並行分析<br/><br/>"]
-        RL["🎮 RL<br/>策略"]
-        GNN["🕸️ GNN<br/>社交"]
-        RAG["📚 RAG<br/>證據"]
+    subgraph Intelligence["🧠 智能分析模組"]
+        direction LR
+        RL["🎮 RL 策略<br/>(PPO 決策)"]:::brain
+        GNN["🕸️ GNN 社交<br/>(GraphSAGE)"]:::brain
+        RAG["📚 RAG 證據<br/>(FAISS)"]:::brain
     end
 
-    subgraph Gen["<br/>💬 生成<br/><br/>"]
-        LLM["GPT-3.5/4"]
+    subgraph Generation["🔮 生成層"]
+        direction TB
+        Fusion["🔗 結果融合"]:::gen
+        LLM["🤖 LLM 推理<br/>(GPT-3.5/4)"]:::gen
+        Fusion --> LLM
     end
 
-    subgraph Agents["<br/>🤖 辯論智能體<br/><br/>"]
-        A1["🟢 支持<br/>+0.8"]
-        A2["🔴 反對<br/>-0.6"]
-        A3["🟡 中立<br/>0.0"]
+    subgraph Agents["👥 辯論智能體"]
+        direction LR
+        A1["🟢 智能體 A<br/>(支持方)"]:::agent
+        A2["🔴 智能體 B<br/>(反對方)"]:::agent
+        A3["🟡 智能體 C<br/>(中立方)"]:::agent
     end
 
-    Web --> Orch
-    Orch --> Analysis
-    RL & GNN & RAG --> Gen
-    Gen --> Agents
-    Agents -.->|回饋| Orch
+    %% Data Flow Connections
+    API <==> LG
+    LG ==> Intelligence
+    Intelligence ==> Fusion
+    LLM ==> Agents
+    Agents -.->|"狀態更新"| LG
 
-    style Web fill:#0ea5e9,stroke:#0284c7,color:#fff
-    style Orch fill:#8b5cf6,stroke:#7c3aed,color:#fff
-    style Analysis fill:#f97316,stroke:#ea580c,color:#fff
-    style Gen fill:#22c55e,stroke:#16a34a,color:#fff
-    style Agents fill:#ec4899,stroke:#db2777,color:#fff
+    %% Styling
+    style Presentation fill:#f0f9ff,stroke:#bae6fd,color:#0369a1
+    style Core fill:#faf5ff,stroke:#e9d5ff,color:#6b21a8
+    style Intelligence fill:#f0fdf4,stroke:#bbf7d0,color:#15803d
+    style Generation fill:#fff7ed,stroke:#fed7aa,color:#c2410c
+    style Agents fill:#fef2f2,stroke:#fecaca,color:#b91c1c
 ```
 
 ---
@@ -438,29 +520,35 @@ graph TB
 辯論流程由宣告式 **StateGraph** 管理：
 
 ```mermaid
-%%{init: {'theme': 'base'}}%%
-flowchart LR
-    S((🚀))
-    S --> A
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#4f46e5', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4338ca', 'lineColor': '#818cf8'}}}%%
+flowchart TB
+    %% Define styles
+    classDef start fill:#10b981,stroke:#059669,stroke-width:2px,color:white;
+    classDef process fill:#eff6ff,stroke:#3b82f6,stroke-width:2px,color:#1e3a8a;
+    classDef decision fill:#fff7ed,stroke:#f97316,stroke-width:2px,color:#9a3412;
+    classDef endNode fill:#ef4444,stroke:#b91c1c,stroke-width:2px,color:white;
 
-    A["⚡ 分析<br/><small>RL+GNN+RAG</small>"]
-    B["🔀 融合"]
-    C["💬 生成"]
-    D["📝 更新"]
-    E{{"🔄"}}
-    F((🏁))
+    Start(("🚀 開始")):::start
+    End(("🏁 結束")):::endNode
 
-    A --> B --> C --> D --> E
-    E -->|"繼續"| A
-    E -->|"結束"| F
+    subgraph Cycle["🔄 辯論循環"]
+        direction TB
+        Analyze["⚡ 並行分析<br/>(RL + GNN + RAG)"]:::process
+        Fuse["🔗 結果融合"]:::process
+        Gen["💬 生成回應"]:::process
+        Update["📝 更新狀態"]:::process
+        
+        Analyze --> Fuse --> Gen --> Update
+    end
 
-    style S fill:#22c55e,stroke:#16a34a,color:#fff
-    style A fill:#f97316,stroke:#ea580c,color:#fff
-    style B fill:#8b5cf6,stroke:#7c3aed,color:#fff
-    style C fill:#0ea5e9,stroke:#0284c7,color:#fff
-    style D fill:#14b8a6,stroke:#0d9488,color:#fff
-    style E fill:#eab308,stroke:#ca8a04,color:#000
-    style F fill:#ef4444,stroke:#dc2626,color:#fff
+    Check{"❓ 繼續?"}:::decision
+
+    Start --> Analyze
+    Update --> Check
+    Check -->|"是 (下一回合)"| Analyze
+    Check -->|"否 (最大回合/投降)"| End
+
+    linkStyle default stroke:#6366f1,stroke-width:2px;
 ```
 
 ---
@@ -469,12 +557,34 @@ flowchart LR
 
 RL 模組根據辯論情境從 4 種自適應策略中選擇：
 
-| 策略 | 說明 | 適用情境 |
-|------|------|----------|
-| 🔥 **激進策略** | 深入分析邏輯漏洞，挑戰核心假設 | 對手論點薄弱時 |
-| 🛡️ **防守策略** | 鞏固核心論點，系統性回應挑戰 | 受到強烈攻擊時 |
-| 🔬 **分析策略** | 使用邏輯推理、實證數據客觀評估 | 需要建立可信度時 |
-| 💚 **同理策略** | 尋找共同點，理解對方合理關切 | 尋求共識時 |
+```mermaid
+%%{init: {'theme': 'base'}}%%
+graph TB
+    subgraph Matrix["🎯 策略矩陣"]
+        direction TB
+        
+        subgraph Row1[" "]
+            direction LR
+            S1["🔥 激進策略<br/>(挑戰與批判)"]:::red
+            S2["🛡️ 防守策略<br/>(鞏固與防護)"]:::blue
+        end
+        
+        subgraph Row2[" "]
+            direction LR
+            S3["🔬 分析策略<br/>(邏輯與證據)"]:::purple
+            S4["💚 同理策略<br/>(連結與說服)"]:::green
+        end
+    end
+
+    classDef red fill:#fee2e2,stroke:#ef4444,stroke-width:2px,color:#7f1d1d;
+    classDef blue fill:#dbeafe,stroke:#3b82f6,stroke-width:2px,color:#1e3a8a;
+    classDef purple fill:#f3e8ff,stroke:#9333ea,stroke-width:2px,color:#581c87;
+    classDef green fill:#dcfce7,stroke:#22c55e,stroke-width:2px,color:#14532d;
+    
+    style Matrix fill:#ffffff,stroke:#e5e7eb,color:#374151
+    style Row1 fill:transparent,stroke:transparent
+    style Row2 fill:transparent,stroke:transparent
+```
 
 ---
 
@@ -607,6 +717,52 @@ uv run python train_all.py --all
 uv run python train_all.py --gnn    # GNN 社交編碼器
 uv run python train_all.py --rl     # RL 策略網路
 uv run python train_all.py --rag    # 建立 RAG 索引
+```
+
+---
+
+## 🛠️ 技術棧
+
+```mermaid
+%%{init: {'theme': 'base'}}%%
+block-beta
+    columns 5
+    
+    block:orch:1
+        columns 1
+        A["🔄 LangGraph"]
+        B["🔗 LangChain"]
+    end
+    
+    block:ml:1
+        columns 1
+        C["🔥 PyTorch"]
+        D["📊 PyG"]
+        E["🔍 FAISS"]
+    end
+    
+    block:llm:1
+        columns 1
+        F["🤖 OpenAI<br/>GPT-3.5/4"]
+    end
+    
+    block:web:1
+        columns 1
+        G["🌐 Flask"]
+        H["🎨 Bootstrap 5"]
+    end
+    
+    block:tools:1
+        columns 1
+        I["📦 uv"]
+        J["🧪 pytest"]
+    end
+
+    style orch fill:#818cf8,color:#fff
+    style ml fill:#fb923c,color:#fff
+    style llm fill:#4ade80,color:#fff
+    style web fill:#22d3ee,color:#fff
+    style tools fill:#f472b6,color:#fff
 ```
 
 ---

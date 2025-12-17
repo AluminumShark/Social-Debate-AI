@@ -1,97 +1,220 @@
-# Social Debate AI
+# 🎭 Social Debate AI
 
-*English | [中文](#chinese-version)*
+<p align="center">
+  <strong>A Multi-Agent Debate System Powered by Deep Learning</strong>
+</p>
 
-A deep learning-based multi-agent social debate system that integrates RAG, GNN, and RL technologies with **LangGraph orchestration** for intelligent debate simulation.
+<p align="center">
+  <a href="#english-version">English</a> | <a href="#中文版本">中文</a>
+</p>
 
-![Python](https://img.shields.io/badge/python-3.10+-blue.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
-![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-red.svg)
-![LangGraph](https://img.shields.io/badge/LangGraph-0.2+-purple.svg)
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python">
+  <img src="https://img.shields.io/badge/PyTorch-2.0+-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white" alt="PyTorch">
+  <img src="https://img.shields.io/badge/LangGraph-0.2+-764ABC?style=for-the-badge&logo=langchain&logoColor=white" alt="LangGraph">
+  <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License">
+</p>
 
-## What's New in v0.2.0
+---
 
-- 🚀 **LangGraph Orchestration** - Replaced manual async orchestration with declarative StateGraph
-- 🔧 **uv Package Management** - Fast, modern Python package management
-- 📦 **Modular Tools** - RAG/GNN/RL wrapped as LangGraph tools
-- 📚 **Restructured Documentation** - Organized docs with clear hierarchy
-- ✅ **Structured Tests** - pytest-based test suite in `tests/`
+<a name="english-version"></a>
 
-## Key Features
+## 📖 Overview
 
-- **Multi-Agent Debate** - 3 AI Agents with different stances and personalities engage in dynamic debates
-- **LangGraph Workflow** - Declarative graph-based orchestration with parallel analysis
-- **RAG Enhancement** - FAISS-based vector retrieval for evidence
-- **GNN Social Network** - Supervised learning to predict persuasion success rate
-- **RL Strategy Learning** - PPO reinforcement learning with 4 dynamic debate strategies
-- **Web Interface** - Modern Flask + Bootstrap 5 responsive interface
+**Social Debate AI** is an intelligent multi-agent debate simulation system that leverages cutting-edge deep learning technologies. It orchestrates dynamic debates between AI agents with distinct personalities and stances, using **LangGraph** for workflow management, **RAG** for evidence retrieval, **GNN** for social dynamics modeling, and **RL** for strategic decision-making.
 
-## System Architecture
+### ✨ Key Features
 
+| Feature | Description |
+|---------|-------------|
+| 🤖 **Multi-Agent Debate** | 3 AI agents with unique stances (Support / Oppose / Neutral) engage in dynamic debates |
+| 🔄 **LangGraph Orchestration** | Declarative state-graph workflow with parallel analysis pipelines |
+| 📚 **RAG Evidence Retrieval** | FAISS-powered vector search for relevant evidence and citations |
+| 🕸️ **GNN Social Modeling** | Graph neural networks predict persuasion success and social influence |
+| 🎮 **RL Strategy Learning** | PPO-based reinforcement learning with 4 adaptive debate strategies |
+| 🌐 **Modern Web Interface** | Flask + Bootstrap 5 responsive UI for real-time debate visualization |
+
+---
+
+## 🏗️ System Architecture
+
+```mermaid
+graph TB
+    subgraph UI["🌐 Web Interface"]
+        Flask["Flask Server"]
+        Web["Bootstrap 5 UI"]
+    end
+
+    subgraph Orchestrator["🎯 LangGraph Orchestrator"]
+        StateGraph["State Graph"]
+        
+        subgraph Parallel["⚡ Parallel Analysis"]
+            RL["🎮 RL Strategy<br/>PPO Policy Network"]
+            GNN["🕸️ GNN Social<br/>Graph Encoder"]
+            RAG["📚 RAG Evidence<br/>FAISS Retriever"]
+        end
+        
+        Fusion["🔗 Result Fusion"]
+        LLM["🤖 LLM Response<br/>GPT-3.5/4"]
+        StateUpdate["📊 State Update"]
+    end
+
+    subgraph Agents["👥 Debate Agents"]
+        AgentA["Agent A<br/>🟢 Support"]
+        AgentB["Agent B<br/>🔴 Oppose"]
+        AgentC["Agent C<br/>🟡 Neutral"]
+    end
+
+    Web --> Flask
+    Flask --> StateGraph
+    StateGraph --> Parallel
+    RL & GNN & RAG --> Fusion
+    Fusion --> LLM
+    LLM --> StateUpdate
+    StateUpdate --> AgentA & AgentB & AgentC
+    AgentA & AgentB & AgentC --> StateGraph
+
+    style UI fill:#e1f5fe
+    style Orchestrator fill:#fff3e0
+    style Agents fill:#e8f5e9
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                      Web Interface                           │
-└─────────────────────────────┬───────────────────────────────┘
-                              │
-┌─────────────────────────────▼───────────────────────────────┐
-│                 LangGraph Orchestrator                       │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │              Parallel Analysis                       │    │
-│  │    ┌────────┐  ┌────────┐  ┌────────┐              │    │
-│  │    │   RL   │  │  GNN   │  │  RAG   │              │    │
-│  │    └────┬───┘  └────┬───┘  └────┬───┘              │    │
-│  │         └───────────┼───────────┘                   │    │
-│  │                     ▼                               │    │
-│  │              Result Fusion                          │    │
-│  └─────────────────────────────────────────────────────┘    │
-│                         │                                    │
-│                         ▼                                    │
-│              Response Generation (LLM)                       │
-│                         │                                    │
-│                         ▼                                    │
-│              State Update & Control                          │
-└─────────────────────────────────────────────────────────────┘
-                              │
-┌─────────────────────────────▼───────────────────────────────┐
-│  Agent A (Support)  │  Agent B (Oppose)  │  Agent C (Neutral)│
-└─────────────────────────────────────────────────────────────┘
+
+---
+
+## 🔄 LangGraph Workflow
+
+The debate flow is managed by a declarative **StateGraph** that orchestrates the entire debate process:
+
+```mermaid
+flowchart TD
+    Start([🚀 Start]) --> PA
+
+    subgraph Analysis["Parallel Analysis Phase"]
+        PA["parallel_analysis"]
+        PA --> |"concurrent"| RL["RL: Select Strategy"]
+        PA --> |"concurrent"| GNN["GNN: Social Analysis"]
+        PA --> |"concurrent"| RAG["RAG: Retrieve Evidence"]
+    end
+
+    RL & GNN & RAG --> Fuse["fuse_results<br/>Combine Insights"]
+    Fuse --> Gen["generate_response<br/>LLM Generation"]
+    Gen --> Update["update_states<br/>Apply Effects"]
+    
+    Update --> Decision{should_continue?}
+    
+    Decision --> |"next_speaker"| Advance["advance_turn"]
+    Decision --> |"next_round"| Advance
+    Decision --> |"surrender / max_rounds"| End([🏁 End])
+    
+    Advance --> Check{check_round}
+    Check --> |"continue"| PA
+    Check --> |"end"| End
+
+    style Start fill:#4caf50,color:#fff
+    style End fill:#f44336,color:#fff
+    style Analysis fill:#e3f2fd
 ```
 
-## Quick Start
+### 📋 State Schema
 
-### Requirements
-- Python 3.10+
-- CUDA 11.8+ (optional, for GPU acceleration)
-- 8GB+ RAM
-- OpenAI API Key
+```mermaid
+classDiagram
+    class DebateState {
+        +str topic
+        +int current_round
+        +int max_rounds
+        +List~str~ agent_order
+        +int current_speaker_index
+        +Dict agent_states
+        +List~Dict~ history
+        +Dict rl_result
+        +Dict gnn_result
+        +Dict rag_result
+        +Dict fused_result
+        +str current_response
+        +bool debate_ended
+    }
 
-### Installation with uv (Recommended)
+    class AgentState {
+        +str agent_id
+        +float current_stance
+        +float conviction
+        +List~float~ social_context
+        +List~float~ persuasion_history
+        +List~float~ attack_history
+        +bool has_surrendered
+        +update_stance()
+        +check_surrender()
+    }
+
+    DebateState "1" --> "*" AgentState : contains
+```
+
+---
+
+## 🎮 Debate Strategies
+
+The RL module selects from 4 adaptive strategies based on debate context:
+
+```mermaid
+mindmap
+    root((Debate Strategies))
+        Aggressive 🔥
+            Critical analysis
+            Challenge assumptions
+            Use counterexamples
+        Defensive 🛡️
+            Consolidate arguments
+            Respond systematically
+            Strengthen evidence
+        Analytical 🔬
+            Logical reasoning
+            Empirical data
+            Objective evaluation
+        Empathetic 💚
+            Find common ground
+            Understand concerns
+            Propose solutions
+```
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- **Python** 3.10+
+- **CUDA** 11.8+ (optional, for GPU acceleration)
+- **RAM** 8GB+
+- **OpenAI API Key**
+
+### Installation (using uv - Recommended)
 
 ```bash
-# 1. Clone the project
+# 1. Clone the repository
 git clone https://github.com/your-username/Social-Debate-AI.git
 cd Social-Debate-AI
 
-# 2. Install uv (if not already installed)
+# 2. Install uv package manager
 # Windows
 powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
-# Linux/Mac
+# Linux/macOS
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # 3. Create environment and install dependencies
 uv sync
 
-# 4. Set up environment variables
+# 4. Configure environment
 cp env.example .env
-# Edit .env file, add your OPENAI_API_KEY
+# Edit .env and add your OPENAI_API_KEY
 ```
 
-### Alternative: pip installation
+### Alternative: pip Installation
 
 ```bash
 # Create virtual environment
 python -m venv .venv
-source .venv/bin/activate  # Linux/Mac
+source .venv/bin/activate  # Linux/macOS
 .venv\Scripts\activate     # Windows
 
 # Install dependencies
@@ -101,83 +224,79 @@ pip install -r requirements.txt
 ### Run the Application
 
 ```bash
-# With uv
+# Using uv
 uv run python ui/app.py
 
 # Or with activated venv
 python ui/app.py
 ```
 
-Visit http://localhost:5000 to start debating!
+🌐 Open http://localhost:5000 to start debating!
 
-## Project Structure
+---
+
+## 📁 Project Structure
 
 ```
 Social-Debate-AI/
-├── src/                      # Core modules
-│   ├── agents/              # Agent implementations
-│   ├── orchestrator/        # LangGraph orchestrator (NEW)
-│   │   ├── langgraph_orchestrator.py
-│   │   ├── debate_state.py
-│   │   ├── debate_tools.py
-│   │   └── parallel_orchestrator.py (legacy)
-│   ├── rag/                 # RAG retrieval system
-│   ├── gnn/                 # GNN social network
-│   ├── rl/                  # RL strategy learning
-│   ├── dialogue/            # Dialogue management
-│   └── gpt_interface/       # GPT API interface
-├── ui/                       # Flask web application
-├── tests/                    # Test suite (NEW)
-│   ├── unit/               # Unit tests
-│   └── integration/        # Integration tests
-├── docs/                     # Documentation (Restructured)
-│   ├── architecture/       # System architecture
-│   ├── guides/             # User guides
-│   ├── api/                # API reference
-│   └── modules/            # Module documentation
-├── configs/                  # Configuration files
-├── data/                     # Data and models
-├── pyproject.toml           # Project configuration
-└── uv.lock                  # Dependency lock file
+├── src/                          # Core source code
+│   ├── agents/                   # Agent implementations
+│   │   ├── base_agent.py        # Base agent class
+│   │   ├── agent_a.py           # Support agent
+│   │   ├── agent_b.py           # Oppose agent
+│   │   └── agent_c.py           # Neutral agent
+│   ├── orchestrator/            # LangGraph orchestration
+│   │   ├── langgraph_orchestrator.py  # Main orchestrator
+│   │   ├── debate_state.py      # State schema
+│   │   └── debate_tools.py      # Tool wrappers
+│   ├── rag/                     # Retrieval-Augmented Generation
+│   │   ├── retriever.py         # Enhanced retriever
+│   │   └── simple_retriever.py  # Lightweight retriever
+│   ├── gnn/                     # Graph Neural Network
+│   │   ├── social_encoder.py    # Social graph encoder
+│   │   └── train_supervised.py  # Training script
+│   ├── rl/                      # Reinforcement Learning
+│   │   ├── policy_network.py    # PPO policy network
+│   │   └── ppo_trainer.py       # PPO trainer
+│   └── dialogue/                # Dialogue management
+├── ui/                          # Web application
+│   ├── app.py                   # Flask server
+│   ├── static/                  # CSS & JavaScript
+│   └── templates/               # HTML templates
+├── tests/                       # Test suite
+│   ├── unit/                    # Unit tests
+│   └── integration/             # Integration tests
+├── configs/                     # Configuration files
+│   ├── debate.yaml              # Debate parameters
+│   ├── rag.yaml                 # RAG settings
+│   ├── gnn.yaml                 # GNN settings
+│   └── rl.yaml                  # RL settings
+├── docs/                        # Documentation
+├── pyproject.toml               # Project configuration
+└── uv.lock                      # Dependency lock file
 ```
 
-## Running Tests
+---
+
+## 🧪 Testing
 
 ```bash
 # Run all tests
 uv run pytest
 
-# Run with verbose output
+# Verbose output
 uv run pytest -v
 
 # Run specific test file
 uv run pytest tests/unit/test_debate_state.py
 
-# Run with coverage
+# Run with coverage report
 uv run pytest --cov=src
 ```
 
-## Documentation
+---
 
-### Architecture
-- [System Overview](docs/architecture/OVERVIEW.md) - High-level architecture
-- [LangGraph Orchestration](docs/architecture/LANGGRAPH.md) - **NEW** Graph-based workflow
-- [Data Flow](docs/architecture/DATA_FLOW.md) - State management
-
-### Guides
-- [Quick Start](docs/guides/QUICKSTART.md) - 5-minute tutorial
-- [Configuration](docs/guides/CONFIGURATION.md) - System configuration
-- [Training](docs/guides/TRAINING.md) - Model training
-- [Deployment](docs/guides/DEPLOYMENT.md) - Production deployment
-
-### API & Modules
-- [REST API](docs/api/REST_API.md) - Flask API reference
-- [RAG Module](docs/modules/RAG.md) - Retrieval system
-- [GNN Module](docs/modules/GNN.md) - Graph neural network
-- [RL Module](docs/modules/RL.md) - Reinforcement learning
-- [Scoring System](docs/modules/SCORING.md) - Debate evaluation
-
-## Configuration
+## ⚙️ Configuration
 
 ### Environment Variables
 
@@ -186,153 +305,321 @@ uv run pytest --cov=src
 OPENAI_API_KEY=sk-...
 
 # Optional
-USE_LANGGRAPH=true  # Use LangGraph orchestrator (default: true)
+USE_LANGGRAPH=true    # Enable LangGraph orchestrator (default: true)
 ```
 
-### Config Files
+### Configuration Files
 
-Located in `configs/`:
-- `debate.yaml` - Debate parameters
-- `rag.yaml` - RAG system configuration
-- `gnn.yaml` - GNN model configuration
-- `rl.yaml` - RL training configuration
-- `system.yaml` - System settings
+| File | Description |
+|------|-------------|
+| `configs/debate.yaml` | Debate rounds, timing, agent settings |
+| `configs/rag.yaml` | Vector DB, embedding model, retrieval params |
+| `configs/gnn.yaml` | Graph structure, hidden dimensions |
+| `configs/rl.yaml` | PPO hyperparameters, reward design |
+| `configs/system.yaml` | Global system settings |
 
-## Training Models
+---
+
+## 🏋️ Model Training
 
 ```bash
 # Train all models
 uv run python train_all.py --all
 
-# Individual training
-uv run python train_all.py --gnn    # GNN social network
-uv run python train_all.py --rl     # RL strategy model
-uv run python train_all.py --rag    # RAG index
+# Train individual models
+uv run python train_all.py --gnn    # GNN social encoder
+uv run python train_all.py --rl     # RL policy network
+uv run python train_all.py --rag    # Build RAG index
 ```
 
-## Technical Stack
+---
 
-| Component | Technology |
-|-----------|------------|
-| Orchestration | LangGraph, LangChain |
-| LLM | OpenAI GPT-3.5/4 |
-| ML Framework | PyTorch, PyTorch Geometric |
-| Vector DB | FAISS |
-| Web | Flask, Bootstrap 5 |
-| Package Manager | uv |
+## 🛠️ Tech Stack
 
-## Contributing
+```mermaid
+graph LR
+    subgraph Orchestration
+        LangGraph["LangGraph"]
+        LangChain["LangChain"]
+    end
 
-1. Fork the project
+    subgraph AI/ML
+        PyTorch["PyTorch"]
+        PyG["PyTorch Geometric"]
+        FAISS["FAISS"]
+    end
+
+    subgraph LLM
+        OpenAI["OpenAI GPT-3.5/4"]
+    end
+
+    subgraph Web
+        Flask["Flask"]
+        Bootstrap["Bootstrap 5"]
+    end
+
+    subgraph Tools
+        uv["uv"]
+        pytest["pytest"]
+    end
+
+    LangGraph --> LangChain
+    LangChain --> OpenAI
+    PyTorch --> PyG
+    PyG --> FAISS
+    Flask --> Bootstrap
+
+    style Orchestration fill:#e8eaf6
+    style AI/ML fill:#fce4ec
+    style LLM fill:#e8f5e9
+    style Web fill:#fff3e0
+    style Tools fill:#f3e5f5
+```
+
+---
+
+## 📚 Documentation
+
+### Architecture
+- [System Overview](docs/architecture/OVERVIEW.md)
+- [LangGraph Orchestration](docs/architecture/LANGGRAPH.md)
+- [Data Flow](docs/architecture/DATA_FLOW.md)
+
+### Guides
+- [Quick Start Guide](docs/guides/QUICKSTART.md)
+- [Configuration Guide](docs/guides/CONFIGURATION.md)
+- [Training Guide](docs/guides/TRAINING.md)
+- [Deployment Guide](docs/guides/DEPLOYMENT.md)
+
+### API & Modules
+- [REST API Reference](docs/api/REST_API.md)
+- [RAG Module](docs/modules/RAG.md)
+- [GNN Module](docs/modules/GNN.md)
+- [RL Module](docs/modules/RL.md)
+- [Scoring System](docs/modules/SCORING.md)
+
+---
+
+## 🤝 Contributing
+
+1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
 3. Run tests (`uv run pytest`)
 4. Commit your changes (`git commit -m 'Add AmazingFeature'`)
 5. Push to the branch (`git push origin feature/AmazingFeature`)
 6. Open a Pull Request
 
-## License
+---
 
-This project is licensed under the MIT License - see [LICENSE](LICENSE) for details.
+## 📄 License
+
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
 
 ---
 
-<a name="chinese-version"></a>
-# Social Debate AI
+<a name="中文版本"></a>
 
-*[English](#social-debate-ai) | 中文*
+# 🎭 Social Debate AI
 
-基於深度學習的多智能體社會辯論系統，整合 RAG、GNN、RL 技術，並使用 **LangGraph 編排** 實現智能辯論模擬。
+<p align="center">
+  <strong>基於深度學習的多智能體辯論系統</strong>
+</p>
 
-![Python](https://img.shields.io/badge/python-3.10+-blue.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
-![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-red.svg)
-![LangGraph](https://img.shields.io/badge/LangGraph-0.2+-purple.svg)
+<p align="center">
+  <a href="#english-version">English</a> | <a href="#中文版本">中文</a>
+</p>
 
-## v0.2.0 新功能
+---
 
-- 🚀 **LangGraph 編排** - 以宣告式 StateGraph 取代手動 async 編排
-- 🔧 **uv 套件管理** - 快速、現代的 Python 套件管理
-- 📦 **模組化工具** - RAG/GNN/RL 封裝為 LangGraph tools
-- 📚 **重構文檔** - 清晰的文檔結構
-- ✅ **結構化測試** - 基於 pytest 的測試套件
+## 📖 概述
 
-## 核心特色
+**Social Debate AI** 是一個智能多智能體辯論模擬系統，結合尖端深度學習技術。系統編排具有不同個性和立場的 AI 智能體進行動態辯論，使用 **LangGraph** 進行工作流管理、**RAG** 進行證據檢索、**GNN** 進行社交動態建模，以及 **RL** 進行策略決策。
 
-- **多智能體辯論** - 3 個具有不同立場和性格的 AI Agent 進行動態辯論
-- **LangGraph 工作流** - 宣告式圖形編排，並行分析
-- **RAG 檢索增強** - 基於 FAISS 向量檢索證據
-- **GNN 社會網路** - 監督式學習預測說服成功率
-- **RL 策略學習** - PPO 強化學習，4 種辯論策略動態選擇
-- **Web 介面** - 現代化的 Flask + Bootstrap 5 響應式界面
+### ✨ 核心特色
 
-## 快速開始
+| 特色 | 說明 |
+|------|------|
+| 🤖 **多智能體辯論** | 3 個具有獨特立場（支持/反對/中立）的 AI 智能體進行動態辯論 |
+| 🔄 **LangGraph 編排** | 宣告式狀態圖工作流，支援並行分析管線 |
+| 📚 **RAG 證據檢索** | 基於 FAISS 的向量搜索，檢索相關證據和引用 |
+| 🕸️ **GNN 社交建模** | 圖神經網路預測說服成功率和社交影響力 |
+| 🎮 **RL 策略學習** | 基於 PPO 的強化學習，4 種自適應辯論策略 |
+| 🌐 **現代化 Web 介面** | Flask + Bootstrap 5 響應式 UI，即時辯論視覺化 |
 
-### 環境要求
-- Python 3.10+
-- CUDA 11.8+ (可選，用於 GPU 加速)
-- 8GB+ RAM
-- OpenAI API Key
+---
 
-### 使用 uv 安裝（推薦）
+## 🏗️ 系統架構
+
+```mermaid
+graph TB
+    subgraph UI["🌐 Web 介面"]
+        Flask["Flask 伺服器"]
+        Web["Bootstrap 5 UI"]
+    end
+
+    subgraph Orchestrator["🎯 LangGraph 編排器"]
+        StateGraph["狀態圖"]
+        
+        subgraph Parallel["⚡ 並行分析"]
+            RL["🎮 RL 策略<br/>PPO 策略網路"]
+            GNN["🕸️ GNN 社交<br/>圖編碼器"]
+            RAG["📚 RAG 證據<br/>FAISS 檢索器"]
+        end
+        
+        Fusion["🔗 結果融合"]
+        LLM["🤖 LLM 回應<br/>GPT-3.5/4"]
+        StateUpdate["📊 狀態更新"]
+    end
+
+    subgraph Agents["👥 辯論智能體"]
+        AgentA["智能體 A<br/>🟢 支持方"]
+        AgentB["智能體 B<br/>🔴 反對方"]
+        AgentC["智能體 C<br/>🟡 中立方"]
+    end
+
+    Web --> Flask
+    Flask --> StateGraph
+    StateGraph --> Parallel
+    RL & GNN & RAG --> Fusion
+    Fusion --> LLM
+    LLM --> StateUpdate
+    StateUpdate --> AgentA & AgentB & AgentC
+    AgentA & AgentB & AgentC --> StateGraph
+
+    style UI fill:#e1f5fe
+    style Orchestrator fill:#fff3e0
+    style Agents fill:#e8f5e9
+```
+
+---
+
+## 🔄 LangGraph 工作流程
+
+辯論流程由宣告式 **StateGraph** 管理，編排整個辯論過程：
+
+```mermaid
+flowchart TD
+    Start([🚀 開始]) --> PA
+
+    subgraph Analysis["並行分析階段"]
+        PA["parallel_analysis"]
+        PA --> |"並行"| RL["RL: 選擇策略"]
+        PA --> |"並行"| GNN["GNN: 社交分析"]
+        PA --> |"並行"| RAG["RAG: 檢索證據"]
+    end
+
+    RL & GNN & RAG --> Fuse["fuse_results<br/>整合洞察"]
+    Fuse --> Gen["generate_response<br/>LLM 生成"]
+    Gen --> Update["update_states<br/>應用效果"]
+    
+    Update --> Decision{是否繼續?}
+    
+    Decision --> |"下一發言者"| Advance["advance_turn"]
+    Decision --> |"下一回合"| Advance
+    Decision --> |"投降 / 達到最大回合"| End([🏁 結束])
+    
+    Advance --> Check{檢查回合}
+    Check --> |"繼續"| PA
+    Check --> |"結束"| End
+
+    style Start fill:#4caf50,color:#fff
+    style End fill:#f44336,color:#fff
+    style Analysis fill:#e3f2fd
+```
+
+---
+
+## 🎮 辯論策略
+
+RL 模組根據辯論情境從 4 種自適應策略中選擇：
+
+| 策略 | 說明 | 適用情境 |
+|------|------|----------|
+| 🔥 **激進策略** | 深入分析邏輯漏洞，挑戰核心假設 | 對手論點薄弱時 |
+| 🛡️ **防守策略** | 鞏固核心論點，系統性回應挑戰 | 受到強烈攻擊時 |
+| 🔬 **分析策略** | 使用邏輯推理、實證數據客觀評估 | 需要建立可信度時 |
+| 💚 **同理策略** | 尋找共同點，理解對方合理關切 | 尋求共識時 |
+
+---
+
+## 🚀 快速開始
+
+### 環境需求
+
+- **Python** 3.10+
+- **CUDA** 11.8+（可選，用於 GPU 加速）
+- **RAM** 8GB+
+- **OpenAI API Key**
+
+### 安裝（使用 uv - 推薦）
 
 ```bash
-# 1. 克隆專案
+# 1. 克隆儲存庫
 git clone https://github.com/your-username/Social-Debate-AI.git
 cd Social-Debate-AI
 
-# 2. 安裝 uv（如果尚未安裝）
+# 2. 安裝 uv 套件管理器
 # Windows
 powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
-# Linux/Mac
+# Linux/macOS
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # 3. 創建環境並安裝依賴
 uv sync
 
-# 4. 設置環境變數
+# 4. 設定環境變數
 cp env.example .env
-# 編輯 .env 文件，添加您的 OPENAI_API_KEY
+# 編輯 .env 並添加您的 OPENAI_API_KEY
 ```
 
-### 運行應用
+### 替代方案：pip 安裝
+
+```bash
+# 創建虛擬環境
+python -m venv .venv
+source .venv/bin/activate  # Linux/macOS
+.venv\Scripts\activate     # Windows
+
+# 安裝依賴
+pip install -r requirements.txt
+```
+
+### 運行應用程式
 
 ```bash
 # 使用 uv
 uv run python ui/app.py
+
+# 或使用已啟動的虛擬環境
+python ui/app.py
 ```
 
-訪問 http://localhost:5000 開始辯論！
+🌐 開啟 http://localhost:5000 開始辯論！
 
-## 專案結構
+---
+
+## 📁 專案結構
 
 ```
 Social-Debate-AI/
-├── src/                      # 核心模組
-│   ├── agents/              # Agent 實現
-│   ├── orchestrator/        # LangGraph 編排器（新）
-│   │   ├── langgraph_orchestrator.py
-│   │   ├── debate_state.py
-│   │   ├── debate_tools.py
-│   │   └── parallel_orchestrator.py (舊版)
-│   ├── rag/                 # RAG 檢索系統
-│   ├── gnn/                 # GNN 社會網路
-│   ├── rl/                  # RL 策略學習
-│   └── ...
-├── ui/                       # Flask Web 應用
-├── tests/                    # 測試套件（新）
-│   ├── unit/               # 單元測試
-│   └── integration/        # 整合測試
-├── docs/                     # 文檔（重構）
-│   ├── architecture/       # 系統架構
-│   ├── guides/             # 使用指南
-│   ├── api/                # API 參考
-│   └── modules/            # 模組文檔
-├── configs/                  # 配置文件
-├── pyproject.toml           # 專案配置
-└── uv.lock                  # 依賴鎖定文件
+├── src/                          # 核心源碼
+│   ├── agents/                   # 智能體實現
+│   ├── orchestrator/             # LangGraph 編排
+│   ├── rag/                      # 檢索增強生成
+│   ├── gnn/                      # 圖神經網路
+│   ├── rl/                       # 強化學習
+│   └── dialogue/                 # 對話管理
+├── ui/                           # Web 應用程式
+├── tests/                        # 測試套件
+├── configs/                      # 配置文件
+├── docs/                         # 文檔
+├── pyproject.toml                # 專案配置
+└── uv.lock                       # 依賴鎖定文件
 ```
 
-## 運行測試
+---
+
+## 🧪 測試
 
 ```bash
 # 運行所有測試
@@ -341,34 +628,92 @@ uv run pytest
 # 詳細輸出
 uv run pytest -v
 
-# 運行特定測試
+# 運行特定測試文件
 uv run pytest tests/unit/test_debate_state.py
+
+# 生成覆蓋率報告
+uv run pytest --cov=src
 ```
-
-## 文檔導覽
-
-### 架構
-- [系統概覽](docs/architecture/OVERVIEW.md) - 高層架構
-- [LangGraph 編排](docs/architecture/LANGGRAPH.md) - **新** 圖形工作流
-- [資料流](docs/architecture/DATA_FLOW.md) - 狀態管理
-
-### 指南
-- [快速開始](docs/guides/QUICKSTART.md) - 5 分鐘教程
-- [配置指南](docs/guides/CONFIGURATION.md) - 系統配置
-- [訓練指南](docs/guides/TRAINING.md) - 模型訓練
-- [部署指南](docs/guides/DEPLOYMENT.md) - 生產部署
-
-### API 與模組
-- [REST API](docs/api/REST_API.md) - Flask API 參考
-- [RAG 模組](docs/modules/RAG.md) - 檢索系統
-- [GNN 模組](docs/modules/GNN.md) - 圖神經網路
-- [RL 模組](docs/modules/RL.md) - 強化學習
-- [評分系統](docs/modules/SCORING.md) - 辯論評估
-
-## 授權
-
-本專案採用 MIT 授權 - 詳見 [LICENSE](LICENSE) 文件
 
 ---
 
-如果這個專案對您有幫助，請給我們一個 ⭐ Star！
+## ⚙️ 配置
+
+### 環境變數
+
+```bash
+# 必要
+OPENAI_API_KEY=sk-...
+
+# 可選
+USE_LANGGRAPH=true    # 啟用 LangGraph 編排器（預設：true）
+```
+
+### 配置文件
+
+| 文件 | 說明 |
+|------|------|
+| `configs/debate.yaml` | 辯論回合數、時間、智能體設定 |
+| `configs/rag.yaml` | 向量資料庫、嵌入模型、檢索參數 |
+| `configs/gnn.yaml` | 圖結構、隱藏層維度 |
+| `configs/rl.yaml` | PPO 超參數、獎勵設計 |
+| `configs/system.yaml` | 全域系統設定 |
+
+---
+
+## 🏋️ 模型訓練
+
+```bash
+# 訓練所有模型
+uv run python train_all.py --all
+
+# 訓練單個模型
+uv run python train_all.py --gnn    # GNN 社交編碼器
+uv run python train_all.py --rl     # RL 策略網路
+uv run python train_all.py --rag    # 建立 RAG 索引
+```
+
+---
+
+## 📚 文檔導覽
+
+### 架構
+- [系統概覽](docs/architecture/OVERVIEW.md)
+- [LangGraph 編排](docs/architecture/LANGGRAPH.md)
+- [資料流](docs/architecture/DATA_FLOW.md)
+
+### 指南
+- [快速開始指南](docs/guides/QUICKSTART.md)
+- [配置指南](docs/guides/CONFIGURATION.md)
+- [訓練指南](docs/guides/TRAINING.md)
+- [部署指南](docs/guides/DEPLOYMENT.md)
+
+### API 與模組
+- [REST API 參考](docs/api/REST_API.md)
+- [RAG 模組](docs/modules/RAG.md)
+- [GNN 模組](docs/modules/GNN.md)
+- [RL 模組](docs/modules/RL.md)
+- [評分系統](docs/modules/SCORING.md)
+
+---
+
+## 🤝 貢獻
+
+1. Fork 本儲存庫
+2. 創建功能分支 (`git checkout -b feature/AmazingFeature`)
+3. 運行測試 (`uv run pytest`)
+4. 提交變更 (`git commit -m 'Add AmazingFeature'`)
+5. 推送至分支 (`git push origin feature/AmazingFeature`)
+6. 開啟 Pull Request
+
+---
+
+## 📄 授權
+
+本專案採用 **MIT 授權** - 詳見 [LICENSE](LICENSE) 文件。
+
+---
+
+<p align="center">
+  如果這個專案對您有幫助，請給我們一個 ⭐ Star！
+</p>

@@ -39,44 +39,50 @@
 ## 🏗️ System Architecture
 
 ```mermaid
-graph TB
-    subgraph UI["🌐 Web Interface"]
-        Flask["Flask Server"]
-        Web["Bootstrap 5 UI"]
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#6366f1', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4f46e5', 'lineColor': '#8b5cf6', 'secondaryColor': '#f0abfc', 'tertiaryColor': '#fef3c7'}}}%%
+flowchart TB
+    subgraph Layer1["  🌐 Presentation Layer  "]
+        direction LR
+        Web["🖥️ Bootstrap 5 UI"]
+        Flask["⚡ Flask Server"]
     end
 
-    subgraph Orchestrator["🎯 LangGraph Orchestrator"]
-        StateGraph["State Graph"]
-        
-        subgraph Parallel["⚡ Parallel Analysis"]
-            RL["🎮 RL Strategy<br/>PPO Policy Network"]
-            GNN["🕸️ GNN Social<br/>Graph Encoder"]
-            RAG["📚 RAG Evidence<br/>FAISS Retriever"]
-        end
-        
-        Fusion["🔗 Result Fusion"]
-        LLM["🤖 LLM Response<br/>GPT-3.5/4"]
-        StateUpdate["📊 State Update"]
+    subgraph Layer2["  🎯 Orchestration Layer  "]
+        direction LR
+        Graph["📊 LangGraph StateGraph"]
     end
 
-    subgraph Agents["👥 Debate Agents"]
-        AgentA["Agent A<br/>🟢 Support"]
-        AgentB["Agent B<br/>🔴 Oppose"]
-        AgentC["Agent C<br/>🟡 Neutral"]
+    subgraph Layer3["  🧠 Analysis Layer  "]
+        direction LR
+        RL["🎮 RL Strategy"]
+        GNN["🕸️ GNN Social"]
+        RAG["📚 RAG Evidence"]
     end
 
-    Web --> Flask
-    Flask --> StateGraph
-    StateGraph --> Parallel
-    RL & GNN & RAG --> Fusion
-    Fusion --> LLM
-    LLM --> StateUpdate
-    StateUpdate --> AgentA & AgentB & AgentC
-    AgentA & AgentB & AgentC --> StateGraph
+    subgraph Layer4["  🔮 Generation Layer  "]
+        direction LR
+        Fusion["🔗 Fusion"]
+        LLM["🤖 GPT-3.5/4"]
+    end
 
-    style UI fill:#e1f5fe
-    style Orchestrator fill:#fff3e0
-    style Agents fill:#e8f5e9
+    subgraph Layer5["  👥 Agent Layer  "]
+        direction LR
+        A["🟢 Agent A<br/>Support"]
+        B["🔴 Agent B<br/>Oppose"]
+        C["🟡 Agent C<br/>Neutral"]
+    end
+
+    Layer1 --> Layer2
+    Layer2 --> Layer3
+    Layer3 --> Layer4
+    Layer4 --> Layer5
+    Layer5 -.->|"feedback"| Layer2
+
+    style Layer1 fill:#06b6d4,color:#fff
+    style Layer2 fill:#8b5cf6,color:#fff
+    style Layer3 fill:#f59e0b,color:#fff
+    style Layer4 fill:#10b981,color:#fff
+    style Layer5 fill:#ec4899,color:#fff
 ```
 
 ---
@@ -86,51 +92,58 @@ graph TB
 The debate flow is managed by a declarative **StateGraph** that orchestrates the entire debate process:
 
 ```mermaid
-flowchart TD
-    Start([🚀 Start]) --> PA
-
-    subgraph Analysis["Parallel Analysis Phase"]
-        PA["parallel_analysis"]
-        PA --> |"concurrent"| RL["RL: Select Strategy"]
-        PA --> |"concurrent"| GNN["GNN: Social Analysis"]
-        PA --> |"concurrent"| RAG["RAG: Retrieve Evidence"]
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#10b981', 'lineColor': '#6366f1'}}}%%
+flowchart LR
+    subgraph Input["📥 Input"]
+        Start(["🚀 Start"])
     end
 
-    RL & GNN & RAG --> Fuse["fuse_results<br/>Combine Insights"]
-    Fuse --> Gen["generate_response<br/>LLM Generation"]
-    Gen --> Update["update_states<br/>Apply Effects"]
-    
-    Update --> Decision{should_continue?}
-    
-    Decision --> |"next_speaker"| Advance["advance_turn"]
-    Decision --> |"next_round"| Advance
-    Decision --> |"surrender / max_rounds"| End([🏁 End])
-    
-    Advance --> Check{check_round}
-    Check --> |"continue"| PA
-    Check --> |"end"| End
+    subgraph Process["⚙️ Debate Loop"]
+        direction TB
+        Analyze["1️⃣ Parallel Analysis<br/>RL + GNN + RAG"]
+        Fuse["2️⃣ Fuse Results"]
+        Generate["3️⃣ Generate Response"]
+        Update["4️⃣ Update States"]
+        Check{"Continue?"}
+        
+        Analyze --> Fuse
+        Fuse --> Generate
+        Generate --> Update
+        Update --> Check
+        Check -->|"✅ Yes"| Analyze
+    end
 
-    style Start fill:#4caf50,color:#fff
-    style End fill:#f44336,color:#fff
-    style Analysis fill:#e3f2fd
+    subgraph Output["📤 Output"]
+        End(["🏁 End"])
+    end
+
+    Start --> Analyze
+    Check -->|"❌ No"| End
+
+    style Input fill:#22d3ee,color:#000
+    style Process fill:#a78bfa,color:#000
+    style Output fill:#fb7185,color:#000
+    style Start fill:#10b981,color:#fff
+    style End fill:#f43f5e,color:#fff
+    style Check fill:#fbbf24,color:#000
 ```
 
 ### 📋 State Schema
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#6366f1'}}}%%
 classDiagram
+    direction LR
     class DebateState {
         +str topic
         +int current_round
         +int max_rounds
-        +List~str~ agent_order
-        +int current_speaker_index
+        +List agent_order
         +Dict agent_states
-        +List~Dict~ history
+        +List history
         +Dict rl_result
         +Dict gnn_result
         +Dict rag_result
-        +Dict fused_result
         +str current_response
         +bool debate_ended
     }
@@ -139,15 +152,13 @@ classDiagram
         +str agent_id
         +float current_stance
         +float conviction
-        +List~float~ social_context
-        +List~float~ persuasion_history
-        +List~float~ attack_history
+        +List persuasion_history
         +bool has_surrendered
         +update_stance()
         +check_surrender()
     }
 
-    DebateState "1" --> "*" AgentState : contains
+    DebateState "1" *-- "3" AgentState
 ```
 
 ---
@@ -157,24 +168,32 @@ classDiagram
 The RL module selects from 4 adaptive strategies based on debate context:
 
 ```mermaid
-mindmap
-    root((Debate Strategies))
-        Aggressive 🔥
-            Critical analysis
-            Challenge assumptions
-            Use counterexamples
-        Defensive 🛡️
-            Consolidate arguments
-            Respond systematically
-            Strengthen evidence
-        Analytical 🔬
-            Logical reasoning
-            Empirical data
-            Objective evaluation
-        Empathetic 💚
-            Find common ground
-            Understand concerns
-            Propose solutions
+%%{init: {'theme': 'base'}}%%
+graph LR
+    subgraph S1["🔥 Aggressive"]
+        A1["Critical analysis"]
+        A2["Challenge assumptions"]
+    end
+    
+    subgraph S2["🛡️ Defensive"]
+        B1["Consolidate arguments"]
+        B2["Strengthen evidence"]
+    end
+    
+    subgraph S3["🔬 Analytical"]
+        C1["Logical reasoning"]
+        C2["Empirical data"]
+    end
+    
+    subgraph S4["💚 Empathetic"]
+        D1["Find common ground"]
+        D2["Propose solutions"]
+    end
+
+    style S1 fill:#ef4444,color:#fff
+    style S2 fill:#3b82f6,color:#fff
+    style S3 fill:#8b5cf6,color:#fff
+    style S4 fill:#10b981,color:#fff
 ```
 
 ---
@@ -337,43 +356,45 @@ uv run python train_all.py --rag    # Build RAG index
 ## 🛠️ Tech Stack
 
 ```mermaid
-graph LR
-    subgraph Orchestration
-        LangGraph["LangGraph"]
-        LangChain["LangChain"]
+%%{init: {'theme': 'base'}}%%
+block-beta
+    columns 5
+    
+    block:orch:1
+        columns 1
+        A["🔄 LangGraph"]
+        B["🔗 LangChain"]
+    end
+    
+    block:ml:1
+        columns 1
+        C["🔥 PyTorch"]
+        D["📊 PyG"]
+        E["🔍 FAISS"]
+    end
+    
+    block:llm:1
+        columns 1
+        F["🤖 OpenAI<br/>GPT-3.5/4"]
+    end
+    
+    block:web:1
+        columns 1
+        G["🌐 Flask"]
+        H["🎨 Bootstrap 5"]
+    end
+    
+    block:tools:1
+        columns 1
+        I["📦 uv"]
+        J["🧪 pytest"]
     end
 
-    subgraph AI/ML
-        PyTorch["PyTorch"]
-        PyG["PyTorch Geometric"]
-        FAISS["FAISS"]
-    end
-
-    subgraph LLM
-        OpenAI["OpenAI GPT-3.5/4"]
-    end
-
-    subgraph Web
-        Flask["Flask"]
-        Bootstrap["Bootstrap 5"]
-    end
-
-    subgraph Tools
-        uv["uv"]
-        pytest["pytest"]
-    end
-
-    LangGraph --> LangChain
-    LangChain --> OpenAI
-    PyTorch --> PyG
-    PyG --> FAISS
-    Flask --> Bootstrap
-
-    style Orchestration fill:#e8eaf6
-    style AI/ML fill:#fce4ec
-    style LLM fill:#e8f5e9
-    style Web fill:#fff3e0
-    style Tools fill:#f3e5f5
+    style orch fill:#818cf8,color:#fff
+    style ml fill:#fb923c,color:#fff
+    style llm fill:#4ade80,color:#fff
+    style web fill:#22d3ee,color:#fff
+    style tools fill:#f472b6,color:#fff
 ```
 
 ---
@@ -451,44 +472,50 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 ## 🏗️ 系統架構
 
 ```mermaid
-graph TB
-    subgraph UI["🌐 Web 介面"]
-        Flask["Flask 伺服器"]
-        Web["Bootstrap 5 UI"]
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#6366f1', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4f46e5', 'lineColor': '#8b5cf6', 'secondaryColor': '#f0abfc', 'tertiaryColor': '#fef3c7'}}}%%
+flowchart TB
+    subgraph Layer1["  🌐 展示層  "]
+        direction LR
+        Web["🖥️ Bootstrap 5 介面"]
+        Flask["⚡ Flask 伺服器"]
     end
 
-    subgraph Orchestrator["🎯 LangGraph 編排器"]
-        StateGraph["狀態圖"]
-        
-        subgraph Parallel["⚡ 並行分析"]
-            RL["🎮 RL 策略<br/>PPO 策略網路"]
-            GNN["🕸️ GNN 社交<br/>圖編碼器"]
-            RAG["📚 RAG 證據<br/>FAISS 檢索器"]
-        end
-        
-        Fusion["🔗 結果融合"]
-        LLM["🤖 LLM 回應<br/>GPT-3.5/4"]
-        StateUpdate["📊 狀態更新"]
+    subgraph Layer2["  🎯 編排層  "]
+        direction LR
+        Graph["📊 LangGraph 狀態圖"]
     end
 
-    subgraph Agents["👥 辯論智能體"]
-        AgentA["智能體 A<br/>🟢 支持方"]
-        AgentB["智能體 B<br/>🔴 反對方"]
-        AgentC["智能體 C<br/>🟡 中立方"]
+    subgraph Layer3["  🧠 分析層  "]
+        direction LR
+        RL["🎮 RL 策略"]
+        GNN["🕸️ GNN 社交"]
+        RAG["📚 RAG 證據"]
     end
 
-    Web --> Flask
-    Flask --> StateGraph
-    StateGraph --> Parallel
-    RL & GNN & RAG --> Fusion
-    Fusion --> LLM
-    LLM --> StateUpdate
-    StateUpdate --> AgentA & AgentB & AgentC
-    AgentA & AgentB & AgentC --> StateGraph
+    subgraph Layer4["  🔮 生成層  "]
+        direction LR
+        Fusion["🔗 融合"]
+        LLM["🤖 GPT-3.5/4"]
+    end
 
-    style UI fill:#e1f5fe
-    style Orchestrator fill:#fff3e0
-    style Agents fill:#e8f5e9
+    subgraph Layer5["  👥 智能體層  "]
+        direction LR
+        A["🟢 智能體 A<br/>支持方"]
+        B["🔴 智能體 B<br/>反對方"]
+        C["🟡 智能體 C<br/>中立方"]
+    end
+
+    Layer1 --> Layer2
+    Layer2 --> Layer3
+    Layer3 --> Layer4
+    Layer4 --> Layer5
+    Layer5 -.->|"回饋"| Layer2
+
+    style Layer1 fill:#06b6d4,color:#fff
+    style Layer2 fill:#8b5cf6,color:#fff
+    style Layer3 fill:#f59e0b,color:#fff
+    style Layer4 fill:#10b981,color:#fff
+    style Layer5 fill:#ec4899,color:#fff
 ```
 
 ---
@@ -498,33 +525,40 @@ graph TB
 辯論流程由宣告式 **StateGraph** 管理，編排整個辯論過程：
 
 ```mermaid
-flowchart TD
-    Start([🚀 開始]) --> PA
-
-    subgraph Analysis["並行分析階段"]
-        PA["parallel_analysis"]
-        PA --> |"並行"| RL["RL: 選擇策略"]
-        PA --> |"並行"| GNN["GNN: 社交分析"]
-        PA --> |"並行"| RAG["RAG: 檢索證據"]
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#10b981', 'lineColor': '#6366f1'}}}%%
+flowchart LR
+    subgraph Input["📥 輸入"]
+        Start(["🚀 開始"])
     end
 
-    RL & GNN & RAG --> Fuse["fuse_results<br/>整合洞察"]
-    Fuse --> Gen["generate_response<br/>LLM 生成"]
-    Gen --> Update["update_states<br/>應用效果"]
-    
-    Update --> Decision{是否繼續?}
-    
-    Decision --> |"下一發言者"| Advance["advance_turn"]
-    Decision --> |"下一回合"| Advance
-    Decision --> |"投降 / 達到最大回合"| End([🏁 結束])
-    
-    Advance --> Check{檢查回合}
-    Check --> |"繼續"| PA
-    Check --> |"結束"| End
+    subgraph Process["⚙️ 辯論循環"]
+        direction TB
+        Analyze["1️⃣ 並行分析<br/>RL + GNN + RAG"]
+        Fuse["2️⃣ 融合結果"]
+        Generate["3️⃣ 生成回應"]
+        Update["4️⃣ 更新狀態"]
+        Check{"繼續?"}
+        
+        Analyze --> Fuse
+        Fuse --> Generate
+        Generate --> Update
+        Update --> Check
+        Check -->|"✅ 是"| Analyze
+    end
 
-    style Start fill:#4caf50,color:#fff
-    style End fill:#f44336,color:#fff
-    style Analysis fill:#e3f2fd
+    subgraph Output["📤 輸出"]
+        End(["🏁 結束"])
+    end
+
+    Start --> Analyze
+    Check -->|"❌ 否"| End
+
+    style Input fill:#22d3ee,color:#000
+    style Process fill:#a78bfa,color:#000
+    style Output fill:#fb7185,color:#000
+    style Start fill:#10b981,color:#fff
+    style End fill:#f43f5e,color:#fff
+    style Check fill:#fbbf24,color:#000
 ```
 
 ---

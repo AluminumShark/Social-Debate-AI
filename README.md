@@ -39,142 +39,142 @@
 ## 🏗️ System Architecture
 
 ```mermaid
-graph TB
-    subgraph UI["🌐 Web Interface"]
-        Flask["Flask Server"]
-        Web["Bootstrap 5 UI"]
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#4f46e5', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4338ca', 'lineColor': '#6366f1', 'secondaryColor': '#10b981', 'tertiaryColor': '#f59e0b'}}}%%
+flowchart TB
+    %% Nodes Configuration
+    classDef web fill:#e0f2fe,stroke:#0ea5e9,stroke-width:2px,color:#0c4a6e;
+    classDef orch fill:#f3e8ff,stroke:#9333ea,stroke-width:2px,color:#581c87;
+    classDef brain fill:#dcfce7,stroke:#22c55e,stroke-width:2px,color:#14532d;
+    classDef gen fill:#ffedd5,stroke:#f97316,stroke-width:2px,color:#7c2d12;
+    classDef agent fill:#fee2e2,stroke:#ef4444,stroke-width:2px,color:#7f1d1d;
+
+    subgraph Presentation["🌐 Presentation Layer"]
+        direction TB
+        UI["🖥️ Bootstrap 5 UI"]:::web
+        API["⚡ Flask API"]:::web
+        UI <--> API
     end
 
-    subgraph Orchestrator["🎯 LangGraph Orchestrator"]
-        StateGraph["State Graph"]
-        
-        subgraph Parallel["⚡ Parallel Analysis"]
-            RL["🎮 RL Strategy<br/>PPO Policy Network"]
-            GNN["🕸️ GNN Social<br/>Graph Encoder"]
-            RAG["📚 RAG Evidence<br/>FAISS Retriever"]
-        end
-        
-        Fusion["🔗 Result Fusion"]
-        LLM["🤖 LLM Response<br/>GPT-3.5/4"]
-        StateUpdate["📊 State Update"]
+    subgraph Core["⚙️ Orchestration Core"]
+        direction TB
+        LG["📊 LangGraph Engine<br/>(State Management)"]:::orch
+    end
+
+    subgraph Intelligence["🧠 Intelligence Modules"]
+        direction LR
+        RL["🎮 RL Strategy<br/>(PPO Policy)"]:::brain
+        GNN["🕸️ GNN Social<br/>(GraphSAGE)"]:::brain
+        RAG["📚 RAG Evidence<br/>(FAISS)"]:::brain
+    end
+
+    subgraph Generation["🔮 Generation Layer"]
+        direction TB
+        Fusion["🔗 Result Fusion"]:::gen
+        LLM["🤖 LLM Inference<br/>(GPT-3.5/4)"]:::gen
+        Fusion --> LLM
     end
 
     subgraph Agents["👥 Debate Agents"]
-        AgentA["Agent A<br/>🟢 Support"]
-        AgentB["Agent B<br/>🔴 Oppose"]
-        AgentC["Agent C<br/>🟡 Neutral"]
+        direction LR
+        A1["🟢 Agent A<br/>(Support)"]:::agent
+        A2["🔴 Agent B<br/>(Oppose)"]:::agent
+        A3["🟡 Agent C<br/>(Neutral)"]:::agent
     end
 
-    Web --> Flask
-    Flask --> StateGraph
-    StateGraph --> Parallel
-    RL & GNN & RAG --> Fusion
-    Fusion --> LLM
-    LLM --> StateUpdate
-    StateUpdate --> AgentA & AgentB & AgentC
-    AgentA & AgentB & AgentC --> StateGraph
+    %% Data Flow Connections
+    API <==> LG
+    LG ==> Intelligence
+    Intelligence ==> Fusion
+    LLM ==> Agents
+    Agents -.->|"State Update"| LG
 
-    style UI fill:#e1f5fe
-    style Orchestrator fill:#fff3e0
-    style Agents fill:#e8f5e9
+    %% Styling
+    style Presentation fill:#f0f9ff,stroke:#bae6fd,color:#0369a1
+    style Core fill:#faf5ff,stroke:#e9d5ff,color:#6b21a8
+    style Intelligence fill:#f0fdf4,stroke:#bbf7d0,color:#15803d
+    style Generation fill:#fff7ed,stroke:#fed7aa,color:#c2410c
+    style Agents fill:#fef2f2,stroke:#fecaca,color:#b91c1c
 ```
 
 ---
 
 ## 🔄 LangGraph Workflow
 
-The debate flow is managed by a declarative **StateGraph** that orchestrates the entire debate process:
+The debate flow is managed by a declarative **StateGraph**:
 
 ```mermaid
-flowchart TD
-    Start([🚀 Start]) --> PA
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#4f46e5', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4338ca', 'lineColor': '#818cf8'}}}%%
+flowchart TB
+    %% Define styles
+    classDef start fill:#10b981,stroke:#059669,stroke-width:2px,color:white;
+    classDef process fill:#eff6ff,stroke:#3b82f6,stroke-width:2px,color:#1e3a8a;
+    classDef decision fill:#fff7ed,stroke:#f97316,stroke-width:2px,color:#9a3412;
+    classDef endNode fill:#ef4444,stroke:#b91c1c,stroke-width:2px,color:white;
 
-    subgraph Analysis["Parallel Analysis Phase"]
-        PA["parallel_analysis"]
-        PA --> |"concurrent"| RL["RL: Select Strategy"]
-        PA --> |"concurrent"| GNN["GNN: Social Analysis"]
-        PA --> |"concurrent"| RAG["RAG: Retrieve Evidence"]
+    Start(("🚀 Start")):::start
+    End(("🏁 End")):::endNode
+
+    subgraph Cycle["🔄 Debate Cycle"]
+        direction TB
+        Analyze["⚡ Parallel Analysis<br/>(RL + GNN + RAG)"]:::process
+        Fuse["🔗 Result Fusion"]:::process
+        Gen["💬 Response Generation"]:::process
+        Update["📝 State Update"]:::process
+        
+        Analyze --> Fuse --> Gen --> Update
     end
 
-    RL & GNN & RAG --> Fuse["fuse_results<br/>Combine Insights"]
-    Fuse --> Gen["generate_response<br/>LLM Generation"]
-    Gen --> Update["update_states<br/>Apply Effects"]
-    
-    Update --> Decision{should_continue?}
-    
-    Decision --> |"next_speaker"| Advance["advance_turn"]
-    Decision --> |"next_round"| Advance
-    Decision --> |"surrender / max_rounds"| End([🏁 End])
-    
-    Advance --> Check{check_round}
-    Check --> |"continue"| PA
-    Check --> |"end"| End
+    Check{"❓ Continue?"}:::decision
 
-    style Start fill:#4caf50,color:#fff
-    style End fill:#f44336,color:#fff
-    style Analysis fill:#e3f2fd
+    Start --> Analyze
+    Update --> Check
+    Check -->|"Yes (Next Turn)"| Analyze
+    Check -->|"No (Max Rounds/Surrender)"| End
+
+    linkStyle default stroke:#6366f1,stroke-width:2px;
 ```
 
 ### 📋 State Schema
 
-```mermaid
-classDiagram
-    class DebateState {
-        +str topic
-        +int current_round
-        +int max_rounds
-        +List~str~ agent_order
-        +int current_speaker_index
-        +Dict agent_states
-        +List~Dict~ history
-        +Dict rl_result
-        +Dict gnn_result
-        +Dict rag_result
-        +Dict fused_result
-        +str current_response
-        +bool debate_ended
-    }
-
-    class AgentState {
-        +str agent_id
-        +float current_stance
-        +float conviction
-        +List~float~ social_context
-        +List~float~ persuasion_history
-        +List~float~ attack_history
-        +bool has_surrendered
-        +update_stance()
-        +check_surrender()
-    }
-
-    DebateState "1" --> "*" AgentState : contains
-```
+| DebateState | AgentState |
+|------------|------------|
+| `topic` `current_round` `max_rounds` | `agent_id` `current_stance` |
+| `agent_states` `history` | `conviction` `persuasion_history` |
+| `rl_result` `gnn_result` `rag_result` | `attack_history` `has_surrendered` |
 
 ---
 
 ## 🎮 Debate Strategies
 
-The RL module selects from 4 adaptive strategies based on debate context:
+The RL module selects from **4 adaptive strategies**:
 
 ```mermaid
-mindmap
-    root((Debate Strategies))
-        Aggressive 🔥
-            Critical analysis
-            Challenge assumptions
-            Use counterexamples
-        Defensive 🛡️
-            Consolidate arguments
-            Respond systematically
-            Strengthen evidence
-        Analytical 🔬
-            Logical reasoning
-            Empirical data
-            Objective evaluation
-        Empathetic 💚
-            Find common ground
-            Understand concerns
-            Propose solutions
+%%{init: {'theme': 'base'}}%%
+graph TB
+    subgraph Matrix["🎯 Strategy Matrix"]
+        direction TB
+        
+        subgraph Row1[" "]
+            direction LR
+            S1["🔥 Aggressive<br/>(Challenge & Critique)"]:::red
+            S2["🛡️ Defensive<br/>(Consolidate & Protect)"]:::blue
+        end
+        
+        subgraph Row2[" "]
+            direction LR
+            S3["🔬 Analytical<br/>(Logic & Evidence)"]:::purple
+            S4["💚 Empathetic<br/>(Connect & Persuade)"]:::green
+        end
+    end
+
+    classDef red fill:#fee2e2,stroke:#ef4444,stroke-width:2px,color:#7f1d1d;
+    classDef blue fill:#dbeafe,stroke:#3b82f6,stroke-width:2px,color:#1e3a8a;
+    classDef purple fill:#f3e8ff,stroke:#9333ea,stroke-width:2px,color:#581c87;
+    classDef green fill:#dcfce7,stroke:#22c55e,stroke-width:2px,color:#14532d;
+    
+    style Matrix fill:#ffffff,stroke:#e5e7eb,color:#374151
+    style Row1 fill:transparent,stroke:transparent
+    style Row2 fill:transparent,stroke:transparent
 ```
 
 ---
@@ -337,66 +337,71 @@ uv run python train_all.py --rag    # Build RAG index
 ## 🛠️ Tech Stack
 
 ```mermaid
-graph LR
-    subgraph Orchestration
-        LangGraph["LangGraph"]
-        LangChain["LangChain"]
+%%{init: {'theme': 'base'}}%%
+block-beta
+    columns 5
+    
+    block:orch:1
+        columns 1
+        A["🔄 LangGraph"]
+        B["🔗 LangChain"]
+    end
+    
+    block:ml:1
+        columns 1
+        C["🔥 PyTorch"]
+        D["📊 PyG"]
+        E["🔍 FAISS"]
+    end
+    
+    block:llm:1
+        columns 1
+        F["🤖 OpenAI<br/>GPT-3.5/4"]
+    end
+    
+    block:web:1
+        columns 1
+        G["🌐 Flask"]
+        H["🎨 Bootstrap 5"]
+    end
+    
+    block:tools:1
+        columns 1
+        I["📦 uv"]
+        J["🧪 pytest"]
     end
 
-    subgraph AI/ML
-        PyTorch["PyTorch"]
-        PyG["PyTorch Geometric"]
-        FAISS["FAISS"]
-    end
-
-    subgraph LLM
-        OpenAI["OpenAI GPT-3.5/4"]
-    end
-
-    subgraph Web
-        Flask["Flask"]
-        Bootstrap["Bootstrap 5"]
-    end
-
-    subgraph Tools
-        uv["uv"]
-        pytest["pytest"]
-    end
-
-    LangGraph --> LangChain
-    LangChain --> OpenAI
-    PyTorch --> PyG
-    PyG --> FAISS
-    Flask --> Bootstrap
-
-    style Orchestration fill:#e8eaf6
-    style AI/ML fill:#fce4ec
-    style LLM fill:#e8f5e9
-    style Web fill:#fff3e0
-    style Tools fill:#f3e5f5
+    style orch fill:#818cf8,color:#fff
+    style ml fill:#fb923c,color:#fff
+    style llm fill:#4ade80,color:#fff
+    style web fill:#22d3ee,color:#fff
+    style tools fill:#f472b6,color:#fff
 ```
 
 ---
 
 ## 📚 Documentation
 
+### 📖 Core Learning Resource
+- **[LEARNING_NOTE.md](docs/LEARNING_NOTE.md)** 📚 Comprehensive deep learning study notes (GNN, PPO, RAG, LangGraph)
+
 ### Architecture
-- [System Overview](docs/architecture/OVERVIEW.md)
-- [LangGraph Orchestration](docs/architecture/LANGGRAPH.md)
-- [Data Flow](docs/architecture/DATA_FLOW.md)
+- [System Overview](docs/architecture/OVERVIEW.md) - High-level architecture
+- [LangGraph Orchestration](docs/architecture/LANGGRAPH.md) - Workflow engine
+- [Data Flow](docs/architecture/DATA_FLOW.md) - State management
 
 ### Guides
-- [Quick Start Guide](docs/guides/QUICKSTART.md)
-- [Configuration Guide](docs/guides/CONFIGURATION.md)
-- [Training Guide](docs/guides/TRAINING.md)
-- [Deployment Guide](docs/guides/DEPLOYMENT.md)
+- [Quick Start Guide](docs/guides/QUICKSTART.md) - Get running in 5 minutes
+- [Configuration Guide](docs/guides/CONFIGURATION.md) - System configuration
+- [Training Guide](docs/guides/TRAINING.md) - Model training
+- [Deployment Guide](docs/guides/DEPLOYMENT.md) - Production deployment
 
 ### API & Modules
-- [REST API Reference](docs/api/REST_API.md)
-- [RAG Module](docs/modules/RAG.md)
-- [GNN Module](docs/modules/GNN.md)
-- [RL Module](docs/modules/RL.md)
-- [Scoring System](docs/modules/SCORING.md)
+- [REST API Reference](docs/api/REST_API.md) - Flask API endpoints
+- [RAG Module](docs/modules/RAG.md) - Evidence retrieval
+- [GNN Module](docs/modules/GNN.md) - Social analysis
+- [RL Module](docs/modules/RL.md) - Strategy selection
+- [Scoring System](docs/modules/SCORING.md) - Victory determination
 
 ---
 
@@ -451,80 +456,99 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 ## 🏗️ 系統架構
 
 ```mermaid
-graph TB
-    subgraph UI["🌐 Web 介面"]
-        Flask["Flask 伺服器"]
-        Web["Bootstrap 5 UI"]
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#4f46e5', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4338ca', 'lineColor': '#6366f1', 'secondaryColor': '#10b981', 'tertiaryColor': '#f59e0b'}}}%%
+flowchart TB
+    %% Nodes Configuration
+    classDef web fill:#e0f2fe,stroke:#0ea5e9,stroke-width:2px,color:#0c4a6e;
+    classDef orch fill:#f3e8ff,stroke:#9333ea,stroke-width:2px,color:#581c87;
+    classDef brain fill:#dcfce7,stroke:#22c55e,stroke-width:2px,color:#14532d;
+    classDef gen fill:#ffedd5,stroke:#f97316,stroke-width:2px,color:#7c2d12;
+    classDef agent fill:#fee2e2,stroke:#ef4444,stroke-width:2px,color:#7f1d1d;
+
+    subgraph Presentation["🌐 展示層"]
+        direction TB
+        UI["🖥️ Bootstrap 5 UI"]:::web
+        API["⚡ Flask API"]:::web
+        UI <--> API
     end
 
-    subgraph Orchestrator["🎯 LangGraph 編排器"]
-        StateGraph["狀態圖"]
-        
-        subgraph Parallel["⚡ 並行分析"]
-            RL["🎮 RL 策略<br/>PPO 策略網路"]
-            GNN["🕸️ GNN 社交<br/>圖編碼器"]
-            RAG["📚 RAG 證據<br/>FAISS 檢索器"]
-        end
-        
-        Fusion["🔗 結果融合"]
-        LLM["🤖 LLM 回應<br/>GPT-3.5/4"]
-        StateUpdate["📊 狀態更新"]
+    subgraph Core["⚙️ 編排核心"]
+        direction TB
+        LG["📊 LangGraph 引擎<br/>(狀態管理)"]:::orch
+    end
+
+    subgraph Intelligence["🧠 智能分析模組"]
+        direction LR
+        RL["🎮 RL 策略<br/>(PPO 決策)"]:::brain
+        GNN["🕸️ GNN 社交<br/>(GraphSAGE)"]:::brain
+        RAG["📚 RAG 證據<br/>(FAISS)"]:::brain
+    end
+
+    subgraph Generation["🔮 生成層"]
+        direction TB
+        Fusion["🔗 結果融合"]:::gen
+        LLM["🤖 LLM 推理<br/>(GPT-3.5/4)"]:::gen
+        Fusion --> LLM
     end
 
     subgraph Agents["👥 辯論智能體"]
-        AgentA["智能體 A<br/>🟢 支持方"]
-        AgentB["智能體 B<br/>🔴 反對方"]
-        AgentC["智能體 C<br/>🟡 中立方"]
+        direction LR
+        A1["🟢 智能體 A<br/>(支持方)"]:::agent
+        A2["🔴 智能體 B<br/>(反對方)"]:::agent
+        A3["🟡 智能體 C<br/>(中立方)"]:::agent
     end
 
-    Web --> Flask
-    Flask --> StateGraph
-    StateGraph --> Parallel
-    RL & GNN & RAG --> Fusion
-    Fusion --> LLM
-    LLM --> StateUpdate
-    StateUpdate --> AgentA & AgentB & AgentC
-    AgentA & AgentB & AgentC --> StateGraph
+    %% Data Flow Connections
+    API <==> LG
+    LG ==> Intelligence
+    Intelligence ==> Fusion
+    LLM ==> Agents
+    Agents -.->|"狀態更新"| LG
 
-    style UI fill:#e1f5fe
-    style Orchestrator fill:#fff3e0
-    style Agents fill:#e8f5e9
+    %% Styling
+    style Presentation fill:#f0f9ff,stroke:#bae6fd,color:#0369a1
+    style Core fill:#faf5ff,stroke:#e9d5ff,color:#6b21a8
+    style Intelligence fill:#f0fdf4,stroke:#bbf7d0,color:#15803d
+    style Generation fill:#fff7ed,stroke:#fed7aa,color:#c2410c
+    style Agents fill:#fef2f2,stroke:#fecaca,color:#b91c1c
 ```
 
 ---
 
 ## 🔄 LangGraph 工作流程
 
-辯論流程由宣告式 **StateGraph** 管理，編排整個辯論過程：
+辯論流程由宣告式 **StateGraph** 管理：
 
 ```mermaid
-flowchart TD
-    Start([🚀 開始]) --> PA
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#4f46e5', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4338ca', 'lineColor': '#818cf8'}}}%%
+flowchart TB
+    %% Define styles
+    classDef start fill:#10b981,stroke:#059669,stroke-width:2px,color:white;
+    classDef process fill:#eff6ff,stroke:#3b82f6,stroke-width:2px,color:#1e3a8a;
+    classDef decision fill:#fff7ed,stroke:#f97316,stroke-width:2px,color:#9a3412;
+    classDef endNode fill:#ef4444,stroke:#b91c1c,stroke-width:2px,color:white;
 
-    subgraph Analysis["並行分析階段"]
-        PA["parallel_analysis"]
-        PA --> |"並行"| RL["RL: 選擇策略"]
-        PA --> |"並行"| GNN["GNN: 社交分析"]
-        PA --> |"並行"| RAG["RAG: 檢索證據"]
+    Start(("🚀 開始")):::start
+    End(("🏁 結束")):::endNode
+
+    subgraph Cycle["🔄 辯論循環"]
+        direction TB
+        Analyze["⚡ 並行分析<br/>(RL + GNN + RAG)"]:::process
+        Fuse["🔗 結果融合"]:::process
+        Gen["💬 生成回應"]:::process
+        Update["📝 更新狀態"]:::process
+        
+        Analyze --> Fuse --> Gen --> Update
     end
 
-    RL & GNN & RAG --> Fuse["fuse_results<br/>整合洞察"]
-    Fuse --> Gen["generate_response<br/>LLM 生成"]
-    Gen --> Update["update_states<br/>應用效果"]
-    
-    Update --> Decision{是否繼續?}
-    
-    Decision --> |"下一發言者"| Advance["advance_turn"]
-    Decision --> |"下一回合"| Advance
-    Decision --> |"投降 / 達到最大回合"| End([🏁 結束])
-    
-    Advance --> Check{檢查回合}
-    Check --> |"繼續"| PA
-    Check --> |"結束"| End
+    Check{"❓ 繼續?"}:::decision
 
-    style Start fill:#4caf50,color:#fff
-    style End fill:#f44336,color:#fff
-    style Analysis fill:#e3f2fd
+    Start --> Analyze
+    Update --> Check
+    Check -->|"是 (下一回合)"| Analyze
+    Check -->|"否 (最大回合/投降)"| End
+
+    linkStyle default stroke:#6366f1,stroke-width:2px;
 ```
 
 ---
@@ -533,12 +557,34 @@ flowchart TD
 
 RL 模組根據辯論情境從 4 種自適應策略中選擇：
 
-| 策略 | 說明 | 適用情境 |
-|------|------|----------|
-| 🔥 **激進策略** | 深入分析邏輯漏洞，挑戰核心假設 | 對手論點薄弱時 |
-| 🛡️ **防守策略** | 鞏固核心論點，系統性回應挑戰 | 受到強烈攻擊時 |
-| 🔬 **分析策略** | 使用邏輯推理、實證數據客觀評估 | 需要建立可信度時 |
-| 💚 **同理策略** | 尋找共同點，理解對方合理關切 | 尋求共識時 |
+```mermaid
+%%{init: {'theme': 'base'}}%%
+graph TB
+    subgraph Matrix["🎯 策略矩陣"]
+        direction TB
+        
+        subgraph Row1[" "]
+            direction LR
+            S1["🔥 激進策略<br/>(挑戰與批判)"]:::red
+            S2["🛡️ 防守策略<br/>(鞏固與防護)"]:::blue
+        end
+        
+        subgraph Row2[" "]
+            direction LR
+            S3["🔬 分析策略<br/>(邏輯與證據)"]:::purple
+            S4["💚 同理策略<br/>(連結與說服)"]:::green
+        end
+    end
+
+    classDef red fill:#fee2e2,stroke:#ef4444,stroke-width:2px,color:#7f1d1d;
+    classDef blue fill:#dbeafe,stroke:#3b82f6,stroke-width:2px,color:#1e3a8a;
+    classDef purple fill:#f3e8ff,stroke:#9333ea,stroke-width:2px,color:#581c87;
+    classDef green fill:#dcfce7,stroke:#22c55e,stroke-width:2px,color:#14532d;
+    
+    style Matrix fill:#ffffff,stroke:#e5e7eb,color:#374151
+    style Row1 fill:transparent,stroke:transparent
+    style Row2 fill:transparent,stroke:transparent
+```
 
 ---
 
@@ -675,25 +721,74 @@ uv run python train_all.py --rag    # 建立 RAG 索引
 
 ---
 
+## 🛠️ 技術棧
+
+```mermaid
+%%{init: {'theme': 'base'}}%%
+block-beta
+    columns 5
+    
+    block:orch:1
+        columns 1
+        A["🔄 LangGraph"]
+        B["🔗 LangChain"]
+    end
+    
+    block:ml:1
+        columns 1
+        C["🔥 PyTorch"]
+        D["📊 PyG"]
+        E["🔍 FAISS"]
+    end
+    
+    block:llm:1
+        columns 1
+        F["🤖 OpenAI<br/>GPT-3.5/4"]
+    end
+    
+    block:web:1
+        columns 1
+        G["🌐 Flask"]
+        H["🎨 Bootstrap 5"]
+    end
+    
+    block:tools:1
+        columns 1
+        I["📦 uv"]
+        J["🧪 pytest"]
+    end
+
+    style orch fill:#818cf8,color:#fff
+    style ml fill:#fb923c,color:#fff
+    style llm fill:#4ade80,color:#fff
+    style web fill:#22d3ee,color:#fff
+    style tools fill:#f472b6,color:#fff
+```
+
+---
+
 ## 📚 文檔導覽
 
+### 📖 核心學習資源
+- **[LEARNING_NOTE.md](docs/LEARNING_NOTE.md)** 📚 完整深度學習筆記（GNN、PPO、RAG、LangGraph）
+
 ### 架構
-- [系統概覽](docs/architecture/OVERVIEW.md)
-- [LangGraph 編排](docs/architecture/LANGGRAPH.md)
-- [資料流](docs/architecture/DATA_FLOW.md)
+- [系統概覽](docs/architecture/OVERVIEW.md) - 高層架構
+- [LangGraph 編排](docs/architecture/LANGGRAPH.md) - 工作流引擎
+- [資料流](docs/architecture/DATA_FLOW.md) - 狀態管理
 
 ### 指南
-- [快速開始指南](docs/guides/QUICKSTART.md)
-- [配置指南](docs/guides/CONFIGURATION.md)
-- [訓練指南](docs/guides/TRAINING.md)
-- [部署指南](docs/guides/DEPLOYMENT.md)
+- [快速開始指南](docs/guides/QUICKSTART.md) - 5 分鐘啟動系統
+- [配置指南](docs/guides/CONFIGURATION.md) - 系統配置
+- [訓練指南](docs/guides/TRAINING.md) - 模型訓練
+- [部署指南](docs/guides/DEPLOYMENT.md) - 生產部署
 
 ### API 與模組
-- [REST API 參考](docs/api/REST_API.md)
-- [RAG 模組](docs/modules/RAG.md)
-- [GNN 模組](docs/modules/GNN.md)
-- [RL 模組](docs/modules/RL.md)
-- [評分系統](docs/modules/SCORING.md)
+- [REST API 參考](docs/api/REST_API.md) - Flask API 端點
+- [RAG 模組](docs/modules/RAG.md) - 證據檢索
+- [GNN 模組](docs/modules/GNN.md) - 社交分析
+- [RL 模組](docs/modules/RL.md) - 策略選擇
+- [評分系統](docs/modules/SCORING.md) - 勝負判定
 
 ---
 

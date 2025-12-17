@@ -401,23 +401,26 @@ block-beta
 
 ## 📚 Documentation
 
+### 📖 Core Learning Resource
+- **[LEARNING_NOTE.md](docs/LEARNING_NOTE.md)** 📚 Comprehensive deep learning study notes (GNN, PPO, RAG, LangGraph)
+
 ### Architecture
-- [System Overview](docs/architecture/OVERVIEW.md)
-- [LangGraph Orchestration](docs/architecture/LANGGRAPH.md)
-- [Data Flow](docs/architecture/DATA_FLOW.md)
+- [System Overview](docs/architecture/OVERVIEW.md) - High-level architecture
+- [LangGraph Orchestration](docs/architecture/LANGGRAPH.md) - Workflow engine
+- [Data Flow](docs/architecture/DATA_FLOW.md) - State management
 
 ### Guides
-- [Quick Start Guide](docs/guides/QUICKSTART.md)
-- [Configuration Guide](docs/guides/CONFIGURATION.md)
-- [Training Guide](docs/guides/TRAINING.md)
-- [Deployment Guide](docs/guides/DEPLOYMENT.md)
+- [Quick Start Guide](docs/guides/QUICKSTART.md) - Get running in 5 minutes
+- [Configuration Guide](docs/guides/CONFIGURATION.md) - System configuration
+- [Training Guide](docs/guides/TRAINING.md) - Model training
+- [Deployment Guide](docs/guides/DEPLOYMENT.md) - Production deployment
 
 ### API & Modules
-- [REST API Reference](docs/api/REST_API.md)
-- [RAG Module](docs/modules/RAG.md)
-- [GNN Module](docs/modules/GNN.md)
-- [RL Module](docs/modules/RL.md)
-- [Scoring System](docs/modules/SCORING.md)
+- [REST API Reference](docs/api/REST_API.md) - Flask API endpoints
+- [RAG Module](docs/modules/RAG.md) - Evidence retrieval
+- [GNN Module](docs/modules/GNN.md) - Social analysis
+- [RL Module](docs/modules/RL.md) - Strategy selection
+- [Scoring System](docs/modules/SCORING.md) - Victory determination
 
 ---
 
@@ -711,23 +714,26 @@ uv run python train_all.py --rag    # 建立 RAG 索引
 
 ## 📚 文檔導覽
 
+### 📖 核心學習資源
+- **[LEARNING_NOTE.md](docs/LEARNING_NOTE.md)** 📚 完整深度學習筆記（GNN、PPO、RAG、LangGraph）
+
 ### 架構
-- [系統概覽](docs/architecture/OVERVIEW.md)
-- [LangGraph 編排](docs/architecture/LANGGRAPH.md)
-- [資料流](docs/architecture/DATA_FLOW.md)
+- [系統概覽](docs/architecture/OVERVIEW.md) - 高層架構
+- [LangGraph 編排](docs/architecture/LANGGRAPH.md) - 工作流引擎
+- [資料流](docs/architecture/DATA_FLOW.md) - 狀態管理
 
 ### 指南
-- [快速開始指南](docs/guides/QUICKSTART.md)
-- [配置指南](docs/guides/CONFIGURATION.md)
-- [訓練指南](docs/guides/TRAINING.md)
-- [部署指南](docs/guides/DEPLOYMENT.md)
+- [快速開始指南](docs/guides/QUICKSTART.md) - 5 分鐘啟動系統
+- [配置指南](docs/guides/CONFIGURATION.md) - 系統配置
+- [訓練指南](docs/guides/TRAINING.md) - 模型訓練
+- [部署指南](docs/guides/DEPLOYMENT.md) - 生產部署
 
 ### API 與模組
-- [REST API 參考](docs/api/REST_API.md)
-- [RAG 模組](docs/modules/RAG.md)
-- [GNN 模組](docs/modules/GNN.md)
-- [RL 模組](docs/modules/RL.md)
-- [評分系統](docs/modules/SCORING.md)
+- [REST API 參考](docs/api/REST_API.md) - Flask API 端點
+- [RAG 模組](docs/modules/RAG.md) - 證據檢索
+- [GNN 模組](docs/modules/GNN.md) - 社交分析
+- [RL 模組](docs/modules/RL.md) - 策略選擇
+- [評分系統](docs/modules/SCORING.md) - 勝負判定
 
 ---
 

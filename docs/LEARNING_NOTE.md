@@ -20,6 +20,7 @@
 - [2.4 GAT: Attention Mechanism](#24-gat-attention-mechanism)
 - [2.5 Implementation: Multi-Task Learning](#25-implementation-multi-task-learning)
 - [2.6 Project Implementation Details](#26-project-implementation-details)
+- [2.7 Step-by-Step GNN Coding Guide](#27-step-by-step-gnn-coding-guide)
 
 ## Part 3: Reinforcement Learning (PPO) ⭐
 - [3.1 RL Basics & Policy Gradient](#31-rl-basics--policy-gradient)
@@ -28,11 +29,13 @@
 - [3.4 GAE: Reducing Variance](#34-gae-reducing-variance)
 - [3.5 Reward Engineering (The "Dark Art")](#35-reward-engineering-the-dark-art)
 - [3.6 Project Implementation Details](#36-project-implementation-details)
+- [3.7 Step-by-Step PPO Coding Guide](#37-step-by-step-ppo-coding-guide)
 
 ## Part 4: RAG & Orchestration
 - [4.1 RAG System Design](#41-rag-system-design)
 - [4.2 LangGraph: State Machines for LLMs](#42-langgraph-state-machines-for-llms)
 - [4.3 Project Implementation Details](#43-project-implementation-details)
+- [4.4 Step-by-Step Orchestration Coding Guide](#44-step-by-step-orchestration-coding-guide)
 
 ## Part 5: Key Concepts Summary
 - [5.1 FAQ & Deep Dive](#51-faq--deep-dive)
@@ -159,6 +162,76 @@ We don't train separate models. We use **one encoder, multiple heads**.
 3.  **Forward Pass**: `x, edge_index` → GNN Layers → `h` (128-dim).
 4.  **Heads**: `h` → Linear Layers → 3 Outputs.
 
+## 2.7 Step-by-Step GNN Coding Guide
+
+**Goal**: Build `PersuasionGNN` class from scratch.
+
+### Step 1: Imports
+```python
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from torch_geometric.nn import SAGEConv, GATConv
+```
+
+### Step 2: Define the Class & Init
+```python
+class PersuasionGNN(nn.Module):
+    def __init__(self, input_dim=768, hidden_dim=256):
+        super().__init__()
+        
+        # 1. GraphSAGE Layers (The "Aggregator")
+        # Compresses 768 -> 256
+        self.conv1 = SAGEConv(input_dim, hidden_dim)
+        # Keeps 256 -> 256
+        self.conv2 = SAGEConv(hidden_dim, hidden_dim)
+        # Compresses 256 -> 128
+        self.conv3 = SAGEConv(hidden_dim, hidden_dim // 2)
+        
+        # 2. GAT Layer (The "Refiner")
+        # 128 -> 128, 4 heads averaged
+        self.attention = GATConv(hidden_dim // 2, hidden_dim // 2, 
+                                heads=4, concat=False)
+                                
+        # 3. Task Heads (The "Predictors")
+        # Task A: Will they be persuaded? (Binary)
+        self.delta_head = nn.Linear(hidden_dim // 2, 1)
+        # Task B: What is the quality? (Regression)
+        self.quality_head = nn.Linear(hidden_dim // 2, 1)
+        # Task C: Which strategy is this? (Classification)
+        self.strategy_head = nn.Linear(hidden_dim // 2, 4)
+```
+
+### Step 3: Define Forward Pass
+```python
+    def forward(self, x, edge_index):
+        # x: [num_nodes, 768], edge_index: [2, num_edges]
+        
+        # Layer 1: SAGE + ReLU + Dropout
+        x = self.conv1(x, edge_index)
+        x = F.relu(x)
+        x = F.dropout(x, p=0.3, training=self.training)
+        
+        # Layer 2: SAGE + ReLU + Dropout
+        x = self.conv2(x, edge_index)
+        x = F.relu(x)
+        x = F.dropout(x, p=0.3, training=self.training)
+        
+        # Layer 3: SAGE + ReLU
+        x = self.conv3(x, edge_index)
+        x = F.relu(x)
+        
+        # Layer 4: GAT (Attention)
+        x = self.attention(x, edge_index)
+        
+        # Multi-task Outputs
+        return {
+            'delta': torch.sigmoid(self.delta_head(x)), # 0-1 prob
+            'quality': torch.sigmoid(self.quality_head(x)), # 0-1 score
+            'strategy': self.strategy_head(x) # Logits for 4 classes
+        }
+```
+
 ---
 
 # Part 3: Reinforcement Learning (PPO) ⭐
@@ -253,6 +326,65 @@ RL is only as good as the reward.
 4.  **Update**: Run SGD on PPO loss function for `K` epochs.
 5.  **Clear Buffer**: On-policy algorithms must discard old data.
 
+## 3.7 Step-by-Step PPO Coding Guide
+
+**Goal**: Implement the core `update` function of PPO.
+
+### Step 1: Compute GAE (Generalized Advantage Estimation)
+```python
+def compute_gae(rewards, values, next_values, dones, gamma=0.99, lam=0.95):
+    """
+    Input: lists of rewards, values, etc.
+    Output: list of advantages
+    """
+    advantages = []
+    gae = 0
+    
+    # Iterate backwards (from last step to first)
+    for i in reversed(range(len(rewards))):
+        # 1. Calculate TD Error (delta)
+        # delta = r + γ * V(s') - V(s)
+        delta = rewards[i] + gamma * next_values[i] * (1 - dones[i]) - values[i]
+        
+        # 2. Accumulate GAE
+        # gae = delta + γ * λ * gae_prev
+        gae = delta + gamma * lam * (1 - dones[i]) * gae
+        
+        advantages.insert(0, gae)
+        
+    return torch.tensor(advantages)
+```
+
+### Step 2: The PPO Loss Function
+```python
+def ppo_loss(old_log_probs, states, actions, advantages, returns):
+    # 1. Get new probabilities from current policy
+    logits, values = model(states)
+    dist = Categorical(logits=logits)
+    new_log_probs = dist.log_prob(actions)
+    
+    # 2. Calculate Ratio (π_new / π_old)
+    # log(a/b) = log(a) - log(b) => a/b = exp(log(a) - log(b))
+    ratio = torch.exp(new_log_probs - old_log_probs)
+    
+    # 3. Calculate Surrogate Objectives
+    # Obj1: Unclipped
+    surr1 = ratio * advantages
+    # Obj2: Clipped (The PPO magic!)
+    surr2 = torch.clamp(ratio, 1.0 - 0.2, 1.0 + 0.2) * advantages
+    
+    # 4. Policy Loss (Maximize obj => Minimize negative obj)
+    policy_loss = -torch.min(surr1, surr2).mean()
+    
+    # 5. Value Loss (MSE between predicted value and actual return)
+    value_loss = F.mse_loss(values.squeeze(), returns)
+    
+    # 6. Total Loss
+    total_loss = policy_loss + 0.5 * value_loss
+    
+    return total_loss
+```
+
 ---
 
 # Part 4: RAG & Orchestration
@@ -302,6 +434,65 @@ class DebateState(TypedDict):
 *   **Tool Binding**:
     *   GNN, RL, and RAG are wrapped as `LangChain Tools` (`@tool` decorator).
     *   This allows potential future expansion where the LLM *decides* which tool to call (ReAct pattern), though currently hard-coded in the parallel node.
+
+## 4.4 Step-by-Step Orchestration Coding Guide
+
+**Goal**: Build the LangGraph workflow.
+
+### Step 1: Define State
+```python
+from typing import Annotated, TypedDict, List
+import operator
+
+class DebateState(TypedDict):
+    topic: str
+    messages: Annotated[List[str], operator.add] # Auto-append
+    round: int
+```
+
+### Step 2: Define Nodes
+```python
+def parallel_analysis(state: DebateState):
+    # Run analysis (simplified)
+    # In real code, use ThreadPoolExecutor here!
+    return {"analysis_results": "..."}
+
+def generate_response(state: DebateState):
+    # Call LLM
+    response = llm.invoke(state['topic'])
+    # Return JUST the new message
+    return {
+        "messages": [response.content], 
+        "round": state['round'] + 1
+    }
+```
+
+### Step 3: Build Graph
+```python
+from langgraph.graph import StateGraph, END
+
+# 1. Init Graph
+workflow = StateGraph(DebateState)
+
+# 2. Add Nodes
+workflow.add_node("analyze", parallel_analysis)
+workflow.add_node("respond", generate_response)
+
+# 3. Add Edges
+workflow.set_entry_point("analyze")
+workflow.add_edge("analyze", "respond")
+
+# 4. Conditional Edge
+def check_end(state):
+    if state['round'] > 5:
+        return END
+    return "analyze"
+
+workflow.add_conditional_edges("respond", check_end)
+
+# 5. Compile
+app = workflow.compile()
+```
 
 ---
 

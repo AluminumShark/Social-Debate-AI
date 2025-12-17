@@ -20,6 +20,7 @@
 - [2.4 GAT：注意力機制](#24-gat注意力機制)
 - [2.5 實作細節：多任務學習](#25-實作細節多任務學習)
 - [2.6 專案實作細節](#26-專案實作細節)
+- [2.7 手把手 GNN 實作指南](#27-手把手-gnn-實作指南)
 
 ## 第三部分：強化學習 (PPO) ⭐
 - [3.1 RL 基礎與策略梯度](#31-rl-基礎與策略梯度)
@@ -28,11 +29,13 @@
 - [3.4 GAE：降低變異數](#34-gae降低變異數)
 - [3.5 獎勵工程 (Reward Engineering)](#35-獎勵工程-reward-engineering)
 - [3.6 專案實作細節](#36-專案實作細節)
+- [3.7 手把手 PPO 實作指南](#37-手把手-ppo-實作指南)
 
 ## 第四部分：RAG 與 編排系統
 - [4.1 RAG 系統設計](#41-rag-系統設計)
 - [4.2 LangGraph：LLM 的狀態機](#42-langgraphllm-的狀態機)
 - [4.3 專案實作細節](#43-專案實作細節)
+- [4.4 手把手編排器實作指南](#44-手把手編排器實作指南)
 
 ## 第五部分：重點概念總結 (Key Concepts)
 - [5.1 常見問題解析 (FAQ)](#51-常見問題解析-faq)
@@ -159,6 +162,76 @@ self.attention = tgnn.GATConv(hidden_dim, hidden_dim, heads=4, concat=False)
 3.  **前向傳播**：`x, edge_index` → GNN Layers → `h` (128維)。
 4.  **輸出頭**：`h` → Linear Layers → 3 個不同的預測結果。
 
+## 2.7 手把手 GNN 實作指南
+
+**目標**：從頭開始構建 `PersuasionGNN` 類別。
+
+### 步驟 1: 引入依賴
+```python
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from torch_geometric.nn import SAGEConv, GATConv
+```
+
+### 步驟 2: 定義類別與初始化
+```python
+class PersuasionGNN(nn.Module):
+    def __init__(self, input_dim=768, hidden_dim=256):
+        super().__init__()
+        
+        # 1. GraphSAGE 層 (負責「聚合」資訊)
+        # 壓縮 768 -> 256
+        self.conv1 = SAGEConv(input_dim, hidden_dim)
+        # 保持 256 -> 256
+        self.conv2 = SAGEConv(hidden_dim, hidden_dim)
+        # 壓縮 256 -> 128
+        self.conv3 = SAGEConv(hidden_dim, hidden_dim // 2)
+        
+        # 2. GAT 層 (負責「精煉」資訊)
+        # 128 -> 128, 4 個頭取平均
+        self.attention = GATConv(hidden_dim // 2, hidden_dim // 2, 
+                                heads=4, concat=False)
+                                
+        # 3. 任務頭 (負責「預測」)
+        # 任務 A: 會被說服嗎？(二元分類)
+        self.delta_head = nn.Linear(hidden_dim // 2, 1)
+        # 任務 B: 品質如何？(回歸)
+        self.quality_head = nn.Linear(hidden_dim // 2, 1)
+        # 任務 C: 這是什麼策略？(多分類)
+        self.strategy_head = nn.Linear(hidden_dim // 2, 4)
+```
+
+### 步驟 3: 定義前向傳播
+```python
+    def forward(self, x, edge_index):
+        # x: [節點數, 768], edge_index: [2, 邊數]
+        
+        # 第 1 層: SAGE + ReLU + Dropout
+        x = self.conv1(x, edge_index)
+        x = F.relu(x)
+        x = F.dropout(x, p=0.3, training=self.training)
+        
+        # 第 2 層: SAGE + ReLU + Dropout
+        x = self.conv2(x, edge_index)
+        x = F.relu(x)
+        x = F.dropout(x, p=0.3, training=self.training)
+        
+        # 第 3 層: SAGE + ReLU
+        x = self.conv3(x, edge_index)
+        x = F.relu(x)
+        
+        # 第 4 層: GAT (注意力機制)
+        x = self.attention(x, edge_index)
+        
+        # 多任務輸出
+        return {
+            'delta': torch.sigmoid(self.delta_head(x)), # 0-1 機率
+            'quality': torch.sigmoid(self.quality_head(x)), # 0-1 分數
+            'strategy': self.strategy_head(x) # 4 個類別的 Logits
+        }
+```
+
 ---
 
 # 第三部分：強化學習 (PPO) ⭐
@@ -253,6 +326,65 @@ RL 的效果完全取決於獎勵函數。
 4.  **更新**：在 PPO Loss 上執行 SGD 更新 `K` 個 Epochs。
 5.  **清空 Buffer**：PPO 是 On-policy 算法，更新後舊數據必須丟棄。
 
+## 3.7 手把手 PPO 實作指南
+
+**目標**：實作 PPO 的核心 `update` 函數。
+
+### 步驟 1: 計算 GAE (廣義優勢估計)
+```python
+def compute_gae(rewards, values, next_values, dones, gamma=0.99, lam=0.95):
+    """
+    輸入: 獎勵列表, 價值列表 等等
+    輸出: 優勢列表 (Advantages)
+    """
+    advantages = []
+    gae = 0
+    
+    # 從最後一步開始往前迭代
+    for i in reversed(range(len(rewards))):
+        # 1. 計算 TD Error (delta)
+        # delta = r + γ * V(s') - V(s)
+        delta = rewards[i] + gamma * next_values[i] * (1 - dones[i]) - values[i]
+        
+        # 2. 累積 GAE
+        # gae = delta + γ * λ * gae_prev
+        gae = delta + gamma * lam * (1 - dones[i]) * gae
+        
+        advantages.insert(0, gae)
+        
+    return torch.tensor(advantages)
+```
+
+### 步驟 2: PPO 損失函數
+```python
+def ppo_loss(old_log_probs, states, actions, advantages, returns):
+    # 1. 用當前策略計算新的機率
+    logits, values = model(states)
+    dist = Categorical(logits=logits)
+    new_log_probs = dist.log_prob(actions)
+    
+    # 2. 計算比率 (Ratio: π_new / π_old)
+    # log(a/b) = log(a) - log(b) => a/b = exp(log(a) - log(b))
+    ratio = torch.exp(new_log_probs - old_log_probs)
+    
+    # 3. 計算 Surrogate Objectives
+    # Obj1: 未截斷的
+    surr1 = ratio * advantages
+    # Obj2: 截斷的 (PPO 的魔法!)
+    surr2 = torch.clamp(ratio, 1.0 - 0.2, 1.0 + 0.2) * advantages
+    
+    # 4. 策略損失 (取最小值的負數，因為要最大化)
+    policy_loss = -torch.min(surr1, surr2).mean()
+    
+    # 5. 價值損失 (預測值與實際回報的 MSE)
+    value_loss = F.mse_loss(values.squeeze(), returns)
+    
+    # 6. 總損失
+    total_loss = policy_loss + 0.5 * value_loss
+    
+    return total_loss
+```
+
 ---
 
 # 第四部分：RAG 與 編排系統
@@ -302,6 +434,65 @@ class DebateState(TypedDict):
 *   **工具綁定 (Tool Binding)**：
     *   GNN, RL, RAG 都被封裝為 `LangChain Tools` (`@tool` 裝飾器)。
     *   這保留了未來擴展的可能性：可以讓 LLM 自己決定「是否需要調用 GNN」，而不僅僅是硬編碼在流程中。
+
+## 4.4 手把手編排器實作指南
+
+**目標**：構建 LangGraph 工作流。
+
+### 步驟 1: 定義狀態
+```python
+from typing import Annotated, TypedDict, List
+import operator
+
+class DebateState(TypedDict):
+    topic: str
+    messages: Annotated[List[str], operator.add] # 自動追加
+    round: int
+```
+
+### 步驟 2: 定義節點
+```python
+def parallel_analysis(state: DebateState):
+    # 執行分析 (簡化版)
+    # 實際代碼中，這裡要用 ThreadPoolExecutor!
+    return {"analysis_results": "..."}
+
+def generate_response(state: DebateState):
+    # 呼叫 LLM
+    response = llm.invoke(state['topic'])
+    # 只返回「新的訊息」
+    return {
+        "messages": [response.content], 
+        "round": state['round'] + 1
+    }
+```
+
+### 步驟 3: 構建圖
+```python
+from langgraph.graph import StateGraph, END
+
+# 1. 初始化圖
+workflow = StateGraph(DebateState)
+
+# 2. 添加節點
+workflow.add_node("analyze", parallel_analysis)
+workflow.add_node("respond", generate_response)
+
+# 3. 添加邊
+workflow.set_entry_point("analyze")
+workflow.add_edge("analyze", "respond")
+
+# 4. 條件邊
+def check_end(state):
+    if state['round'] > 5:
+        return END
+    return "analyze"
+
+workflow.add_conditional_edges("respond", check_end)
+
+# 5. 編譯
+app = workflow.compile()
+```
 
 ---
 

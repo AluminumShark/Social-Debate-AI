@@ -19,6 +19,7 @@
 - [2.3 GraphSAGE: Scalability King](#23-graphsage-scalability-king)
 - [2.4 GAT: Attention Mechanism](#24-gat-attention-mechanism)
 - [2.5 Implementation: Multi-Task Learning](#25-implementation-multi-task-learning)
+- [2.6 Project Implementation Details](#26-project-implementation-details)
 
 ## Part 3: Reinforcement Learning (PPO) ⭐
 - [3.1 RL Basics & Policy Gradient](#31-rl-basics--policy-gradient)
@@ -26,10 +27,12 @@
 - [3.3 Actor-Critic Implementation](#33-actor-critic-implementation)
 - [3.4 GAE: Reducing Variance](#34-gae-reducing-variance)
 - [3.5 Reward Engineering (The "Dark Art")](#35-reward-engineering-the-dark-art)
+- [3.6 Project Implementation Details](#36-project-implementation-details)
 
 ## Part 4: RAG & Orchestration
 - [4.1 RAG System Design](#41-rag-system-design)
 - [4.2 LangGraph: State Machines for LLMs](#42-langgraph-state-machines-for-llms)
+- [4.3 Project Implementation Details](#43-project-implementation-details)
 
 ## Part 5: Key Concepts Summary
 - [5.1 FAQ & Deep Dive](#51-faq--deep-dive)
@@ -132,6 +135,30 @@ We don't train separate models. We use **one encoder, multiple heads**.
 
 **Why?** The backbone learns "Understanding Debate State", which is useful for ALL tasks. Shared parameters = Better generalization.
 
+## 2.6 Project Implementation Details
+
+### Tech Stack
+*   **Framework**: `PyTorch Geometric` (PyG) for efficient graph operations.
+*   **Embedding**: `DistilBERT` (768-dim) from `HuggingFace Transformers` for node features.
+
+### Specific Configurations
+*   **Layers**: 3x SAGEConv + 1x GATConv (4 heads).
+*   **Dimensions**: 768 (Input) → 256 → 256 → 128 (Shared Latent).
+*   **Dropout**: 0.3 to prevent overfitting on small graphs.
+*   **Loss Function**:
+    ```python
+    loss = 0.5 * BCE(delta) + 0.3 * MSE(quality) + 0.2 * CrossEntropy(strategy)
+    ```
+    *Reasoning*: Persuasion prediction (delta) is the primary goal, hence highest weight.
+
+### Data Flow
+1.  **Raw Text** → DistilBERT Tokenizer → Model → `[CLS]` Token Vector (768-dim).
+2.  **Graph Construction**:
+    *   Node Features `x`: `[num_nodes, 768]`.
+    *   Edge Index `edge_index`: `[2, num_edges]` (sparse adjacency matrix).
+3.  **Forward Pass**: `x, edge_index` → GNN Layers → `h` (128-dim).
+4.  **Heads**: `h` → Linear Layers → 3 Outputs.
+
 ---
 
 # Part 3: Reinforcement Learning (PPO) ⭐
@@ -202,6 +229,30 @@ RL is only as good as the reward.
     *   +0.2 if opponent stance shifts > 0.1.
     *   -0.1 for repeating sentences.
 
+## 3.6 Project Implementation Details
+
+### Tech Stack
+*   **Custom PPO Implementation**: Built from scratch using PyTorch (no `stable-baselines3`).
+    *   *Why?* To handle custom `DebateState` encoding and integrating `DistilBERT` embeddings directly into the state space.
+
+### Key Hyperparameters
+*   **Learning Rate**: `3e-4` (Standard Adam default).
+*   **Gamma (Discount)**: `0.99` (Values future rewards highly).
+*   **GAE Lambda**: `0.95` (Balances bias/variance).
+*   **Clip Epsilon**: `0.2` (Standard PPO clip range).
+*   **Update Epochs**: `4` (Reuse data 4 times per batch).
+
+### State Representation
+*   **Input**: `[768]` vector from BERT embedding of current dialogue context.
+*   **Handling Variable Length**: We use the `[CLS]` token of the last 3 turns + Topic embedding to create a fixed-size context vector.
+
+### Training Loop
+1.  **Rollout**: Run debate for `N` turns using current policy.
+2.  **Store**: Save `(state, action, reward, next_state, log_prob)` in buffer.
+3.  **Compute Advantage**: Use GAE formula backwards from last step.
+4.  **Update**: Run SGD on PPO loss function for `K` epochs.
+5.  **Clear Buffer**: On-policy algorithms must discard old data.
+
 ---
 
 # Part 4: RAG & Orchestration
@@ -235,6 +286,22 @@ class DebateState(TypedDict):
 2.  **Fusion Node**: Combine results into a prompt.
 3.  **Generation Node**: Call LLM.
 4.  **Conditional Edge**: Check `if rounds > max` then `END`.
+
+## 4.3 Project Implementation Details
+
+### RAG Implementation
+*   **Library**: `LangChain` + `FAISS`.
+*   **Vector Store**: In-memory FAISS index, saved to disk as `.index` file.
+*   **Retriever**:
+    *   `Similarity Search`: Top 10 results.
+    *   `MMR (Maximal Marginal Relevance)`: Used to ensure diversity in evidence (don't return 10 identical facts).
+
+### LangGraph Implementation
+*   **Async/Sync Bridge**: The graph runs asynchronously (`async def`), but some ML models (PyTorch) are blocking.
+    *   *Solution*: Used `concurrent.futures.ThreadPoolExecutor` inside `_parallel_analysis_node` to prevent blocking the event loop.
+*   **Tool Binding**:
+    *   GNN, RL, and RAG are wrapped as `LangChain Tools` (`@tool` decorator).
+    *   This allows potential future expansion where the LLM *decides* which tool to call (ReAct pattern), though currently hard-coded in the parallel node.
 
 ---
 

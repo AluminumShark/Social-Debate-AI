@@ -19,6 +19,7 @@
 - [2.3 GraphSAGE：擴展性之王](#23-graphsage擴展性之王)
 - [2.4 GAT：注意力機制](#24-gat注意力機制)
 - [2.5 實作細節：多任務學習](#25-實作細節多任務學習)
+- [2.6 專案實作細節](#26-專案實作細節)
 
 ## 第三部分：強化學習 (PPO) ⭐
 - [3.1 RL 基礎與策略梯度](#31-rl-基礎與策略梯度)
@@ -26,10 +27,12 @@
 - [3.3 Actor-Critic 架構實作](#33-actor-critic-架構實作)
 - [3.4 GAE：降低變異數](#34-gae降低變異數)
 - [3.5 獎勵工程 (Reward Engineering)](#35-獎勵工程-reward-engineering)
+- [3.6 專案實作細節](#36-專案實作細節)
 
 ## 第四部分：RAG 與 編排系統
 - [4.1 RAG 系統設計](#41-rag-系統設計)
 - [4.2 LangGraph：LLM 的狀態機](#42-langgraphllm-的狀態機)
+- [4.3 專案實作細節](#43-專案實作細節)
 
 ## 第五部分：重點概念總結 (Key Concepts)
 - [5.1 常見問題解析 (FAQ)](#51-常見問題解析-faq)
@@ -132,6 +135,30 @@ self.attention = tgnn.GATConv(hidden_dim, hidden_dim, heads=4, concat=False)
 
 **為什麼？** 骨幹學習的是「理解辯論局勢」，這對所有任務都是通用的。參數共享 = 更好的泛化能力 (Generalization)。
 
+## 2.6 專案實作細節
+
+### 技術棧 (Tech Stack)
+*   **框架**：使用 `PyTorch Geometric` (PyG) 進行圖神經網路運算。這比手寫 Sparse Matrix 乘法快得多。
+*   **特徵嵌入**：使用 `HuggingFace Transformers` 的 `DistilBERT` (768 維) 將文本轉為向量。選用 DistilBERT 是為了速度與效能的平衡。
+
+### 關鍵參數 (Configurations)
+*   **層數設計**：3 層 SAGEConv (壓縮特徵) + 1 層 GATConv (4 頭注意力，用於最終決策)。
+*   **維度變換**：768 (輸入) → 256 → 256 → 128 (共享潛在空間)。
+*   **Dropout**：設為 0.3。由於辯論圖通常較小（<100 個節點），防止過擬合非常重要。
+*   **損失函數 (Loss)**：
+    ```python
+    loss = 0.5 * BCE(delta) + 0.3 * MSE(quality) + 0.2 * CrossEntropy(strategy)
+    ```
+    *設計理由*：最重要的是預測「能否說服」(delta)，所以權重最高 (0.5)。
+
+### 數據流 (Data Flow)
+1.  **原始文本** → DistilBERT Tokenizer → Model → 取 `[CLS]` Token 向量 (768維)。
+2.  **圖構建**：
+    *   節點特徵 `x`: `[num_nodes, 768]`。
+    *   邊索引 `edge_index`: `[2, num_edges]` (稀疏鄰接矩陣格式)。
+3.  **前向傳播**：`x, edge_index` → GNN Layers → `h` (128維)。
+4.  **輸出頭**：`h` → Linear Layers → 3 個不同的預測結果。
+
 ---
 
 # 第三部分：強化學習 (PPO) ⭐
@@ -202,6 +229,30 @@ RL 的效果完全取決於獎勵函數。
     *   對手立場鬆動 > 0.1 給 +0.2。
     *   重複語句 -0.1。
 
+## 3.6 專案實作細節
+
+### 技術選擇 (Tech Stack)
+*   **手刻 PPO (Custom PPO)**：沒有使用 `stable-baselines3` (SB3)。
+    *   *為什麼？* SB3 假設環境是標準的 Gym 介面 (numpy array)，但我們的 `DebateState` 包含複雜的語意資訊，且需要將 `DistilBERT` 嵌入過程整合到模型中，手刻 PyTorch 更有彈性。
+
+### 關鍵超參數 (Key Hyperparameters)
+*   **Learning Rate**: `3e-4` (Adam 優化器的標準起點)。
+*   **Gamma (折扣因子)**: `0.99` (辯論是長期的，未來的獎勵很重要)。
+*   **GAE Lambda**: `0.95` (在偏差與變異數之間取得平衡)。
+*   **Clip Epsilon**: `0.2` (標準 PPO 參數，不讓策略更新太激進)。
+*   **Update Epochs**: `4` (每個 batch 的數據重複利用 4 次來更新)。
+
+### 狀態表示 (State Representation)
+*   **輸入**：`[768]` 維向量，來自當前對話歷史的 BERT Embedding。
+*   **處理變長輸入**：我們取最近 3 回合對話的 `[CLS]` Token 平均值 + 題目 Embedding，組合成固定長度的 Context Vector。
+
+### 訓練循環 (Training Loop)
+1.  **Rollout**：使用當前策略跑 `N` 回合辯論。
+2.  **存儲**：將 `(state, action, reward, next_state, log_prob)` 存入 Buffer。
+3.  **計算優勢**：從最後一步倒推計算 GAE。
+4.  **更新**：在 PPO Loss 上執行 SGD 更新 `K` 個 Epochs。
+5.  **清空 Buffer**：PPO 是 On-policy 算法，更新後舊數據必須丟棄。
+
 ---
 
 # 第四部分：RAG 與 編排系統
@@ -235,6 +286,22 @@ class DebateState(TypedDict):
 2.  **融合節點**：將結果組合成 Prompt。
 3.  **生成節點**：呼叫 LLM。
 4.  **條件邊**：檢查 `if rounds > max` 則 `END`。
+
+## 4.3 專案實作細節
+
+### RAG 實作
+*   **庫**：`LangChain` + `FAISS`。
+*   **向量存儲**：開發時使用內存版 FAISS，並將索引序列化為 `.index` 文件存儲在硬碟。
+*   **檢索策略**：
+    *   `Similarity Search`：先抓取前 10 個最相似片段。
+    *   `MMR (Maximal Marginal Relevance)`：**關鍵！** 用於確保證據的「多樣性」。我們不希望抓到 10 個內容一模一樣的片段，MMR 會在「相關性」與「新穎性」之間權衡。
+
+### LangGraph 實作
+*   **異步/同步橋接 (Async/Sync Bridge)**：LangGraph 本身是異步的 (`async def`)，但 PyTorch 模型推論往往是同步且阻塞的 (Blocking)。
+    *   *解決方案*：在 `_parallel_analysis_node` 中使用 `concurrent.futures.ThreadPoolExecutor` 將 GNN/RL/RAG 的計算放到執行緒池中，避免阻塞主 Event Loop，這在高並發 API 服務中至關重要。
+*   **工具綁定 (Tool Binding)**：
+    *   GNN, RL, RAG 都被封裝為 `LangChain Tools` (`@tool` 裝飾器)。
+    *   這保留了未來擴展的可能性：可以讓 LLM 自己決定「是否需要調用 GNN」，而不僅僅是硬編碼在流程中。
 
 ---
 

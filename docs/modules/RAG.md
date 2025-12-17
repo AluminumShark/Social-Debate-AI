@@ -11,28 +11,29 @@
 The RAG (Retrieval-Augmented Generation) module retrieves relevant evidence to support debate arguments using **FAISS** vector search and **OpenAI embeddings**.
 
 ```mermaid
-%%{init: {'theme': 'base'}}%%
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#4f46e5', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4338ca', 'lineColor': '#6366f1', 'secondaryColor': '#10b981', 'tertiaryColor': '#f59e0b'}}}%%
 flowchart LR
+    %% Styles
+    classDef input fill:#e0f2fe,stroke:#0ea5e9,stroke-width:2px,color:#0c4a6e;
+    classDef rag fill:#f3e8ff,stroke:#9333ea,stroke-width:2px,color:#581c87;
+    classDef output fill:#dcfce7,stroke:#22c55e,stroke-width:2px,color:#14532d;
+
     subgraph Input["📥 Input"]
-        Q["Query"]
+        Q["Query"]:::input
     end
 
     subgraph RAG["🔍 RAG Pipeline"]
-        E["Embed Query"]
-        S["Vector Search<br/>(FAISS)"]
-        R["Rerank Results"]
+        E["Embed Query"]:::rag
+        S["Vector Search<br/>(FAISS)"]:::rag
+        R["Rerank Results"]:::rag
     end
 
     subgraph Output["📊 Output"]
-        D["Top-K Evidence"]
-        M["Metadata"]
+        D["Top-K Evidence"]:::output
+        M["Metadata"]:::output
     end
 
     Input --> E --> S --> R --> Output
-
-    style Input fill:#06b6d4,color:#fff
-    style RAG fill:#8b5cf6,color:#fff
-    style Output fill:#10b981,color:#fff
 ```
 
 ---

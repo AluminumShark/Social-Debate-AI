@@ -11,29 +11,30 @@
 The GNN (Graph Neural Network) module analyzes social dynamics in debates using **GraphSAGE** and **GAT** architectures.
 
 ```mermaid
-%%{init: {'theme': 'base'}}%%
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#4f46e5', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4338ca', 'lineColor': '#6366f1', 'secondaryColor': '#10b981', 'tertiaryColor': '#f59e0b'}}}%%
 flowchart LR
+    %% Styles
+    classDef input fill:#e0f2fe,stroke:#0ea5e9,stroke-width:2px,color:#0c4a6e;
+    classDef model fill:#f3e8ff,stroke:#9333ea,stroke-width:2px,color:#581c87;
+    classDef output fill:#dcfce7,stroke:#22c55e,stroke-width:2px,color:#14532d;
+
     subgraph Input["📥 Input"]
-        T["Text (768-dim BERT)"]
-        G["Graph Structure"]
+        T["Text (768-dim BERT)"]:::input
+        G["Graph Structure"]:::input
     end
 
     subgraph GNN["🧠 GNN Encoder"]
-        S1["GraphSAGE ×3"]
-        S2["GAT (4 heads)"]
+        S1["GraphSAGE ×3"]:::model
+        S2["GAT (4 heads)"]:::model
     end
 
     subgraph Output["📊 Multi-Task Output"]
-        D["Delta Prediction"]
-        Q["Quality Score"]
-        S["Strategy Classification"]
+        D["Delta Prediction"]:::output
+        Q["Quality Score"]:::output
+        S["Strategy Classification"]:::output
     end
 
     Input --> GNN --> Output
-
-    style Input fill:#06b6d4,color:#fff
-    style GNN fill:#8b5cf6,color:#fff
-    style Output fill:#10b981,color:#fff
 ```
 
 ---

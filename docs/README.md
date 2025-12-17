@@ -9,45 +9,46 @@ Welcome to the Social Debate AI documentation! This comprehensive guide covers s
 ## 📑 Documentation Structure
 
 ```mermaid
-%%{init: {'theme': 'base'}}%%
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#4f46e5', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4338ca', 'lineColor': '#6366f1', 'secondaryColor': '#10b981', 'tertiaryColor': '#f59e0b'}}}%%
 flowchart LR
+    %% Styles
+    classDef core fill:#f3e8ff,stroke:#9333ea,stroke-width:2px,color:#581c87;
+    classDef arch fill:#e0f2fe,stroke:#0ea5e9,stroke-width:2px,color:#0c4a6e;
+    classDef mod fill:#ffedd5,stroke:#f97316,stroke-width:2px,color:#7c2d12;
+    classDef guide fill:#dcfce7,stroke:#22c55e,stroke-width:2px,color:#14532d;
+    classDef api fill:#fee2e2,stroke:#ef4444,stroke-width:2px,color:#7f1d1d;
+
     subgraph Core["📖 Core Docs"]
-        LN["LEARNING_NOTE.md<br/>Deep Learning Study Notes"]
+        LN["LEARNING_NOTE.md<br/>Deep Learning Study Notes"]:::core
     end
 
     subgraph Arch["🏗️ Architecture"]
-        OV["OVERVIEW.md"]
-        LG["LANGGRAPH.md"]
-        DF["DATA_FLOW.md"]
+        OV["OVERVIEW.md"]:::arch
+        LG["LANGGRAPH.md"]:::arch
+        DF["DATA_FLOW.md"]:::arch
     end
 
     subgraph Mod["📦 Modules"]
-        GNN["GNN.md"]
-        RL["RL.md"]
-        RAG["RAG.md"]
-        SC["SCORING.md"]
+        GNN["GNN.md"]:::mod
+        RL["RL.md"]:::mod
+        RAG["RAG.md"]:::mod
+        SC["SCORING.md"]:::mod
     end
 
     subgraph Guide["📋 Guides"]
-        QS["QUICKSTART.md"]
-        CF["CONFIGURATION.md"]
-        TR["TRAINING.md"]
-        DP["DEPLOYMENT.md"]
+        QS["QUICKSTART.md"]:::guide
+        CF["CONFIGURATION.md"]:::guide
+        TR["TRAINING.md"]:::guide
+        DP["DEPLOYMENT.md"]:::guide
     end
 
     subgraph API["🔌 API"]
-        REST["REST_API.md"]
+        REST["REST_API.md"]:::api
     end
 
     Core --> Arch & Mod
     Arch --> Guide
     Mod --> API
-
-    style Core fill:#8b5cf6,color:#fff
-    style Arch fill:#06b6d4,color:#fff
-    style Mod fill:#f59e0b,color:#fff
-    style Guide fill:#10b981,color:#fff
-    style API fill:#ec4899,color:#fff
 ```
 
 ---
@@ -127,45 +128,46 @@ flowchart LR
 ## 📑 文檔結構
 
 ```mermaid
-%%{init: {'theme': 'base'}}%%
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#4f46e5', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4338ca', 'lineColor': '#6366f1', 'secondaryColor': '#10b981', 'tertiaryColor': '#f59e0b'}}}%%
 flowchart LR
+    %% Styles
+    classDef core fill:#f3e8ff,stroke:#9333ea,stroke-width:2px,color:#581c87;
+    classDef arch fill:#e0f2fe,stroke:#0ea5e9,stroke-width:2px,color:#0c4a6e;
+    classDef mod fill:#ffedd5,stroke:#f97316,stroke-width:2px,color:#7c2d12;
+    classDef guide fill:#dcfce7,stroke:#22c55e,stroke-width:2px,color:#14532d;
+    classDef api fill:#fee2e2,stroke:#ef4444,stroke-width:2px,color:#7f1d1d;
+
     subgraph Core["📖 核心文檔"]
-        LN["LEARNING_NOTE.md<br/>深度學習筆記"]
+        LN["LEARNING_NOTE.md<br/>深度學習筆記"]:::core
     end
 
     subgraph Arch["🏗️ 架構"]
-        OV["OVERVIEW.md"]
-        LG["LANGGRAPH.md"]
-        DF["DATA_FLOW.md"]
+        OV["OVERVIEW.md"]:::arch
+        LG["LANGGRAPH.md"]:::arch
+        DF["DATA_FLOW.md"]:::arch
     end
 
     subgraph Mod["📦 模組"]
-        GNN["GNN.md"]
-        RL["RL.md"]
-        RAG["RAG.md"]
-        SC["SCORING.md"]
+        GNN["GNN.md"]:::mod
+        RL["RL.md"]:::mod
+        RAG["RAG.md"]:::mod
+        SC["SCORING.md"]:::mod
     end
 
     subgraph Guide["📋 指南"]
-        QS["QUICKSTART.md"]
-        CF["CONFIGURATION.md"]
-        TR["TRAINING.md"]
-        DP["DEPLOYMENT.md"]
+        QS["QUICKSTART.md"]:::guide
+        CF["CONFIGURATION.md"]:::guide
+        TR["TRAINING.md"]:::guide
+        DP["DEPLOYMENT.md"]:::guide
     end
 
     subgraph API["🔌 API"]
-        REST["REST_API.md"]
+        REST["REST_API.md"]:::api
     end
 
     Core --> Arch & Mod
     Arch --> Guide
     Mod --> API
-
-    style Core fill:#8b5cf6,color:#fff
-    style Arch fill:#06b6d4,color:#fff
-    style Mod fill:#f59e0b,color:#fff
-    style Guide fill:#10b981,color:#fff
-    style API fill:#ec4899,color:#fff
 ```
 
 ---

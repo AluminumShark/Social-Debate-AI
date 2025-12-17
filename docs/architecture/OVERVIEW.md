@@ -9,11 +9,20 @@
 Social Debate AI is a multi-agent debate simulation system integrating three AI/ML modules orchestrated by LangGraph:
 
 ```mermaid
-%%{init: {'theme': 'base'}}%%
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#4f46e5', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4338ca', 'lineColor': '#6366f1', 'secondaryColor': '#10b981', 'tertiaryColor': '#f59e0b'}}}%%
 flowchart TB
+    %% Styles
+    classDef ui fill:#e0f2fe,stroke:#0ea5e9,stroke-width:2px,color:#0c4a6e;
+    classDef orch fill:#f3e8ff,stroke:#9333ea,stroke-width:2px,color:#581c87;
+    classDef parallel fill:#fff7ed,stroke:#f97316,stroke-width:2px,color:#7c2d12;
+    classDef rl fill:#fef2f2,stroke:#ef4444,stroke-width:2px,color:#7f1d1d;
+    classDef gnn fill:#f0fdf4,stroke:#22c55e,stroke-width:2px,color:#14532d;
+    classDef rag fill:#ecfeff,stroke:#06b6d4,stroke-width:2px,color:#164e63;
+    classDef agent fill:#f5f3ff,stroke:#8b5cf6,stroke-width:2px,color:#4c1d95;
+
     subgraph UI["🖥️ Web Interface"]
         direction LR
-        F["Flask + Bootstrap 5"]
+        F["Flask + Bootstrap 5"]:::ui
     end
 
     subgraph Orchestrator["⚙️ LangGraph Orchestrator"]
@@ -21,33 +30,30 @@ flowchart TB
         
         subgraph Parallel["Parallel Analysis"]
             direction LR
-            RL["🎮 RL<br/>Strategy"]
-            GNN["🕸️ GNN<br/>Social"]
-            RAG["📚 RAG<br/>Evidence"]
+            RL["🎮 RL<br/>Strategy"]:::rl
+            GNN["🕸️ GNN<br/>Social"]:::gnn
+            RAG["📚 RAG<br/>Evidence"]:::rag
         end
 
-        Fuse["🔀 Result Fusion"]
-        Gen["💬 Response Generation<br/>(LLM)"]
-        Update["📝 State Update"]
+        Fuse["🔀 Result Fusion"]:::orch
+        Gen["💬 Response Generation<br/>(LLM)"]:::orch
+        Update["📝 State Update"]:::orch
     end
 
     subgraph Agents["🤖 Debate Agents"]
         direction LR
-        A["Agent A<br/>Support +0.8"]
-        B["Agent B<br/>Oppose -0.6"]
-        C["Agent C<br/>Neutral 0.0"]
+        A["Agent A<br/>Support +0.8"]:::agent
+        B["Agent B<br/>Oppose -0.6"]:::agent
+        C["Agent C<br/>Neutral 0.0"]:::agent
     end
 
     UI --> Orchestrator
     Parallel --> Fuse --> Gen --> Update
     Orchestrator --> Agents
-
-    style UI fill:#06b6d4,color:#fff
-    style Orchestrator fill:#8b5cf6,color:#fff
-    style Agents fill:#10b981,color:#fff
-    style RL fill:#f59e0b,color:#fff
-    style GNN fill:#ec4899,color:#fff
-    style RAG fill:#3b82f6,color:#fff
+    
+    %% Style Subgraphs
+    style Parallel fill:#fff7ed,stroke:#fed7aa,color:#9a3412
+    style Orchestrator fill:#faf5ff,stroke:#e9d5ff,color:#6b21a8
 ```
 
 ---
@@ -74,26 +80,31 @@ See [LangGraph Architecture](LANGGRAPH.md) for details.
 ### 3. Analysis Modules
 
 ```mermaid
-%%{init: {'theme': 'base'}}%%
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#4f46e5', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4338ca', 'lineColor': '#6366f1', 'secondaryColor': '#10b981', 'tertiaryColor': '#f59e0b'}}}%%
 flowchart LR
+    %% Styles
+    classDef rl fill:#fef2f2,stroke:#ef4444,stroke-width:2px,color:#7f1d1d;
+    classDef gnn fill:#f0fdf4,stroke:#22c55e,stroke-width:2px,color:#14532d;
+    classDef rag fill:#ecfeff,stroke:#06b6d4,stroke-width:2px,color:#164e63;
+
     subgraph RL["🎮 RL Module"]
-        R1["PPO Algorithm"]
-        R2["4 Strategies"]
+        R1["PPO Algorithm"]:::rl
+        R2["4 Strategies"]:::rl
     end
 
     subgraph GNN["🕸️ GNN Module"]
-        G1["GraphSAGE + GAT"]
-        G2["Social Analysis"]
+        G1["GraphSAGE + GAT"]:::gnn
+        G2["Social Analysis"]:::gnn
     end
 
     subgraph RAG["📚 RAG Module"]
-        A1["FAISS Index"]
-        A2["Evidence Retrieval"]
+        A1["FAISS Index"]:::rag
+        A2["Evidence Retrieval"]:::rag
     end
-
-    style RL fill:#f59e0b,color:#fff
-    style GNN fill:#ec4899,color:#fff
-    style RAG fill:#3b82f6,color:#fff
+    
+    style RL fill:#fff1f2,stroke:#fecaca,color:#be123c
+    style GNN fill:#f0fdfa,stroke:#ccfbf1,color:#0f766e
+    style RAG fill:#eff6ff,stroke:#bfdbfe,color:#1e3a8a
 ```
 
 | Module | Architecture | Purpose |
@@ -115,7 +126,7 @@ Each agent maintains:
 ## Technology Stack
 
 ```mermaid
-%%{init: {'theme': 'base'}}%%
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#4f46e5', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4338ca', 'lineColor': '#6366f1', 'secondaryColor': '#10b981', 'tertiaryColor': '#f59e0b'}}}%%
 block-beta
     columns 3
     
@@ -147,12 +158,12 @@ block-beta
         B10["FAISS"]
     end
 
-    style Frontend fill:#06b6d4,color:#fff
-    style Backend fill:#10b981,color:#fff
-    style Orch fill:#8b5cf6,color:#fff
-    style LLM fill:#f59e0b,color:#fff
-    style ML fill:#ec4899,color:#fff
-    style DB fill:#3b82f6,color:#fff
+    style Frontend fill:#e0f2fe,stroke:#0ea5e9,stroke-width:2px,color:#0c4a6e
+    style Backend fill:#dcfce7,stroke:#22c55e,stroke-width:2px,color:#14532d
+    style Orch fill:#f3e8ff,stroke:#9333ea,stroke-width:2px,color:#581c87
+    style LLM fill:#fff7ed,stroke:#f97316,stroke-width:2px,color:#7c2d12
+    style ML fill:#fee2e2,stroke:#ef4444,stroke-width:2px,color:#7f1d1d
+    style DB fill:#ecfeff,stroke:#06b6d4,stroke-width:2px,color:#164e63
 ```
 
 | Layer | Technology |
@@ -170,7 +181,7 @@ block-beta
 ## Data Flow
 
 ```mermaid
-%%{init: {'theme': 'base'}}%%
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#4f46e5', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4338ca', 'lineColor': '#6366f1', 'secondaryColor': '#10b981', 'tertiaryColor': '#f59e0b'}}}%%
 sequenceDiagram
     participant U as User
     participant W as Web UI
@@ -223,11 +234,20 @@ sequenceDiagram
 Social Debate AI 是一個多 Agent 辯論模擬系統，整合三個由 LangGraph 編排的 AI/ML 模組：
 
 ```mermaid
-%%{init: {'theme': 'base'}}%%
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#4f46e5', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4338ca', 'lineColor': '#6366f1', 'secondaryColor': '#10b981', 'tertiaryColor': '#f59e0b'}}}%%
 flowchart TB
+    %% Styles
+    classDef ui fill:#e0f2fe,stroke:#0ea5e9,stroke-width:2px,color:#0c4a6e;
+    classDef orch fill:#f3e8ff,stroke:#9333ea,stroke-width:2px,color:#581c87;
+    classDef parallel fill:#fff7ed,stroke:#f97316,stroke-width:2px,color:#7c2d12;
+    classDef rl fill:#fef2f2,stroke:#ef4444,stroke-width:2px,color:#7f1d1d;
+    classDef gnn fill:#f0fdf4,stroke:#22c55e,stroke-width:2px,color:#14532d;
+    classDef rag fill:#ecfeff,stroke:#06b6d4,stroke-width:2px,color:#164e63;
+    classDef agent fill:#f5f3ff,stroke:#8b5cf6,stroke-width:2px,color:#4c1d95;
+
     subgraph UI["🖥️ Web 介面"]
         direction LR
-        F["Flask + Bootstrap 5"]
+        F["Flask + Bootstrap 5"]:::ui
     end
 
     subgraph Orchestrator["⚙️ LangGraph 編排器"]
@@ -235,30 +255,30 @@ flowchart TB
         
         subgraph Parallel["並行分析"]
             direction LR
-            RL["🎮 RL<br/>策略"]
-            GNN["🕸️ GNN<br/>社交"]
-            RAG["📚 RAG<br/>證據"]
+            RL["🎮 RL<br/>策略"]:::rl
+            GNN["🕸️ GNN<br/>社交"]:::gnn
+            RAG["📚 RAG<br/>證據"]:::rag
         end
 
-        Fuse["🔀 結果融合"]
-        Gen["💬 回應生成<br/>(LLM)"]
-        Update["📝 狀態更新"]
+        Fuse["🔀 結果融合"]:::orch
+        Gen["💬 回應生成<br/>(LLM)"]:::orch
+        Update["📝 狀態更新"]:::orch
     end
 
     subgraph Agents["🤖 辯論 Agents"]
         direction LR
-        A["Agent A<br/>支持 +0.8"]
-        B["Agent B<br/>反對 -0.6"]
-        C["Agent C<br/>中立 0.0"]
+        A["Agent A<br/>支持 +0.8"]:::agent
+        B["Agent B<br/>反對 -0.6"]:::agent
+        C["Agent C<br/>中立 0.0"]:::agent
     end
 
     UI --> Orchestrator
     Parallel --> Fuse --> Gen --> Update
     Orchestrator --> Agents
-
-    style UI fill:#06b6d4,color:#fff
-    style Orchestrator fill:#8b5cf6,color:#fff
-    style Agents fill:#10b981,color:#fff
+    
+    %% Style Subgraphs
+    style Parallel fill:#fff7ed,stroke:#fed7aa,color:#9a3412
+    style Orchestrator fill:#faf5ff,stroke:#e9d5ff,color:#6b21a8
 ```
 
 ---

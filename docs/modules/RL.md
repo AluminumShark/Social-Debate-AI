@@ -11,33 +11,34 @@
 The RL (Reinforcement Learning) module uses **PPO (Proximal Policy Optimization)** algorithm with an **Actor-Critic** architecture to select optimal debate strategies.
 
 ```mermaid
-%%{init: {'theme': 'base'}}%%
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#4f46e5', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4338ca', 'lineColor': '#6366f1', 'secondaryColor': '#10b981', 'tertiaryColor': '#f59e0b'}}}%%
 flowchart LR
+    %% Styles
+    classDef input fill:#e0f2fe,stroke:#0ea5e9,stroke-width:2px,color:#0c4a6e;
+    classDef network fill:#f3e8ff,stroke:#9333ea,stroke-width:2px,color:#581c87;
+    classDef output fill:#dcfce7,stroke:#22c55e,stroke-width:2px,color:#14532d;
+
     subgraph Input["📥 Input"]
-        S["State (768-dim)"]
+        S["State (768-dim)"]:::input
     end
 
     subgraph Network["🧠 PPO Network"]
-        SH["Shared Layers"]
+        SH["Shared Layers"]:::network
         subgraph Heads["Dual Heads"]
-            A["Actor<br/>(Policy)"]
-            C["Critic<br/>(Value)"]
+            A["Actor<br/>(Policy)"]:::network
+            C["Critic<br/>(Value)"]:::network
         end
         SH --> A & C
     end
 
     subgraph Output["📊 Output"]
-        P["Action Probs<br/>[4 strategies]"]
-        V["State Value"]
+        P["Action Probs<br/>[4 strategies]"]:::output
+        V["State Value"]:::output
     end
 
     Input --> Network
     A --> P
     C --> V
-
-    style Input fill:#06b6d4,color:#fff
-    style Network fill:#8b5cf6,color:#fff
-    style Output fill:#10b981,color:#fff
 ```
 
 ---

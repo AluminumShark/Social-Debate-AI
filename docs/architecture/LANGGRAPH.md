@@ -26,28 +26,35 @@ Version 0.2.0 introduces a **LangGraph-based orchestrator** that replaces manual
 ## Graph Structure
 
 ```mermaid
-%%{init: {'theme': 'base'}}%%
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#4f46e5', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4338ca', 'lineColor': '#6366f1', 'secondaryColor': '#10b981', 'tertiaryColor': '#f59e0b'}}}%%
 flowchart TB
+    %% Styles
+    classDef entry fill:#e0f2fe,stroke:#0ea5e9,stroke-width:2px,color:#0c4a6e;
+    classDef process fill:#f3e8ff,stroke:#9333ea,stroke-width:2px,color:#581c87;
+    classDef decision fill:#fff7ed,stroke:#f97316,stroke-width:2px,color:#7c2d12;
+    classDef continue fill:#dcfce7,stroke:#22c55e,stroke-width:2px,color:#14532d;
+    classDef endNode fill:#fee2e2,stroke:#ef4444,stroke-width:2px,color:#7f1d1d;
+
     subgraph Entry["🚀 Entry"]
-        PA["parallel_analysis<br/>(RL + GNN + RAG)"]
+        PA["parallel_analysis<br/>(RL + GNN + RAG)"]:::entry
     end
 
     subgraph Process["⚙️ Processing"]
-        FR["fuse_results"]
-        GR["generate_response<br/>(LLM)"]
-        US["update_states"]
+        FR["fuse_results"]:::process
+        GR["generate_response<br/>(LLM)"]:::process
+        US["update_states"]:::process
     end
 
     subgraph Decision["🔀 Decision"]
-        SC{"should_continue"}
+        SC{"should_continue"}:::decision
     end
 
     subgraph Continue["🔄 Continue"]
-        AT["advance_turn"]
+        AT["advance_turn"]:::continue
     end
 
     subgraph End["🏁 End"]
-        E["END"]
+        E["END"]:::endNode
     end
 
     PA --> FR --> GR --> US --> SC
@@ -55,12 +62,6 @@ flowchart TB
     SC -->|next_round| AT
     SC -->|end| E
     AT --> PA
-
-    style Entry fill:#06b6d4,color:#fff
-    style Process fill:#8b5cf6,color:#fff
-    style Decision fill:#f59e0b,color:#fff
-    style Continue fill:#10b981,color:#fff
-    style End fill:#ef4444,color:#fff
 ```
 
 ---
@@ -68,7 +69,7 @@ flowchart TB
 ## State Schema
 
 ```mermaid
-%%{init: {'theme': 'base'}}%%
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#4f46e5', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4338ca', 'lineColor': '#6366f1', 'secondaryColor': '#10b981', 'tertiaryColor': '#f59e0b'}}}%%
 classDiagram
     class DebateState {
         +str topic
@@ -138,30 +139,31 @@ class DebateState(TypedDict):
 The system defines four LangGraph tools:
 
 ```mermaid
-%%{init: {'theme': 'base'}}%%
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#4f46e5', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4338ca', 'lineColor': '#6366f1', 'secondaryColor': '#10b981', 'tertiaryColor': '#f59e0b'}}}%%
 flowchart LR
+    %% Styles
+    classDef tools fill:#f3e8ff,stroke:#9333ea,stroke-width:2px,color:#581c87;
+    classDef output fill:#dcfce7,stroke:#22c55e,stroke-width:2px,color:#14532d;
+
     subgraph Tools["🔧 LangGraph Tools"]
         direction TB
-        T1["rl_select_strategy"]
-        T2["gnn_analyze_social"]
-        T3["rag_retrieve_evidence"]
-        T4["evaluate_response_effects"]
+        T1["rl_select_strategy"]:::tools
+        T2["gnn_analyze_social"]:::tools
+        T3["rag_retrieve_evidence"]:::tools
+        T4["evaluate_response_effects"]:::tools
     end
 
     subgraph Output["📊 Outputs"]
-        O1["strategy + confidence"]
-        O2["influence + prediction"]
-        O3["evidence pool"]
-        O4["persuasion score"]
+        O1["strategy + confidence"]:::output
+        O2["influence + prediction"]:::output
+        O3["evidence pool"]:::output
+        O4["persuasion score"]:::output
     end
 
     T1 --> O1
     T2 --> O2
     T3 --> O3
     T4 --> O4
-
-    style Tools fill:#8b5cf6,color:#fff
-    style Output fill:#10b981,color:#fff
 ```
 
 | Tool | Purpose | Returns |
@@ -328,28 +330,35 @@ v0.2.0 引入了基於 **LangGraph 的編排器**，用聲明式、圖形化的�
 ## 圖結構
 
 ```mermaid
-%%{init: {'theme': 'base'}}%%
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#4f46e5', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4338ca', 'lineColor': '#6366f1', 'secondaryColor': '#10b981', 'tertiaryColor': '#f59e0b'}}}%%
 flowchart TB
+    %% Styles
+    classDef entry fill:#e0f2fe,stroke:#0ea5e9,stroke-width:2px,color:#0c4a6e;
+    classDef process fill:#f3e8ff,stroke:#9333ea,stroke-width:2px,color:#581c87;
+    classDef decision fill:#fff7ed,stroke:#f97316,stroke-width:2px,color:#7c2d12;
+    classDef continue fill:#dcfce7,stroke:#22c55e,stroke-width:2px,color:#14532d;
+    classDef endNode fill:#fee2e2,stroke:#ef4444,stroke-width:2px,color:#7f1d1d;
+
     subgraph Entry["🚀 入口"]
-        PA["parallel_analysis<br/>(RL + GNN + RAG)"]
+        PA["parallel_analysis<br/>(RL + GNN + RAG)"]:::entry
     end
 
     subgraph Process["⚙️ 處理"]
-        FR["fuse_results"]
-        GR["generate_response<br/>(LLM)"]
-        US["update_states"]
+        FR["fuse_results"]:::process
+        GR["generate_response<br/>(LLM)"]:::process
+        US["update_states"]:::process
     end
 
     subgraph Decision["🔀 決策"]
-        SC{"should_continue"}
+        SC{"should_continue"}:::decision
     end
 
     subgraph Continue["🔄 繼續"]
-        AT["advance_turn"]
+        AT["advance_turn"]:::continue
     end
 
     subgraph End["🏁 結束"]
-        E["END"]
+        E["END"]:::endNode
     end
 
     PA --> FR --> GR --> US --> SC
@@ -357,12 +366,6 @@ flowchart TB
     SC -->|next_round| AT
     SC -->|end| E
     AT --> PA
-
-    style Entry fill:#06b6d4,color:#fff
-    style Process fill:#8b5cf6,color:#fff
-    style Decision fill:#f59e0b,color:#fff
-    style Continue fill:#10b981,color:#fff
-    style End fill:#ef4444,color:#fff
 ```
 
 ---

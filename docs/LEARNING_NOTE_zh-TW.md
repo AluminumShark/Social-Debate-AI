@@ -1,7 +1,7 @@
 # 📚 深度學習與系統設計學習筆記
 ## Social Debate AI - 多智能體社交辯論系統
 
-> **狀態**：Google 等級系統設計與 ML 面試準備筆記。
+> **狀態**：進階系統設計與機器學習技術筆記。
 > **核心**：GNN (GraphSAGE/GAT)、RL (PPO)、RAG、LangGraph。
 > **目標**：從零到精通 - 釐清概念、數學直覺與程式碼實作。
 
@@ -15,7 +15,7 @@
 
 ## 第二部分：圖神經網路 (GNN) ⭐
 - [2.1 核心概念：訊息傳遞 (Message Passing)](#21-核心概念訊息傳遞-message-passing)
-- [2.2 Inductive vs. Transductive (面試必考)](#22-inductive-vs-transductive-面試必考)
+- [2.2 Inductive vs. Transductive (核心概念辨析)](#22-inductive-vs-transductive-核心概念辨析)
 - [2.3 GraphSAGE：擴展性之王](#23-graphsage擴展性之王)
 - [2.4 GAT：注意力機制](#24-gat注意力機制)
 - [2.5 實作細節：多任務學習](#25-實作細節多任務學習)
@@ -31,9 +31,9 @@
 - [4.1 RAG 系統設計](#41-rag-系統設計)
 - [4.2 LangGraph：LLM 的狀態機](#42-langgraphllm-的狀態機)
 
-## 第五部分：面試速查表 (Cheat Sheet)
-- [5.1 常見面試題](#51-常見面試題)
-- [5.2 核心重點總結](#52-核心重點總結)
+## 第五部分：重點概念總結 (Key Concepts)
+- [5.1 常見問題解析 (FAQ)](#51-常見問題解析-faq)
+- [5.2 核心重點回顧](#52-核心重點回顧)
 
 ---
 
@@ -75,7 +75,7 @@
 2.  **聚合 (Aggregate)**：將資訊摘要 (Sum/Mean/Max)。
 3.  **更新 (Update)**：結合自身狀態與鄰居資訊來更新自己。
 
-## 2.2 Inductive vs. Transductive (面試必考)
+## 2.2 Inductive vs. Transductive (核心概念辨析)
 
 *   **Transductive (直推式，如 GCN)**：訓練時需要看到 *整張圖*。如果有新節點加入，必須重新訓練模型。這對動態辯論（不斷有新回覆）來說是不可行的。
 *   **Inductive (歸納式，如 GraphSAGE)**：學習的是一個「聚合函數」(Aggregator)。可以對 **未見過的節點** (Unseen nodes) 進行推理。**這是我們選擇 GraphSAGE 的原因。**
@@ -238,9 +238,9 @@ class DebateState(TypedDict):
 
 ---
 
-# 第五部分：面試速查表 (Cheat Sheet)
+# 第五部分：重點概念總結 (Key Concepts)
 
-## 5.1 常見面試題
+## 5.1 常見問題解析 (FAQ)
 
 **Q: 為什麼選擇 PPO 而不是 DQN？**
 *   **A**: DQN 只能處理離散動作且是 Value-based。PPO 是 Actor-Critic 架構，能處理連續或離散動作，且能學習隨機策略 (Stochastic Policy)，這對於需要多樣性的辯論場景更合適，且訓練更穩定。
@@ -254,7 +254,7 @@ class DebateState(TypedDict):
 **Q: 為什麼 GNN 要用多任務學習？**
 *   **A**: 預測「說服成功率」和「品質分數」依賴於相同的底層特徵（論點邏輯、情感等）。共享底層參數可以起到正則化的作用，提高特徵的魯棒性。
 
-## 5.2 核心重點總結
+## 5.2 核心重點回顧
 
 1.  **GNN** 理解論點的 **結構 (Structure)**。
 2.  **RL** 優化長期的 **策略 (Strategy)**。

@@ -1,7 +1,7 @@
 # 📚 Deep Learning & System Design Study Notes
 ## Social Debate AI - Multi-Agent Social Debate System
 
-> **Status**: Ready for Google-level System Design & ML Interview Prep.
+> **Status**: Advanced System Design & Machine Learning Technical Notes.
 > **Focus**: GNN (GraphSAGE/GAT), RL (PPO), RAG, LangGraph.
 > **Goal**: From zero to mastery - clear concepts, math intuition, and code implementation.
 
@@ -15,7 +15,7 @@
 
 ## Part 2: Graph Neural Networks (GNN) ⭐
 - [2.1 Core Concept: Message Passing](#21-core-concept-message-passing)
-- [2.2 Inductive vs. Transductive (Interview Hot Topic)](#22-inductive-vs-transductive-interview-hot-topic)
+- [2.2 Inductive vs. Transductive (Core Concept)](#22-inductive-vs-transductive-core-concept)
 - [2.3 GraphSAGE: Scalability King](#23-graphsage-scalability-king)
 - [2.4 GAT: Attention Mechanism](#24-gat-attention-mechanism)
 - [2.5 Implementation: Multi-Task Learning](#25-implementation-multi-task-learning)
@@ -31,8 +31,8 @@
 - [4.1 RAG System Design](#41-rag-system-design)
 - [4.2 LangGraph: State Machines for LLMs](#42-langgraph-state-machines-for-llms)
 
-## Part 5: Interview Cheat Sheet
-- [5.1 Common Interview Questions](#51-common-interview-questions)
+## Part 5: Key Concepts Summary
+- [5.1 FAQ & Deep Dive](#51-faq--deep-dive)
 - [5.2 Key Takeaways](#52-key-takeaways)
 
 ---
@@ -75,7 +75,7 @@ Standard NN (MLP) assumes independent data (i.i.d). GNN assumes data is **connec
 2.  **Aggregate**: Summarize info (Sum/Mean/Max).
 3.  **Update**: Update own state based on self + neighbors.
 
-## 2.2 Inductive vs. Transductive (Interview Hot Topic)
+## 2.2 Inductive vs. Transductive (Core Concept)
 
 *   **Transductive (e.g., GCN)**: Requires *all* nodes during training. Can't handle new nodes without retraining. Bad for dynamic debates.
 *   **Inductive (e.g., GraphSAGE)**: Learns a *function* to aggregate neighbors. Can handle **unseen nodes** (new replies). **We use this.**
@@ -238,9 +238,9 @@ class DebateState(TypedDict):
 
 ---
 
-# Part 5: Interview Cheat Sheet
+# Part 5: Key Concepts Summary
 
-## 5.1 Common Interview Questions
+## 5.1 FAQ & Deep Dive
 
 **Q: Why use PPO over DQN?**
 *   **A**: DQN only works for discrete actions and value-based. PPO is Actor-Critic, works for both, and handles stochastic policies (better for debate variety) with greater stability.

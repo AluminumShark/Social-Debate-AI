@@ -8,48 +8,12 @@ Welcome to the Social Debate AI documentation! This comprehensive guide covers s
 
 ## 📑 Documentation Structure
 
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#4f46e5', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4338ca', 'lineColor': '#6366f1', 'secondaryColor': '#10b981', 'tertiaryColor': '#f59e0b'}}}%%
-flowchart LR
-    %% Styles
-    classDef core fill:#f3e8ff,stroke:#9333ea,stroke-width:2px,color:#581c87;
-    classDef arch fill:#e0f2fe,stroke:#0ea5e9,stroke-width:2px,color:#0c4a6e;
-    classDef mod fill:#ffedd5,stroke:#f97316,stroke-width:2px,color:#7c2d12;
-    classDef guide fill:#dcfce7,stroke:#22c55e,stroke-width:2px,color:#14532d;
-    classDef api fill:#fee2e2,stroke:#ef4444,stroke-width:2px,color:#7f1d1d;
+The documentation is organized into four main sections:
 
-    subgraph Core["📖 Core Docs"]
-        LN["LEARNING_NOTE.md<br/>Deep Learning Study Notes"]:::core
-    end
-
-    subgraph Arch["🏗️ Architecture"]
-        OV["OVERVIEW.md"]:::arch
-        LG["LANGGRAPH.md"]:::arch
-        DF["DATA_FLOW.md"]:::arch
-    end
-
-    subgraph Mod["📦 Modules"]
-        GNN["GNN.md"]:::mod
-        RL["RL.md"]:::mod
-        RAG["RAG.md"]:::mod
-        SC["SCORING.md"]:::mod
-    end
-
-    subgraph Guide["📋 Guides"]
-        QS["QUICKSTART.md"]:::guide
-        CF["CONFIGURATION.md"]:::guide
-        TR["TRAINING.md"]:::guide
-        DP["DEPLOYMENT.md"]:::guide
-    end
-
-    subgraph API["🔌 API"]
-        REST["REST_API.md"]:::api
-    end
-
-    Core --> Arch & Mod
-    Arch --> Guide
-    Mod --> API
-```
+1.  **📖 Core Docs**: Deep learning study notes and theoretical background.
+2.  **🏗️ Architecture**: System design, LangGraph workflow, and data flow.
+3.  **📦 Modules**: Detailed references for GNN, RL, RAG, and Scoring modules.
+4.  **📋 Guides**: Quick start, configuration, training, and deployment guides.
 
 ---
 
@@ -59,9 +23,10 @@ flowchart LR
 
 | Document | Description |
 |----------|-------------|
-| **[LEARNING_NOTE.md](LEARNING_NOTE.md)** | 📚 Comprehensive deep learning study notes covering GNN, PPO, RAG, and LangGraph with code examples and Mermaid diagrams |
+| **[LEARNING_NOTE.md](LEARNING_NOTE.md)** | 🇬🇧 **English** - Comprehensive deep learning notes (GNN, PPO, RAG, LangGraph) |
+| **[LEARNING_NOTE_zh-TW.md](LEARNING_NOTE_zh-TW.md)** | 🇹🇼 **Traditional Chinese** - 深度學習完整筆記（含原理與實作細節） |
 
-> **Start here!** This is the most complete resource for understanding the technical details of the project.
+> **Start here!** These notes are the most complete resource for understanding the technical details of the project.
 
 ---
 
@@ -79,9 +44,9 @@ flowchart LR
 
 | Module | Description | Deep Dive |
 |--------|-------------|-----------|
-| [GNN Module](modules/GNN.md) | Graph Neural Network for social analysis | [LEARNING_NOTE §2](LEARNING_NOTE.md#part-2-gnn-deep-dive-) |
-| [RL Module](modules/RL.md) | PPO reinforcement learning for strategy | [LEARNING_NOTE §3](LEARNING_NOTE.md#part-3-ppo-deep-dive-) |
-| [RAG Module](modules/RAG.md) | Evidence retrieval system | [LEARNING_NOTE §4.1](LEARNING_NOTE.md#41-rag-principles-and-implementation) |
+| [GNN Module](modules/GNN.md) | Graph Neural Network for social analysis | [LEARNING_NOTE §2](LEARNING_NOTE.md#part-2-gnn-deep-dive) |
+| [RL Module](modules/RL.md) | PPO reinforcement learning for strategy | [LEARNING_NOTE §3](LEARNING_NOTE.md#part-3-rl-deep-dive) |
+| [RAG Module](modules/RAG.md) | Evidence retrieval system | [LEARNING_NOTE §4](LEARNING_NOTE.md#part-4-rag-system) |
 | [Scoring System](modules/SCORING.md) | Debate evaluation and victory determination | - |
 
 ---
@@ -109,7 +74,7 @@ flowchart LR
 
 | Version | Date | Changes |
 |---------|------|---------|
-| 0.2.1 | 2025-12 | Restructured docs with LEARNING_NOTE as core resource |
+| 0.2.1 | 2025-12 | Restructured docs with separate English/Chinese learning notes |
 | 0.2.0 | 2025-12 | Added LangGraph orchestration, restructured documentation |
 | 0.1.0 | 2025-07 | Initial release with manual orchestration |
 
@@ -127,48 +92,12 @@ flowchart LR
 
 ## 📑 文檔結構
 
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#4f46e5', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4338ca', 'lineColor': '#6366f1', 'secondaryColor': '#10b981', 'tertiaryColor': '#f59e0b'}}}%%
-flowchart LR
-    %% Styles
-    classDef core fill:#f3e8ff,stroke:#9333ea,stroke-width:2px,color:#581c87;
-    classDef arch fill:#e0f2fe,stroke:#0ea5e9,stroke-width:2px,color:#0c4a6e;
-    classDef mod fill:#ffedd5,stroke:#f97316,stroke-width:2px,color:#7c2d12;
-    classDef guide fill:#dcfce7,stroke:#22c55e,stroke-width:2px,color:#14532d;
-    classDef api fill:#fee2e2,stroke:#ef4444,stroke-width:2px,color:#7f1d1d;
+文檔主要分為四個部分：
 
-    subgraph Core["📖 核心文檔"]
-        LN["LEARNING_NOTE.md<br/>深度學習筆記"]:::core
-    end
-
-    subgraph Arch["🏗️ 架構"]
-        OV["OVERVIEW.md"]:::arch
-        LG["LANGGRAPH.md"]:::arch
-        DF["DATA_FLOW.md"]:::arch
-    end
-
-    subgraph Mod["📦 模組"]
-        GNN["GNN.md"]:::mod
-        RL["RL.md"]:::mod
-        RAG["RAG.md"]:::mod
-        SC["SCORING.md"]:::mod
-    end
-
-    subgraph Guide["📋 指南"]
-        QS["QUICKSTART.md"]:::guide
-        CF["CONFIGURATION.md"]:::guide
-        TR["TRAINING.md"]:::guide
-        DP["DEPLOYMENT.md"]:::guide
-    end
-
-    subgraph API["🔌 API"]
-        REST["REST_API.md"]:::api
-    end
-
-    Core --> Arch & Mod
-    Arch --> Guide
-    Mod --> API
-```
+1.  **📖 核心文檔**：深度學習筆記與理論背景。
+2.  **🏗️ 架構**：系統設計、LangGraph 工作流與資料流。
+3.  **📦 模組**：GNN、RL、RAG 與評分模組的詳細參考。
+4.  **📋 指南**：快速開始、配置、訓練與部署指南。
 
 ---
 
@@ -178,7 +107,8 @@ flowchart LR
 
 | 文檔 | 說明 |
 |------|------|
-| **[LEARNING_NOTE.md](LEARNING_NOTE.md)** | 📚 完整的深度學習筆記，涵蓋 GNN、PPO、RAG 和 LangGraph，包含程式碼範例和 Mermaid 圖表 |
+| **[LEARNING_NOTE.md](LEARNING_NOTE.md)** | 🇬🇧 **英文版** - 完整深度學習筆記（GNN、PPO、RAG、LangGraph） |
+| **[LEARNING_NOTE_zh-TW.md](LEARNING_NOTE_zh-TW.md)** | 🇹🇼 **繁體中文版** - 深度學習完整筆記（含原理與實作細節） |
 
 > **從這裡開始！** 這是了解專案技術細節最完整的資源。
 
@@ -198,9 +128,9 @@ flowchart LR
 
 | 模組 | 說明 | 深入了解 |
 |------|------|----------|
-| [GNN 模組](modules/GNN.md) | 社交分析圖神經網路 | [LEARNING_NOTE §2](LEARNING_NOTE.md#part-2-gnn-deep-dive-) |
-| [RL 模組](modules/RL.md) | PPO 強化學習策略 | [LEARNING_NOTE §3](LEARNING_NOTE.md#part-3-ppo-deep-dive-) |
-| [RAG 模組](modules/RAG.md) | 證據檢索系統 | [LEARNING_NOTE §4.1](LEARNING_NOTE.md#41-rag-principles-and-implementation) |
+| [GNN 模組](modules/GNN.md) | 社交分析圖神經網路 | [中文筆記 §2](LEARNING_NOTE_zh-TW.md#第二部分-gnn-深度解析) |
+| [RL 模組](modules/RL.md) | PPO 強化學習策略 | [中文筆記 §3](LEARNING_NOTE_zh-TW.md#第三部分-rl-深度解析) |
+| [RAG 模組](modules/RAG.md) | 證據檢索系統 | [中文筆記 §4](LEARNING_NOTE_zh-TW.md#第四部分-rag-系統) |
 | [評分系統](modules/SCORING.md) | 辯論評估和勝負判定 | - |
 
 ---
@@ -228,6 +158,6 @@ flowchart LR
 
 | 版本 | 日期 | 變更 |
 |------|------|------|
-| 0.2.1 | 2025-12 | 重構文檔，以 LEARNING_NOTE 為核心資源 |
+| 0.2.1 | 2025-12 | 重構文檔，拆分中英文學習筆記 |
 | 0.2.0 | 2025-12 | 新增 LangGraph 編排，重組文檔結構 |
 | 0.1.0 | 2025-07 | 初始版本，手動編排 |

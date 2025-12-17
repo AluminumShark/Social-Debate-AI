@@ -1,361 +1,265 @@
-# 📚 Deep Learning Study Notes
+# 📚 Deep Learning & System Design Study Notes
 ## Social Debate AI - Multi-Agent Social Debate System
 
-> **About this document**: A comprehensive learning notebook documenting the key concepts, architectures, and implementations of GNN, PPO, RAG, and LangGraph in the context of a multi-agent debate system.
+> **Status**: Ready for Google-level System Design & ML Interview Prep.
+> **Focus**: GNN (GraphSAGE/GAT), RL (PPO), RAG, LangGraph.
+> **Goal**: From zero to mastery - clear concepts, math intuition, and code implementation.
 
 ---
 
 # 📑 Table of Contents
 
-## Part 1: Project Fundamentals
-- [1.1 What is this project?](#11-what-is-this-project)
-- [1.2 System Architecture Overview](#12-system-architecture-overview)
-- [1.3 Code Structure](#13-code-structure)
+## Part 1: System Design (The "Big Picture")
+- [1.1 High-Level Architecture](#11-high-level-architecture)
+- [1.2 Why this Architecture? (Trade-offs)](#12-why-this-architecture-trade-offs)
 
-## Part 2: GNN Deep Dive ⭐
-- [2.1 What is Graph Neural Network?](#21-what-is-graph-neural-network)
-- [2.2 GraphSAGE Explained](#22-graphsage-explained)
-- [2.3 GAT (Graph Attention) Explained](#23-gat-graph-attention-explained)
-- [2.4 Project GNN Architecture Analysis](#24-project-gnn-architecture-analysis)
-- [2.5 GNN Training Pipeline](#25-gnn-training-pipeline)
-- [2.6 GNN Inference Pipeline](#26-gnn-inference-pipeline)
+## Part 2: Graph Neural Networks (GNN) ⭐
+- [2.1 Core Concept: Message Passing](#21-core-concept-message-passing)
+- [2.2 Inductive vs. Transductive (Interview Hot Topic)](#22-inductive-vs-transductive-interview-hot-topic)
+- [2.3 GraphSAGE: Scalability King](#23-graphsage-scalability-king)
+- [2.4 GAT: Attention Mechanism](#24-gat-attention-mechanism)
+- [2.5 Implementation: Multi-Task Learning](#25-implementation-multi-task-learning)
 
-## Part 3: PPO Deep Dive ⭐
-- [3.1 Reinforcement Learning Fundamentals](#31-reinforcement-learning-fundamentals)
-- [3.2 Policy Gradient Methods](#32-policy-gradient-methods)
-- [3.3 PPO Core Principles](#33-ppo-core-principles)
-- [3.4 Actor-Critic Architecture](#34-actor-critic-architecture)
-- [3.5 GAE (Generalized Advantage Estimation)](#35-gae-generalized-advantage-estimation)
-- [3.6 Project PPO Implementation Analysis](#36-project-ppo-implementation-analysis)
+## Part 3: Reinforcement Learning (PPO) ⭐
+- [3.1 RL Basics & Policy Gradient](#31-rl-basics--policy-gradient)
+- [3.2 The Math of PPO (Simplified)](#32-the-math-of-ppo-simplified)
+- [3.3 Actor-Critic Implementation](#33-actor-critic-implementation)
+- [3.4 GAE: Reducing Variance](#34-gae-reducing-variance)
+- [3.5 Reward Engineering (The "Dark Art")](#35-reward-engineering-the-dark-art)
 
-## Part 4: RAG & LangGraph
-- [4.1 RAG Principles and Implementation](#41-rag-principles-and-implementation)
-- [4.2 LangGraph State Machine](#42-langgraph-state-machine)
+## Part 4: RAG & Orchestration
+- [4.1 RAG System Design](#41-rag-system-design)
+- [4.2 LangGraph: State Machines for LLMs](#42-langgraph-state-machines-for-llms)
 
-## Part 5: Reflections & Best Practices
-- [5.1 Project Summary](#51-project-summary)
-- [5.2 Key Technical Challenges](#52-key-technical-challenges)
-- [5.3 Knowledge Checklist](#53-knowledge-checklist)
+## Part 5: Interview Cheat Sheet
+- [5.1 Common Interview Questions](#51-common-interview-questions)
+- [5.2 Key Takeaways](#52-key-takeaways)
 
 ---
 
-# Part 1: Project Fundamentals
+# Part 1: System Design
 
-## 1.1 What is this project?
+## 1.1 High-Level Architecture
 
-### One-Sentence Summary
-**Social Debate AI** is a multi-agent system where 3 AI agents debate each other using advanced deep learning techniques:
-1.  **GNN** to analyze persuasion targets.
-2.  **RL (PPO)** to select optimal strategies.
-3.  **RAG** to retrieve supporting evidence.
-4.  **GPT-4** to generate arguments.
+We are building a **Multi-Agent System** where agents don't just "chat", they "strategize".
 
-### Visual Understanding
+*   **Input**: User topic.
+*   **Orchestrator**: **LangGraph** (State Machine). Manages the loop.
+*   **Brain (Parallel Execution)**:
+    *   **GNN**: "Who should I target?" (Social dynamics).
+    *   **RL (PPO)**: "What strategy works?" (Aggressive/Logical/etc.).
+    *   **RAG**: "What facts do I need?" (Vector DB).
+*   **Output**: **GPT-4** generates text based on {Target, Strategy, Facts}.
 
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#6366f1'}}}%%
-flowchart TB
-    subgraph Topic["📋 Debate Topic"]
-        Q["Should AI be regulated?"]
-    end
+## 1.2 Why this Architecture? (Trade-offs)
 
-    subgraph Turn["🎯 Agent A's Turn"]
-        subgraph Step1["Step 1: Parallel Analysis"]
-            direction LR
-            GNN["🕸️ GNN<br/>Target Analysis"]
-            PPO["🎮 PPO<br/>Strategy Selection"]
-            RAG["📚 RAG<br/>Evidence Retrieval"]
-        end
+**Q: Why not just ask GPT-4 to "debate"?**
+*   **A**: LLMs are stateless and drift. They don't optimize for long-term persuasion goals. We need **RL** to inject a "goal" (winning the debate) and **GNN** to understand the "room" (social graph).
 
-        Step2["Step 2: Fuse Results<br/>(Strategy + Evidence)"]
-        Step3["Step 3: LLM Generation<br/>(GPT-4 Response)"]
-        Step4["Step 4: State Update<br/>(Stance & Conviction)"]
-    end
+**Q: Why LangGraph instead of simple Python loops?**
+*   **A**:
+    *   **Persistence**: We can pause/resume debates (Human-in-the-loop).
+    *   **Cyclic Graphs**: Debates are loops, not DAGs. LangGraph handles cycles natively.
+    *   **State Management**: `Annotated[List, operator.add]` handles history append automatically.
 
-    Topic --> Turn
-    Step1 --> Step2 --> Step3 --> Step4
+---
 
-    style Topic fill:#fef3c7,color:#000
-    style Turn fill:#dbeafe,color:#000
-    style Step1 fill:#e0e7ff,color:#000
+# Part 2: Graph Neural Networks (GNN) ⭐
+
+## 2.1 Core Concept: Message Passing
+
+Standard NN (MLP) assumes independent data (i.i.d). GNN assumes data is **connected**.
+
+**The Framework**:
+1.  **Message**: Node gathers info from neighbors.
+2.  **Aggregate**: Summarize info (Sum/Mean/Max).
+3.  **Update**: Update own state based on self + neighbors.
+
+## 2.2 Inductive vs. Transductive (Interview Hot Topic)
+
+*   **Transductive (e.g., GCN)**: Requires *all* nodes during training. Can't handle new nodes without retraining. Bad for dynamic debates.
+*   **Inductive (e.g., GraphSAGE)**: Learns a *function* to aggregate neighbors. Can handle **unseen nodes** (new replies). **We use this.**
+
+## 2.3 GraphSAGE: Scalability King
+
+GraphSAGE = **S**ample and **Agg**regat**e**.
+
+### The Math
+$$ h_v^k = \sigma(W^k \cdot \text{CONCAT}(h_v^{k-1}, \text{AGG}\{h_u^{k-1}, \forall u \in N(v)\})) $$
+
+*   $h_v^k$: Feature of node $v$ at layer $k$.
+*   $N(v)$: Neighbors of $v$.
+*   $\text{AGG}$: Mean, Max, or LSTM.
+
+### PyTorch Geometric Implementation
+```python
+# SAGEConv applies: W_1 * x + W_2 * mean(neighbors)
+self.conv1 = tgnn.SAGEConv(in_channels=768, out_channels=256)
 ```
 
+## 2.4 GAT: Attention Mechanism
+
+GraphSAGE treats all neighbors equally (or fixed weights). **GAT** learns *who matters*.
+
+### The Intuition
+"In a debate, a reply from a 'Influencer' matters more than a random user."
+
+### The Math (Attention Coefficient)
+$$ \alpha_{ij} = \text{softmax}_j( \text{LeakyReLU}( \vec{a}^T [W h_i || W h_j] ) ) $$
+
+1.  Transform features ($W h$).
+2.  Concat node $i$ and neighbor $j$.
+3.  Calculate score via attention vector $\vec{a}$.
+4.  Normalize via Softmax.
+
+### Multi-Head Attention
+Run the process $K$ times independently and average/concat results to stabilize learning.
+
+```python
+# heads=4, concat=False -> Output dim is hidden_dim (averaged)
+self.attention = tgnn.GATConv(hidden_dim, hidden_dim, heads=4, concat=False)
+```
+
+## 2.5 Implementation: Multi-Task Learning
+
+We don't train separate models. We use **one encoder, multiple heads**.
+
+*   **Backbone**: SAGE -> SAGE -> SAGE -> GAT.
+*   **Heads**:
+    1.  `delta_head` (Binary): Will persuasion succeed?
+    2.  `quality_head` (Regression): Score 0-1.
+    3.  `strategy_head` (Classification): Which strategy?
+
+**Why?** The backbone learns "Understanding Debate State", which is useful for ALL tasks. Shared parameters = Better generalization.
+
 ---
 
-## 1.2 System Architecture Overview
+# Part 3: Reinforcement Learning (PPO) ⭐
 
-```mermaid
-%%{init: {'theme': 'base'}}%%
-flowchart TB
-    subgraph Web["🌐 Web Interface"]
-        Flask["Flask Server"]
-    end
+**Goal**: Train an agent to pick the best *Strategy* (Action) given the *Context* (State) to maximize *Persuasion* (Reward).
 
-    subgraph Orchestrator["🎯 LangGraph Orchestrator"]
-        PA["Parallel Analysis"]
-        FR["Result Fusion"]
-        GR["Generation"]
-        US["State Update"]
-        SC{"Continue?"}
+## 3.1 RL Basics & Policy Gradient
+
+*   **Policy $\pi(a|s)$**: The brain. Given state $s$, output probs for actions $a$.
+*   **Objective**: Maximize expected return $J(\theta) = E[\sum r]$.
+
+**Vanilla Policy Gradient**:
+$$ \nabla J(\theta) = E [ \nabla \log \pi_\theta(a|s) \cdot A(s,a) ] $$
+*   "Push prob up if Advantage > 0, down if Advantage < 0."
+*   **Problem**: High variance. One bad update ruins the policy.
+
+## 3.2 The Math of PPO (Simplified)
+
+**PPO (Proximal Policy Optimization)** is about **Stability**.
+
+### The Ratio
+$$ r_t(\theta) = \frac{\pi_\theta(a_t|s_t)}{\pi_{\theta_{old}}(a_t|s_t)} $$
+*   Ratio = 1: No change.
+*   Ratio > 1: Action more likely now.
+
+### The Clipped Objective (The "Secret Sauce")
+$$ L^{CLIP} = \min( r_t A_t, \text{clip}(r_t, 1-\epsilon, 1+\epsilon) A_t ) $$
+
+*   If action is good ($A > 0$): Don't increase prob too much (limit to $1+\epsilon$).
+*   If action is bad ($A < 0$): Don't decrease prob too much (limit to $1-\epsilon$).
+*   **Why?** Prevents "falling off a cliff" into a bad policy region that we can't recover from.
+
+## 3.3 Actor-Critic Implementation
+
+We need two networks (often sharing layers):
+1.  **Actor**: Outputs logits for 4 strategies.
+2.  **Critic**: Outputs scalar Value $V(s)$.
+
+```python
+class PPONetwork(nn.Module):
+    def __init__(self):
+        # Shared feature extractor
+        self.shared = nn.Sequential(nn.Linear(768, 256), nn.ReLU())
         
-        PA --> FR --> GR --> US --> SC
-        SC -->|"yes"| PA
-    end
-
-    subgraph Modules["⚡ Deep Learning Modules"]
-        direction LR
-        GNN["🕸️ GNN"]
-        RL["🎮 RL (PPO)"]
-        RAGm["📚 RAG"]
-    end
-
-    Web --> Orchestrator
-    PA --> Modules
-
-    style Web fill:#06b6d4,color:#fff
-    style Orchestrator fill:#8b5cf6,color:#fff
-    style Modules fill:#f59e0b,color:#000
+        # Actor: State -> Action Probs
+        self.actor = nn.Linear(256, 4) 
+        
+        # Critic: State -> Value Estimate
+        self.critic = nn.Linear(256, 1)
 ```
+
+## 3.4 GAE: Reducing Variance
+
+**Generalized Advantage Estimation (GAE)** balances:
+*   **TD-Error (1-step)**: Low variance, High bias.
+*   **Monte Carlo (All-steps)**: High variance, Low bias.
+
+Formula:
+$$ A_t^{GAE} = \sum (\gamma \lambda)^l \delta_{t+l} $$
+*   $\lambda$ controls the trade-off. Usually $\lambda=0.95$.
+
+## 3.5 Reward Engineering (The "Dark Art")
+
+RL is only as good as the reward.
+*   **Sparse Reward**: +1 only at end of debate. (Hard to learn).
+*   **Dense Reward (Shaping)**:
+    *   +0.1 for citing evidence.
+    *   +0.2 if opponent stance shifts > 0.1.
+    *   -0.1 for repeating sentences.
 
 ---
 
-## 1.3 Code Structure
+# Part 4: RAG & Orchestration
 
-```
-Social-Debate-AI/
-│
-├── src/
-│   ├── gnn/                      # 🧠 Graph Neural Network
-│   │   ├── social_encoder.py     # GNN model definition
-│   │   └── train_supervised.py   # Training script
-│   │
-│   ├── rl/                       # 🎮 Reinforcement Learning
-│   │   ├── policy_network.py     # PPO Actor-Critic network
-│   │   └── ppo_trainer.py        # PPO trainer & environment
-│   │
-│   ├── rag/                      # 🔍 Knowledge Retrieval
-│   │   ├── retriever.py          # Enhanced retriever
-│   │   └── simple_retriever.py   # Base retriever
-│   │
-│   └── orchestrator/             # 🎯 Orchestrator
-│       ├── langgraph_orchestrator.py  # Workflow engine
-│       ├── debate_state.py            # State schema
-│       └── debate_tools.py            # Module wrappers
-```
+## 4.1 RAG System Design
 
----
+**Retrieval Augmented Generation** pattern:
 
-# Part 2: GNN Deep Dive ⭐
+1.  **Chunking**: Split long docs (512 tokens). Overlap (50 tokens) to preserve context.
+2.  **Embedding**: OpenAI `text-embedding-3-small`.
+3.  **Indexing**: FAISS (Facebook AI Similarity Search) for millisecond-level NN search.
+4.  **Retrieval**: Query -> Vector -> Top-K chunks.
+5.  **Generation**: Prompt = `Context: {chunks} Question: {q}`.
 
-## 2.1 What is Graph Neural Network?
+**Optimization**: Use **Cross-Encoder** for re-ranking top-K results to improve precision.
 
-Unlike regular Neural Networks (MLP) that handle fixed-size vectors, **Graph Neural Networks (GNN)** process graph-structured data (Nodes + Edges).
+## 4.2 LangGraph: State Machines for LLMs
 
-In our debate system, the debate history forms a graph:
-*   **Nodes**: Posts and replies.
-*   **Edges**: Reply relationships.
-*   **Features**: Text embeddings (DistilBERT).
+LangGraph treats your app as a graph `Nodes` and `Edges`.
 
-**Goal**: Learn which arguments are persuasive and how influence propagates through the conversation structure.
-
----
-
-## 2.2 GraphSAGE Explained
-
-**GraphSAGE (SAmple and aggreGatE)** solves the scalability problem of traditional GCNs. Instead of using the entire graph matrix, it samples neighbors and aggregates their features.
-
-**Key Steps:**
-1.  **Sample**: Select a fixed number of neighbors for each node.
-2.  **Aggregate**: Combine neighbor features (e.g., using mean or max).
-3.  **Update**: Combine aggregated neighbor info with the node's current features.
-
-### Code Correspondence (PyTorch Geometric)
-
+**State Schema**:
 ```python
-# src/gnn/social_encoder.py
-
-self.conv1 = tgnn.SAGEConv(input_dim, hidden_dim)
-# input_dim = 768 (BERT embedding)
-# hidden_dim = 256
+class DebateState(TypedDict):
+    history: Annotated[List[BaseMessage], operator.add] 
+    # operator.add is Magic! It means:
+    # new_state['history'] = old_state['history'] + returned_history
 ```
 
----
-
-## 2.3 GAT (Graph Attention) Explained
-
-**GAT (Graph Attention Network)** improves on GraphSAGE by assigning **learnable weights** to different neighbors. Not all replies are equally important!
-
-**Mechanism:**
-1.  Calculate **Attention Score** for every neighbor pair.
-2.  Apply **Softmax** to normalize scores.
-3.  Compute weighted sum of neighbor features.
-
-**Multi-Head Attention**: We use `heads=4` to learn different types of relationships simultaneously.
-
-```python
-# src/gnn/social_encoder.py
-self.attention = tgnn.GATConv(128, 128, heads=4, concat=False)
-```
+**Workflow**:
+1.  **Parallel Node**: Run GNN/RL/RAG in thread pool.
+2.  **Fusion Node**: Combine results into a prompt.
+3.  **Generation Node**: Call LLM.
+4.  **Conditional Edge**: Check `if rounds > max` then `END`.
 
 ---
 
-## 2.4 Project GNN Architecture Analysis
+# Part 5: Interview Cheat Sheet
 
-Our model is a **Multi-Task Learning** architecture:
+## 5.1 Common Interview Questions
 
-1.  **Encoder**: 3 layers of GraphSAGE (compression) + 1 layer of GAT (attention).
-2.  **Heads**:
-    *   `delta_head`: Binary classification (Will this persuade? 0/1)
-    *   `quality_head`: Regression (Quality score 0.0-1.0)
-    *   `strategy_head`: Classification (Which strategy is this? 0-3)
+**Q: Why use PPO over DQN?**
+*   **A**: DQN only works for discrete actions and value-based. PPO is Actor-Critic, works for both, and handles stochastic policies (better for debate variety) with greater stability.
 
-```mermaid
-%%{init: {'theme': 'base'}}%%
-flowchart LR
-    Input["Input Features"] --> Encoder["Graph Encoder<br/>(SAGE + GAT)"]
-    Encoder --> Delta["Delta Head<br/>(Persuasion)"]
-    Encoder --> Quality["Quality Head<br/>(Score)"]
-    Encoder --> Strategy["Strategy Head<br/>(Class)"]
-```
+**Q: Explain the difference between GraphSAGE and GCN.**
+*   **A**: GCN requires the full graph Laplacian (transductive). GraphSAGE learns an aggregation function (inductive), allowing it to handle new nodes (new debate replies) without retraining.
 
----
+**Q: How do you handle the "context window" limit in RAG?**
+*   **A**: 1. Better Chunking. 2. Re-ranking (retrieve 50, rank top 5). 3. Map-Reduce summarization for broad queries.
 
-## 2.5 GNN Training Pipeline
+**Q: Why Multi-Task Learning for GNN?**
+*   **A**: Predicting "Persuasion success" and "Quality score" relies on the same underlying features (argument logic, sentiment). Sharing layers acts as regularization and improves feature robustness.
 
-We use the **ChangeMyView (CMV)** dataset from Reddit.
-*   **Input**: Text encoded by DistilBERT (`[768]`).
-*   **Labels**: Delta (persuaded), score, strategy.
-*   **Loss**: Weighted sum of BCE (delta), MSE (quality), and CrossEntropy (strategy).
+## 5.2 Key Takeaways
+
+1.  **GNN** understands the *structure* of arguments.
+2.  **RL** optimizes the *strategy* over time.
+3.  **RAG** grounds the debate in *fact*.
+4.  **LangGraph** orchestrates the *flow*.
 
 ---
-
-## 2.6 GNN Inference Pipeline
-
-**Critical Note**: Ensure the inference pipeline matches the training pipeline.
-*   **Training**: Real text -> DistilBERT -> GNN.
-*   **Inference**: Real debate context -> DistilBERT -> GNN.
-
-*(Do not use random noise vectors for inference, as discussed in technical challenges.)*
-
----
-
-# Part 3: PPO Deep Dive ⭐
-
-## 3.1 Reinforcement Learning Fundamentals
-
-*   **Agent**: The debater.
-*   **Environment**: The debate simulation (other agents + judge).
-*   **State**: 768-dim context vector.
-*   **Action**: Select strategy (Aggressive, Defensive, Analytical, Empathetic).
-*   **Reward**: Score change based on persuasion success.
-
----
-
-## 3.2 Policy Gradient Methods
-
-Policy Gradient directly optimizes the policy `π(a|s)` to maximize expected reward.
-*   **Idea**: If an action leads to good reward, increase its probability.
-*   **Problem**: High variance and unstable updates.
-
----
-
-## 3.3 PPO Core Principles
-
-**PPO (Proximal Policy Optimization)** stabilizes training by limiting how much the policy can change in a single step.
-
-**Clipped Objective**:
-It uses a ratio `r(θ) = π_new / π_old`. If `r(θ)` moves too far from 1 (e.g., > 1.2 or < 0.8), the update is clipped. This prevents the "policy collapse" problem common in standard RL.
-
----
-
-## 3.4 Actor-Critic Architecture
-
-Our PPO implementation uses an **Actor-Critic** network:
-1.  **Actor (Policy)**: Outputs action probabilities (which strategy to use?).
-2.  **Critic (Value)**: Estimates state value (how good is the current situation?).
-
-Shared layers extract features, while separate heads output policy and value.
-
----
-
-## 3.5 GAE (Generalized Advantage Estimation)
-
-We use **GAE** to calculate "Advantage" (how much better an action was compared to the average).
-*   Combines **TD-Error** (short-term) and **Monte-Carlo** (long-term) returns.
-*   Controlled by parameter `lambda` (0.95).
-
----
-
-## 3.6 Project PPO Implementation Analysis
-
-### Network
-```python
-# src/rl/ppo_trainer.py
-self.shared = nn.Linear(768, 256)
-self.actor = nn.Linear(256, 4)  # 4 strategies
-self.critic = nn.Linear(256, 1) # Value scalar
-```
-
-### Reward Design
-Designing the reward function is crucial.
-*   **Sparse Reward**: +1 only when opponent surrenders (hard to learn).
-*   **Dense Reward**: +0.1 for every increase in opponent's persuasion score (better).
-
----
-
-# Part 4: RAG & LangGraph
-
-## 4.1 RAG Principles and Implementation
-
-**RAG (Retrieval Augmented Generation)** bridges the gap between LLM's frozen knowledge and real-time facts.
-
-**Process**:
-1.  **Query**: "AI regulation cases".
-2.  **Embed**: Convert to vector (OpenAI `text-embedding-3-small`).
-3.  **Search**: Find nearest neighbors in FAISS database.
-4.  **Generate**: Feed retrieved docs + query to GPT-4.
-
-```mermaid
-%%{init: {'theme': 'base'}}%%
-flowchart LR
-    Query --> Embed
-    Embed --> Search["Vector Search"]
-    Search --> Context
-    Context --> LLM
-```
-
----
-
-## 4.2 LangGraph State Machine
-
-**LangGraph** allows us to define the debate flow as a graph.
-
-*   **State**: `DebateState` (TypedDict) holds the conversation history.
-*   **Nodes**: Python functions (`parallel_analysis`, `generate_response`).
-*   **Edges**: Logic to transition (e.g., `should_continue`).
-
-**Key Feature**: `Annotated[List[Dict], operator.add]`. This tells LangGraph to *append* new messages to the history list rather than overwriting it.
-
----
-
-# Part 5: Reflections & Best Practices
-
-## 5.1 Project Summary
-
-This project integrates GNN, PPO, RAG, and LangGraph to create a sophisticated debate system. The key achievement is orchestrating these disparate AI modules into a coherent flow using state machines, allowing for dynamic and informed debate responses.
-
-## 5.2 Key Technical Challenges
-
-1.  **Training-Inference Skew**: Ensuring GNN/RL models receive the same feature distribution in production as during training is vital.
-2.  **Reward Engineering**: In RL, "you get what you optimize for." Poorly designed rewards lead to gaming the system (e.g., repeating the same "optimal" phrase).
-3.  **Async Concurrency**: Managing event loops when combining LangGraph (async) with PyTorch (blocking) requires careful thread management.
-
-## 5.3 Knowledge Checklist
-
-- [ ] GraphSAGE vs. GAT difference?
-- [ ] Why PPO uses clipping?
-- [ ] How RAG embedding search works?
-- [ ] LangGraph state reducer (`operator.add`)?
-
----
-*Last Updated: December 2024*
+*Last Updated: December 2025*

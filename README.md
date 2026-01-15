@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <a href="#english-version">English</a> | <a href="#chinese-version">中文版</a>
+  <a href="#english-version">English</a> | <a href="#chinese-version">繁體中文</a>
 </p>
 
 <p align="center">
@@ -447,7 +447,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 </p>
 
 <p align="center">
-  <a href="#english-version">English</a> | <a href="#chinese-version">中文版</a>
+  <a href="#english-version">English</a> | <a href="#chinese-version">繁體中文</a>
 </p>
 
 ---

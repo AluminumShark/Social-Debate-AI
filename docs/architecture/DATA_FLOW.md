@@ -7,35 +7,35 @@ This document describes how data flows through the Social Debate AI system and h
 ## State Lifecycle
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                     Initial State Creation                       │
-│  - Topic                                                         │
-│  - Agent configurations (stance, conviction)                     │
-│  - Max rounds                                                    │
-└─────────────────────────────┬───────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                        Debate Loop                               │
-│  ┌─────────────────────────────────────────────────────────┐    │
-│  │ For each round:                                          │    │
-│  │   For each agent:                                        │    │
-│  │     1. Analyze (RL + GNN + RAG)                         │    │
-│  │     2. Fuse results                                      │    │
-│  │     3. Generate response                                 │    │
-│  │     4. Evaluate effects                                  │    │
-│  │     5. Update all agent states                          │    │
-│  │     6. Check end conditions                             │    │
-│  └─────────────────────────────────────────────────────────┘    │
-└─────────────────────────────┬───────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                     Final Summary                                │
-│  - Winner determination                                          │
-│  - Score calculation                                             │
-│  - Debate statistics                                             │
-└─────────────────────────────────────────────────────────────────┘
+
+                     Initial State Creation                       
+  - Topic                                                         
+  - Agent configurations (stance, conviction)                     
+  - Max rounds                                                    
+
+                              
+                              
+
+                        Debate Loop                               
+      
+   For each round:                                              
+     For each agent:                                            
+       1. Analyze (RL + GNN + RAG)                             
+       2. Fuse results                                          
+       3. Generate response                                     
+       4. Evaluate effects                                      
+       5. Update all agent states                              
+       6. Check end conditions                                 
+      
+
+                              
+                              
+
+                     Final Summary                                
+  - Winner determination                                          
+  - Score calculation                                             
+  - Debate statistics                                             
+
 ```
 
 ## State Components
@@ -102,24 +102,24 @@ AnalysisResults:
 
 ```
 Context Build
-     │
-     ├──► RL Tool ──► strategy, quality_score
-     │
-     ├──► GNN Tool ──► influence_score, persuasion_prediction
-     │
-     └──► RAG Tool ──► evidence_pool, best_evidence
+     
+      RL Tool  strategy, quality_score
+     
+      GNN Tool  influence_score, persuasion_prediction
+     
+      RAG Tool  evidence_pool, best_evidence
 ```
 
 ### 2. Fusion Phase
 
 ```
-RL Result ─────┐
-               │
-GNN Result ────┼──► Strategy Fusion Logic ──► final_strategy
-               │
-RAG Result ────┼──► Evidence Selection ──► best_evidence
-               │
-               └──► Confidence Calculation ──► evidence_confidence
+RL Result 
+               
+GNN Result  Strategy Fusion Logic  final_strategy
+               
+RAG Result  Evidence Selection  best_evidence
+               
+                Confidence Calculation  evidence_confidence
 ```
 
 **Fusion Rules:**
@@ -131,24 +131,24 @@ RAG Result ────┼──► Evidence Selection ──► best_evidence
 ### 3. Generation Phase
 
 ```
-Agent State ─────┐
-                 │
-Fused Results ───┼──► Prompt Builder ──► LLM ──► Response
-                 │
-History ─────────┘
+Agent State 
+                 
+Fused Results  Prompt Builder  LLM  Response
+                 
+History 
 ```
 
 ### 4. Update Phase
 
 ```
-Response ──► Evaluate Effects ──► persuasion_score
-                              ──► attack_score
-                              ──► evidence_score
-                                      │
-                                      ▼
+Response  Evaluate Effects  persuasion_score
+                               attack_score
+                               evidence_score
+                                      
+                                      
                               Update Target Agent States
-                                      │
-                                      ▼
+                                      
+                                      
                               Check Surrender Conditions
 ```
 

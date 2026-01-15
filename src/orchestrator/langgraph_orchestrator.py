@@ -260,7 +260,7 @@ Available evidence: {evidence[:500] if evidence else 'None'}"""
             response_text = response.content.strip()
             
             # Check if truncated
-            if not response_text.endswith(('.', '!', '?', '。', '！', '？')):
+            if not response_text.endswith(('.', '!', '?', '', '', '')):
                 response_text += ". In conclusion, I maintain my position based on the above analysis."
             
             print(f"[Generate] Response generated ({len(response_text.split())} words)")
@@ -588,41 +588,41 @@ Available evidence: {evidence[:500] if evidence else 'None'}"""
     def get_graph_visualization(self) -> str:
         """Get ASCII representation of the graph"""
         return """
-        ┌─────────────────────┐
-        │  parallel_analysis  │
-        │  (RL + GNN + RAG)   │
-        └──────────┬──────────┘
-                   │
-        ┌──────────▼──────────┐
-        │    fuse_results     │
-        └──────────┬──────────┘
-                   │
-        ┌──────────▼──────────┐
-        │  generate_response  │
-        │       (LLM)         │
-        └──────────┬──────────┘
-                   │
-        ┌──────────▼──────────┐
-        │   update_states     │
-        └──────────┬──────────┘
-                   │
-           ┌───────┴───────┐
-           │  should_continue  │
-           └───────┬───────┘
-                   │
-        ┌──────────┼──────────┐
-        │          │          │
+        
+          parallel_analysis  
+          (RL + GNN + RAG)   
+        
+                   
+        
+            fuse_results     
+        
+                   
+        
+          generate_response  
+               (LLM)         
+        
+                   
+        
+           update_states     
+        
+                   
+           
+             should_continue  
+           
+                   
+        
+                            
     next_speaker  next_round   end
-        │          │          │
-        └────┬─────┘          │
-             │                │
-        ┌────▼────┐           │
-        │ advance │           │
-        │  turn   │           │
-        └────┬────┘           │
-             │                │
-             └────────────────┘
-                    │
+                            
+                  
+                             
+                   
+         advance            
+          turn              
+                   
+                             
+             
+                    
                    END
         """
 

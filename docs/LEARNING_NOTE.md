@@ -1,4 +1,4 @@
-# 📚 Deep Learning & System Design Study Notes
+#  Deep Learning & System Design Study Notes
 ## Social Debate AI - Multi-Agent Social Debate System
 
 > **Status**: Advanced System Design & Machine Learning Technical Notes.
@@ -7,13 +7,13 @@
 
 ---
 
-# 📑 Table of Contents
+#  Table of Contents
 
 ## Part 1: System Design (The "Big Picture")
 - [1.1 High-Level Architecture](#11-high-level-architecture)
 - [1.2 Why this Architecture? (Trade-offs)](#12-why-this-architecture-trade-offs)
 
-## Part 2: Graph Neural Networks (GNN) ⭐
+## Part 2: Graph Neural Networks (GNN) 
 - [2.1 Core Concept: Message Passing](#21-core-concept-message-passing)
 - [2.2 Inductive vs. Transductive (Core Concept)](#22-inductive-vs-transductive-core-concept)
 - [2.3 GraphSAGE: Scalability King](#23-graphsage-scalability-king)
@@ -22,7 +22,7 @@
 - [2.6 Project Implementation Details](#26-project-implementation-details)
 - [2.7 Step-by-Step GNN Coding Guide](#27-step-by-step-gnn-coding-guide)
 
-## Part 3: Reinforcement Learning (PPO) ⭐
+## Part 3: Reinforcement Learning (PPO) 
 - [3.1 RL Basics & Policy Gradient](#31-rl-basics--policy-gradient)
 - [3.2 The Math of PPO (Simplified)](#32-the-math-of-ppo-simplified)
 - [3.3 Actor-Critic Implementation](#33-actor-critic-implementation)
@@ -70,7 +70,7 @@ We are building a **Multi-Agent System** where agents don't just "chat", they "s
 
 ---
 
-# Part 2: Graph Neural Networks (GNN) ⭐
+# Part 2: Graph Neural Networks (GNN) 
 
 ## 2.1 Core Concept: Message Passing
 
@@ -234,7 +234,7 @@ class PersuasionGNN(nn.Module):
 
 ---
 
-# Part 3: Reinforcement Learning (PPO) ⭐
+# Part 3: Reinforcement Learning (PPO) 
 
 **Goal**: Train an agent to pick the best *Strategy* (Action) given the *Context* (State) to maximize *Persuasion* (Reward).
 

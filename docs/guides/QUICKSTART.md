@@ -1,6 +1,6 @@
 # Quick Start Guide
 
-*English | [中文](#chinese-version)*
+*English | [](#chinese-version)*
 
 Get Social Debate AI up and running in 5 minutes!
 
@@ -107,10 +107,10 @@ The system uses LangGraph for orchestration:
 ```
 parallel_analysis → fuse_results → generate_response → update_states
        ↓                                                      ↓
-  ┌────┴────┐                                           should_continue
-  │ RL/GNN  │                                                 ↓
-  │  /RAG   │                                      next_speaker / end
-  └─────────┘
+                                             should_continue
+   RL/GNN                                                   ↓
+    /RAG                                         next_speaker / end
+  
 ```
 
 See [LangGraph Architecture](../architecture/LANGGRAPH.md) for details.
@@ -179,30 +179,30 @@ A: You can reduce batch size in config files or use `--demo` mode for training.
 ---
 
 <a name="chinese-version"></a>
-# 快速開始指南
+# 
 
-*[English](#quick-start-guide) | 中文*
+*[English](#quick-start-guide) | *
 
-5 分鐘內啟動並運行 Social Debate AI！
+5  Social Debate AI
 
-## 前置要求
+## 
 
 - Python 3.10+
 - 8GB+ RAM
 - Git
-- OpenAI API Key（可選，完整功能需要）
+- OpenAI API Key
 
-## 安裝步驟
+## 
 
-### 1. 克隆專案
+### 1. 
 ```bash
 git clone https://github.com/your-username/Social-Debate-AI.git
 cd Social-Debate-AI
 ```
 
-### 2. 安裝 uv（推薦）
+### 2.  uv
 
-uv 是一個快速、現代的 Python 套件管理器。
+uv  Python 
 
 ```bash
 # Windows (PowerShell)
@@ -212,151 +212,151 @@ powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-### 3. 創建環境並安裝依賴
+### 3. 
 
 ```bash
-# 使用 uv（推薦，約 30 秒）
+#  uv 30 
 uv sync
 
-# 或使用 pip（替代方案）
+#  pip
 python -m venv .venv
 .venv\Scripts\activate     # Windows
 source .venv/bin/activate  # Linux/Mac
 pip install -r requirements.txt
 ```
 
-### 4. 設置 API Key
+### 4.  API Key
 
 ```bash
-# 創建 .env 文件
+#  .env 
 cp env.example .env
 
-# 編輯 .env 文件，添加您的 OpenAI API Key
+#  .env  OpenAI API Key
 # OPENAI_API_KEY=sk-...
 ```
 
-## 快速運行
+## 
 
-### 方式一：Web UI（推薦）
+### Web UI
 
 ```bash
-# 使用 uv
+#  uv
 uv run python ui/app.py
 
-# 或使用已啟動的虛擬環境
+# 
 python ui/app.py
 ```
 
-打開瀏覽器訪問 http://localhost:5000
+ http://localhost:5000
 
-### 方式二：先運行測試
+### 
 
 ```bash
-# 驗證安裝
+# 
 uv run pytest tests/ -v
 ```
 
-## 使用 Web UI
+##  Web UI
 
-### 1. 初始化系統
-- 打開 http://localhost:5000
-- 系統會自動使用 LangGraph 編排器初始化
+### 1. 
+-  http://localhost:5000
+-  LangGraph 
 
-### 2. 設置辯論主題
-輸入您想討論的主題，例如：
-- "人工智慧是否應該被政府監管？"
-- "基本收入是否可行？"
-- "社交媒體的影響是正面還是負面？"
+### 2. 
 
-### 3. 開始辯論
-- 點擊「開始辯論」或「下一回合」按鈕
-- 觀察三個 Agent 的辯論過程：
-  - **Agent A**（支持）：立場 +0.8
-  - **Agent B**（反對）：立場 -0.6
-  - **Agent C**（中立）：立場 0.0
-- 查看實時的立場和信念變化
+- ""
+- ""
+- ""
 
-### 4. 分析結果
-- 系統會自動判定勝負
-- 可以導出完整的辯論記錄
-- 查看詳細的評分細節
+### 3. 
+- 
+-  Agent 
+  - **Agent A** +0.8
+  - **Agent B** -0.6
+  - **Agent C** 0.0
+- 
 
-## 架構（LangGraph）
+### 4. 
+- 
+- 
+- 
 
-系統使用 LangGraph 進行編排：
+## LangGraph
+
+ LangGraph 
 
 ```
 parallel_analysis → fuse_results → generate_response → update_states
        ↓                                                      ↓
-  ┌────┴────┐                                           should_continue
-  │ RL/GNN  │                                                 ↓
-  │  /RAG   │                                      next_speaker / end
-  └─────────┘
+                                             should_continue
+   RL/GNN                                                   ↓
+    /RAG                                         next_speaker / end
+  
 ```
 
-詳見 [LangGraph 架構](../architecture/LANGGRAPH.md)。
+ [LangGraph ](../architecture/LANGGRAPH.md)
 
-## 訓練模型（可選）
+## 
 
 ```bash
-# 訓練所有模型
+# 
 uv run python train_all.py --all
 
-# 個別訓練
-uv run python train_all.py --gnn    # GNN 社會網路
-uv run python train_all.py --rl     # RL 策略模型
-uv run python train_all.py --rag    # RAG 索引
+# 
+uv run python train_all.py --gnn    # GNN 
+uv run python train_all.py --rl     # RL 
+uv run python train_all.py --rag    # RAG 
 ```
 
-## 配置
+## 
 
-### 環境變數
+### 
 
-| 變數 | 必須 | 說明 |
+|  |  |  |
 |------|------|------|
-| `OPENAI_API_KEY` | 是* | OpenAI API key |
-| `USE_LANGGRAPH` | 否 | 使用 LangGraph 編排器（預設：true）|
+| `OPENAI_API_KEY` | * | OpenAI API key |
+| `USE_LANGGRAPH` |  |  LangGraph true|
 
-*完整功能需要；沒有時系統會使用備用回應。
+*
 
-### 配置文件
+### 
 
-位於 `configs/` 目錄：
-- `debate.yaml` - 辯論參數
-- `rag.yaml` - RAG 系統配置
-- `gnn.yaml` - GNN 模型配置
-- `rl.yaml` - RL 訓練配置
-- `system.yaml` - 系統設置
+ `configs/` 
+- `debate.yaml` - 
+- `rag.yaml` - RAG 
+- `gnn.yaml` - GNN 
+- `rl.yaml` - RL 
+- `system.yaml` - 
 
-## 常見問題
+## 
 
-### Q: 沒有 GPU 可以運行嗎？
-A: 可以！系統會自動使用 CPU。訓練會慢一些，但推理速度影響不大。
+### Q:  GPU 
+A:  CPU
 
-### Q: 必須要 OpenAI API Key 嗎？
-A: 推薦但不是必須。沒有 API Key 時系統會使用備用回應，功能有所限制。
+### Q:  OpenAI API Key 
+A:  API Key 
 
-### Q: 如何更改辯論參數？
-A: 編輯 `configs/debate.yaml` 文件，可以調整回合數、Agent 數量等。
+### Q: 
+A:  `configs/debate.yaml` Agent 
 
-### Q: 如何使用舊版編排器？
-A: 在運行前設置環境變數 `USE_LANGGRAPH=false`。
+### Q: 
+A:  `USE_LANGGRAPH=false`
 
-### Q: 系統佔用太多記憶體？
-A: 可以在配置文件中減小批次大小，或訓練時使用 `--demo` 模式。
+### Q: 
+A:  `--demo` 
 
-## 下一步
+## 
 
-- 查看 [LangGraph 架構](../architecture/LANGGRAPH.md) 了解新的編排方式
-- 查看 [訓練指南](TRAINING.md) 了解如何訓練模型
-- 查看 [REST API](../api/REST_API.md) 了解如何集成到您的應用
-- 查看 [部署指南](DEPLOYMENT.md) 了解生產環境部署
+-  [LangGraph ](../architecture/LANGGRAPH.md) 
+-  [](TRAINING.md) 
+-  [REST API](../api/REST_API.md) 
+-  [](DEPLOYMENT.md) 
 
-## 需要幫助？
+## 
 
-- 提交 [GitHub Issue](https://github.com/your-username/Social-Debate-AI/issues)
-- 查看 [完整文檔](../README.md)
+-  [GitHub Issue](https://github.com/your-username/Social-Debate-AI/issues)
+-  [](../README.md)
 
 ---
 
-恭喜！您已經成功設置 Social Debate AI。開始探索智能辯論的世界吧！
+ Social Debate AI

@@ -1,6 +1,6 @@
 # Social Debate AI Deployment Guide
 
-*English | [中文](#chinese-version)*
+*English | [](#chinese-version)*
 
 This guide explains how to deploy Social Debate AI to production environments.
 
@@ -243,7 +243,7 @@ docker-compose up -d
 docker-compose logs -f
 ```
 
-## 🔒 Security Configuration
+##  Security Configuration
 
 ### 1. HTTPS Configuration
 
@@ -434,69 +434,69 @@ redis_client.set(f'debate:{debate_id}', json.dumps(debate_state))
 
 ## Chinese Version
 
-# Social Debate AI 部署指南
+# Social Debate AI 
 
-*[English](#social-debate-ai-deployment-guide) | 中文*
+*[English](#social-debate-ai-deployment-guide) | *
 
-本指南說明如何將 Social Debate AI 部署到生產環境。
+ Social Debate AI 
 
-## 部署選項
+## 
 
-### 1. 本地部署
-- 適合個人使用和測試
-- 最簡單的部署方式
+### 1. 
+- 
+- 
 
-### 2. 雲端部署
+### 2. 
 - AWS EC2
 - Google Cloud Platform
 - Azure
 - Heroku
 
-### 3. Docker 部署
-- 容器化部署
-- 易於擴展
+### 3. Docker 
+- 
+- 
 
-## 本地生產部署
+## 
 
-### 1. 環境準備
+### 1. 
 
 ```bash
-# 創建生產環境
+# 
 python -m venv venv_prod
 source venv_prod/bin/activate  # Linux/Mac
-# 或
+# 
 venv_prod\Scripts\activate  # Windows
 
-# 安裝依賴
+# 
 pip install -r requirements.txt
-pip install gunicorn  # 生產服務器
+pip install gunicorn  # 
 ```
 
-### 2. 環境變數配置
+### 2. 
 
-創建 `.env.production` 文件：
+ `.env.production` 
 
 ```bash
 # API Keys
 OPENAI_API_KEY=your-production-key
 
-# Flask 配置
+# Flask 
 FLASK_ENV=production
 SECRET_KEY=your-secure-secret-key
 
-# 安全設置
+# 
 SESSION_COOKIE_SECURE=True
 SESSION_COOKIE_HTTPONLY=True
 SESSION_COOKIE_SAMESITE=Lax
 ```
 
-### 3. 使用 Gunicorn 運行
+### 3.  Gunicorn 
 
 ```bash
-# 基本運行
+# 
 gunicorn -w 4 -b 0.0.0.0:5000 ui.app:app
 
-# 推薦配置
+# 
 gunicorn \
   --workers 4 \
   --bind 0.0.0.0:5000 \
@@ -506,7 +506,7 @@ gunicorn \
   ui.app:app
 ```
 
-### 4. 使用 Nginx 反向代理
+### 4.  Nginx 
 
 ```nginx
 server {
@@ -520,13 +520,13 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         
-        # WebSocket 支援（未來功能）
+        # WebSocket 
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
     }
     
-    # 靜態文件
+    # 
     location /static {
         alias /path/to/Social_Debate_AI/ui/static;
         expires 1d;
@@ -534,54 +534,54 @@ server {
 }
 ```
 
-## AWS EC2 部署
+## AWS EC2 
 
-### 1. 創建 EC2 實例
+### 1.  EC2 
 
 ```bash
-# 推薦配置
-- 實例類型: t3.medium (最低) 或 t3.large (推薦)
-- 作業系統: Ubuntu 20.04 LTS
-- 存儲: 20GB SSD
-- 安全組: 開放 80, 443, 22 端口
+# 
+- : t3.medium ()  t3.large ()
+- : Ubuntu 20.04 LTS
+- : 20GB SSD
+- :  80, 443, 22 
 ```
 
-### 2. 初始化服務器
+### 2. 
 
 ```bash
-# 連接到 EC2
+#  EC2
 ssh -i your-key.pem ubuntu@your-ec2-ip
 
-# 更新系統
+# 
 sudo apt update && sudo apt upgrade -y
 
-# 安裝必要軟體
+# 
 sudo apt install python3.8 python3-pip nginx git -y
 ```
 
-### 3. 部署應用
+### 3. 
 
 ```bash
-# 克隆專案
+# 
 git clone https://github.com/your-username/Social_Debate_AI.git
 cd Social_Debate_AI
 
-# 設置虛擬環境
+# 
 python3 -m venv venv
 source venv/bin/activate
 
-# 安裝依賴
+# 
 pip install -r requirements.txt
 pip install gunicorn
 
-# 設置環境變數
+# 
 cp .env.example .env
-nano .env  # 編輯配置
+nano .env  # 
 ```
 
-### 4. 設置 Systemd 服務
+### 4.  Systemd 
 
-創建 `/etc/systemd/system/social-debate.service`:
+ `/etc/systemd/system/social-debate.service`:
 
 ```ini
 [Unit]
@@ -599,7 +599,7 @@ Restart=always
 WantedBy=multi-user.target
 ```
 
-啟動服務：
+
 
 ```bash
 sudo systemctl start social-debate
@@ -607,37 +607,37 @@ sudo systemctl enable social-debate
 sudo systemctl status social-debate
 ```
 
-## Docker 部署
+## Docker 
 
-### 1. 創建 Dockerfile
+### 1.  Dockerfile
 
 ```dockerfile
 FROM python:3.8-slim
 
 WORKDIR /app
 
-# 安裝系統依賴
+# 
 RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
     && rm -rf /var/lib/apt/lists/*
 
-# 複製依賴文件
+# 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install gunicorn
 
-# 複製應用代碼
+# 
 COPY . .
 
-# 暴露端口
+# 
 EXPOSE 5000
 
-# 運行命令
+# 
 CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:5000", "ui.app:app"]
 ```
 
-### 2. 創建 docker-compose.yml
+### 2.  docker-compose.yml
 
 ```yaml
 version: '3.8'
@@ -666,65 +666,65 @@ services:
     restart: unless-stopped
 ```
 
-### 3. 構建和運行
+### 3. 
 
 ```bash
-# 構建映像
+# 
 docker-compose build
 
-# 運行容器
+# 
 docker-compose up -d
 
-# 查看日誌
+# 
 docker-compose logs -f
 ```
 
-## 🔒 安全配置
+##  
 
-### 1. HTTPS 配置
+### 1. HTTPS 
 
-使用 Let's Encrypt 免費證書：
+ Let's Encrypt 
 
 ```bash
-# 安裝 Certbot
+#  Certbot
 sudo apt install certbot python3-certbot-nginx
 
-# 獲取證書
+# 
 sudo certbot --nginx -d your-domain.com
 
-# 自動更新
+# 
 sudo certbot renew --dry-run
 ```
 
-### 2. 防火牆設置
+### 2. 
 
 ```bash
-# UFW 防火牆
+# UFW 
 sudo ufw allow 22/tcp    # SSH
 sudo ufw allow 80/tcp    # HTTP
 sudo ufw allow 443/tcp   # HTTPS
 sudo ufw enable
 ```
 
-### 3. 環境變數安全
+### 3. 
 
 ```bash
-# 使用 python-dotenv
+#  python-dotenv
 from dotenv import load_dotenv
 load_dotenv('.env.production')
 
-# 敏感信息加密
+# 
 from cryptography.fernet import Fernet
 key = Fernet.generate_key()
 cipher_suite = Fernet(key)
 ```
 
-## 監控和日誌
+## 
 
-### 1. 應用日誌
+### 1. 
 
 ```python
-# 在 app.py 中配置日誌
+#  app.py 
 import logging
 from logging.handlers import RotatingFileHandler
 
@@ -740,20 +740,20 @@ if not app.debug:
     app.logger.addHandler(file_handler)
 ```
 
-### 2. 系統監控
+### 2. 
 
 ```bash
-# 使用 htop 監控資源
+#  htop 
 sudo apt install htop
 htop
 
-# 使用 netdata 進行全面監控
+#  netdata 
 bash <(curl -Ss https://my-netdata.io/kickstart.sh)
 ```
 
-### 3. 錯誤追蹤
+### 3. 
 
-考慮整合 Sentry：
+ Sentry
 
 ```python
 import sentry_sdk
@@ -766,9 +766,9 @@ sentry_sdk.init(
 )
 ```
 
-## 性能優化
+## 
 
-### 1. 緩存配置
+### 1. 
 
 ```python
 from flask_caching import Cache
@@ -783,12 +783,12 @@ def expensive_function():
     pass
 ```
 
-### 2. 資料庫優化
+### 2. 
 
-如果使用資料庫存儲辯論記錄：
+
 
 ```python
-# 使用連接池
+# 
 from sqlalchemy.pool import QueuePool
 
 engine = create_engine(
@@ -799,16 +799,16 @@ engine = create_engine(
 )
 ```
 
-### 3. CDN 配置
+### 3. CDN 
 
-使用 Cloudflare 或其他 CDN 服務加速靜態資源。
+ Cloudflare  CDN 
 
-## 擴展策略
+## 
 
-### 1. 水平擴展
+### 1. 
 
 ```nginx
-# Nginx 負載均衡
+# Nginx 
 upstream app_servers {
     server 127.0.0.1:5000;
     server 127.0.0.1:5001;
@@ -822,46 +822,46 @@ server {
 }
 ```
 
-### 2. 使用 Redis 共享狀態
+### 2.  Redis 
 
 ```python
 from redis import Redis
 redis_client = Redis(host='localhost', port=6379, db=0)
 
-# 存儲辯論狀態
+# 
 redis_client.set(f'debate:{debate_id}', json.dumps(debate_state))
 ```
 
-## 故障排除
+## 
 
-### 常見問題
+### 
 
-1. **記憶體不足**
-   - 增加交換空間
-   - 優化模型載入
-   - 使用更大的實例
+1. ****
+   - 
+   - 
+   - 
 
-2. **響應超時**
-   - 增加 Gunicorn timeout
-   - 優化模型推理
-   - 使用異步處理
+2. ****
+   -  Gunicorn timeout
+   - 
+   - 
 
-3. **並發問題**
-   - 使用 Redis 鎖
-   - 實現請求排隊
-   - 限制並發數
+3. ****
+   -  Redis 
+   - 
+   - 
 
-## 部署檢查清單
+## 
 
-- [ ] 環境變數配置完整
-- [ ] HTTPS 證書已安裝
-- [ ] 防火牆規則已設置
-- [ ] 日誌系統正常運作
-- [ ] 備份策略已實施
-- [ ] 監控系統已啟用
-- [ ] 錯誤追蹤已配置
-- [ ] 性能測試已完成
+- [ ] 
+- [ ] HTTPS 
+- [ ] 
+- [ ] 
+- [ ] 
+- [ ] 
+- [ ] 
+- [ ] 
 
 ---
 
-**提示**：部署前請先在測試環境驗證所有配置！ 
+**** 

@@ -1,6 +1,6 @@
-# ⚙️ LangGraph Orchestration Architecture
+#  LangGraph Orchestration Architecture
 
-*English | [中文](#中文版本)*
+*English | [](#)*
 
 ---
 
@@ -35,25 +35,25 @@ flowchart TB
     classDef continue fill:#dcfce7,stroke:#22c55e,stroke-width:2px,color:#14532d;
     classDef endNode fill:#fee2e2,stroke:#ef4444,stroke-width:2px,color:#7f1d1d;
 
-    subgraph Entry["🚀 Entry"]
+    subgraph Entry[" Entry"]
         PA["parallel_analysis<br/>(RL + GNN + RAG)"]:::entry
     end
 
-    subgraph Process["⚙️ Processing"]
+    subgraph Process[" Processing"]
         FR["fuse_results"]:::process
         GR["generate_response<br/>(LLM)"]:::process
         US["update_states"]:::process
     end
 
-    subgraph Decision["🔀 Decision"]
+    subgraph Decision[" Decision"]
         SC{"should_continue"}:::decision
     end
 
-    subgraph Continue["🔄 Continue"]
+    subgraph Continue[" Continue"]
         AT["advance_turn"]:::continue
     end
 
-    subgraph End["🏁 End"]
+    subgraph End[" End"]
         E["END"]:::endNode
     end
 
@@ -145,7 +145,7 @@ flowchart LR
     classDef tools fill:#f3e8ff,stroke:#9333ea,stroke-width:2px,color:#581c87;
     classDef output fill:#dcfce7,stroke:#22c55e,stroke-width:2px,color:#14532d;
 
-    subgraph Tools["🔧 LangGraph Tools"]
+    subgraph Tools[" LangGraph Tools"]
         direction TB
         T1["rl_select_strategy"]:::tools
         T2["gnn_analyze_social"]:::tools
@@ -153,7 +153,7 @@ flowchart LR
         T4["evaluate_response_effects"]:::tools
     end
 
-    subgraph Output["📊 Outputs"]
+    subgraph Output[" Outputs"]
         O1["strategy + confidence"]:::output
         O2["influence + prediction"]:::output
         O3["evidence pool"]:::output
@@ -291,43 +291,43 @@ If LangGraph initialization fails, the system automatically falls back to the le
 
 ```
 src/orchestrator/
-├── __init__.py                 # Module exports
-├── parallel_orchestrator.py    # Legacy orchestrator (fallback)
-├── langgraph_orchestrator.py   # LangGraph orchestrator
-├── debate_state.py             # State schema definitions
-└── debate_tools.py             # LangGraph tools
+ __init__.py                 # Module exports
+ parallel_orchestrator.py    # Legacy orchestrator (fallback)
+ langgraph_orchestrator.py   # LangGraph orchestrator
+ debate_state.py             # State schema definitions
+ debate_tools.py             # LangGraph tools
 ```
 
 ---
 
-<a name="中文版本"></a>
+<a name=""></a>
 
-# ⚙️ LangGraph 編排架構
+#  LangGraph 
 
-*[English](#-langgraph-orchestration-architecture) | 中文*
-
----
-
-## 概述
-
-v0.2.0 引入了基於 **LangGraph 的編排器**，用聲明式、圖形化的工作流取代手動異步編排。
+*[English](#-langgraph-orchestration-architecture) | *
 
 ---
 
-## 為什麼選擇 LangGraph？
+## 
 
-| 方面 | 之前（手動）| 之後（LangGraph）|
+v0.2.0  **LangGraph **
+
+---
+
+##  LangGraph
+
+|  | | LangGraph|
 |------|------------|------------------|
-| 並行執行 | 手動 asyncio + ThreadPoolExecutor | 內建並行分支 |
-| 狀態管理 | 手動 dict + dataclass | StateGraph 自動管理 |
-| 流程控制 | 硬編碼 if/else + while | 聲明式圖 + 條件邊 |
-| 視覺化 | 無 | `graph.get_graph().draw_png()` |
-| 檢查點 | 無 | 內建記憶體持久化 |
-| 工具調用 | 手動函數調用 | ToolNode + Agent 自主決策 |
+|  |  asyncio + ThreadPoolExecutor |  |
+|  |  dict + dataclass | StateGraph  |
+|  |  if/else + while |  +  |
+|  |  | `graph.get_graph().draw_png()` |
+|  |  |  |
+|  |  | ToolNode + Agent  |
 
 ---
 
-## 圖結構
+## 
 
 ```mermaid
 %%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#4f46e5', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4338ca', 'lineColor': '#6366f1', 'secondaryColor': '#10b981', 'tertiaryColor': '#f59e0b'}}}%%
@@ -339,25 +339,25 @@ flowchart TB
     classDef continue fill:#dcfce7,stroke:#22c55e,stroke-width:2px,color:#14532d;
     classDef endNode fill:#fee2e2,stroke:#ef4444,stroke-width:2px,color:#7f1d1d;
 
-    subgraph Entry["🚀 入口"]
+    subgraph Entry[" "]
         PA["parallel_analysis<br/>(RL + GNN + RAG)"]:::entry
     end
 
-    subgraph Process["⚙️ 處理"]
+    subgraph Process[" "]
         FR["fuse_results"]:::process
         GR["generate_response<br/>(LLM)"]:::process
         US["update_states"]:::process
     end
 
-    subgraph Decision["🔀 決策"]
+    subgraph Decision[" "]
         SC{"should_continue"}:::decision
     end
 
-    subgraph Continue["🔄 繼續"]
+    subgraph Continue[" "]
         AT["advance_turn"]:::continue
     end
 
-    subgraph End["🏁 結束"]
+    subgraph End[" "]
         E["END"]:::endNode
     end
 
@@ -370,31 +370,31 @@ flowchart TB
 
 ---
 
-## 狀態模式
+## 
 
 ```python
 class DebateState(TypedDict):
-    # 核心辯論資訊
-    topic: str                    # 辯論主題
-    current_round: int            # 當前回合
-    max_rounds: int               # 最大回合數
+    # 
+    topic: str                    # 
+    current_round: int            # 
+    max_rounds: int               # 
     
-    # Agent 管理
-    agent_order: List[str]        # Agent 順序
-    current_speaker_index: int    # 當前發言者索引
-    agent_states: Dict[str, Any]  # 所有 Agent 狀態
+    # Agent 
+    agent_order: List[str]        # Agent 
+    current_speaker_index: int    # 
+    agent_states: Dict[str, Any]  #  Agent 
     
-    # 歷史追蹤（使用 operator.add 累積）
+    #  operator.add 
     history: Annotated[List[Dict], operator.add]
     round_history: List[Dict]
     
-    # 分析結果
+    # 
     rl_result: Optional[Dict]
     gnn_result: Optional[Dict]
     rag_result: Optional[Dict]
     fused_result: Optional[Dict]
     
-    # 控制標誌
+    # 
     debate_ended: bool
     end_reason: Optional[str]
     winner: Optional[str]
@@ -402,22 +402,22 @@ class DebateState(TypedDict):
 
 ---
 
-## 工具
+## 
 
-系統定義四個 LangGraph 工具：
+ LangGraph 
 
-| 工具 | 用途 | 返回值 |
+|  |  |  |
 |------|------|--------|
-| `rl_select_strategy` | 選擇最佳辯論策略 | strategy, quality_score, confidence |
-| `gnn_analyze_social` | 分析社交影響力 | influence_score, persuasion_prediction, stance_trend |
-| `rag_retrieve_evidence` | 檢索支持證據 | evidence_pool, best_evidence, evidence_types |
-| `evaluate_response_effects` | 評估回應影響 | persuasion_score, attack_score, evidence_score |
+| `rl_select_strategy` |  | strategy, quality_score, confidence |
+| `gnn_analyze_social` |  | influence_score, persuasion_prediction, stance_trend |
+| `rag_retrieve_evidence` |  | evidence_pool, best_evidence, evidence_types |
+| `evaluate_response_effects` |  | persuasion_score, attack_score, evidence_score |
 
 ---
 
-## 使用方式
+## 
 
-### 基本使用
+### 
 
 ```python
 from src.orchestrator import create_langgraph_orchestrator
@@ -428,7 +428,7 @@ orchestrator = create_langgraph_orchestrator(
 )
 
 results = orchestrator.run_debate(
-    topic="AI 是否應該被監管？",
+    topic="AI ",
     agent_configs=[
         {'id': 'Agent_A', 'initial_stance': 0.8, 'initial_conviction': 0.7},
         {'id': 'Agent_B', 'initial_stance': -0.6, 'initial_conviction': 0.7},
@@ -440,32 +440,32 @@ results = orchestrator.run_debate(
 
 ---
 
-## 與舊版編排器的比較
+## 
 
-| 指標 | 舊版 | LangGraph |
+|  |  | LangGraph |
 |------|------|-----------|
-| 程式碼行數 | ~900 | ~400 |
-| 狀態管理 | 手動 | 自動 |
-| 除錯 | 困難 | 圖形視覺化 |
-| 可擴展性 | 低 | 高 |
+|  | ~900 | ~400 |
+|  |  |  |
+|  |  |  |
+|  |  |  |
 
-### 優勢
+### 
 
-1. **更清晰的狀態轉換**：聲明式圖使流程明確
-2. **內建並行處理**：無需手動異步管理
-3. **更好的除錯**：可用圖形視覺化
-4. **可擴展性**：易於添加新節點/工具
-5. **記憶體/檢查點**：內建狀態持久化支援
+1. ****
+2. ****
+3. ****
+4. ****/
+5. **/**
 
 ---
 
-## 文件結構
+## 
 
 ```
 src/orchestrator/
-├── __init__.py                 # 模組導出
-├── parallel_orchestrator.py    # 舊版編排器（備用）
-├── langgraph_orchestrator.py   # LangGraph 編排器
-├── debate_state.py             # 狀態模式定義
-└── debate_tools.py             # LangGraph 工具
+ __init__.py                 # 
+ parallel_orchestrator.py    # 
+ langgraph_orchestrator.py   # LangGraph 
+ debate_state.py             # 
+ debate_tools.py             # LangGraph 
 ```

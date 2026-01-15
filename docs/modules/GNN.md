@@ -10,6 +10,15 @@
 
 The GNN (Graph Neural Network) module analyzes social dynamics in debates using **GraphSAGE** and **GAT** architectures.
 
+### Training Data
+
+| Attribute | Description |
+|-----------|-------------|
+| **Dataset** | ChangeMyView (CMV) Corpus |
+| **Source** | [Cornell ConvoKit](https://convokit.cornell.edu/documentation/changemyview.html) |
+| **Origin** | Reddit r/changemyview subreddit |
+| **Key Feature** | Delta annotations marking successful persuasion |
+
 ```mermaid
 %%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#4f46e5', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4338ca', 'lineColor': '#6366f1', 'secondaryColor': '#10b981', 'tertiaryColor': '#f59e0b'}}}%%
 flowchart LR
@@ -138,6 +147,15 @@ training:
 ## 
 
 GNN **GraphSAGE**  **GAT** 
+
+### 
+
+| 屬性 | 說明 |
+|------|------|
+| **資料集** | ChangeMyView (CMV) Corpus |
+| **來源** | [Cornell ConvoKit](https://convokit.cornell.edu/documentation/changemyview.html) |
+| **原始來源** | Reddit r/changemyview 子版塊 |
+| **核心特徵** | 包含標記成功說服的 delta 註解 |
 
 ---
 

@@ -119,12 +119,24 @@ indexing:
 
 GNN (Graph Neural Network) model uses supervised learning to predict persuasion success rate and optimal strategies.
 
-### 1. Training Command
+### 1. Training Data Source
+
+| Attribute | Description |
+|-----------|-------------|
+| **Dataset** | ChangeMyView (CMV) Corpus |
+| **Source** | [Cornell ConvoKit](https://convokit.cornell.edu/documentation/changemyview.html) |
+| **Origin** | Reddit r/changemyview subreddit |
+| **Data File** | `data/raw/pairs.jsonl` |
+| **Content** | Submission-comment pairs with delta annotations |
+
+> **About CMV**: ChangeMyView is a Reddit community where users post opinions and others try to change their minds. A "delta" (Δ) is awarded when persuasion succeeds.
+
+### 2. Training Command
 ```bash
 python train_all.py --gnn
 ```
 
-### 2. Training Architecture
+### 3. Training Architecture
 - **Model Type**: GraphSAGE + GAT attention mechanism
 - **Task Type**: Multi-task learning
   - Delta prediction (binary classification)
@@ -133,7 +145,7 @@ python train_all.py --gnn
 - **Training Data**: Delta/non-delta comments from CMV dataset
 - **Training Time**: ~10-15 minutes (GPU)
 
-### 3. Monitor Training
+### 4. Monitor Training
 Training process displays:
 ```
 Epoch 10/50, Loss: 1.2345, Delta Acc: 0.5678, Quality MAE: 2.3456, Strategy Acc: 0.4567
@@ -141,12 +153,12 @@ Epoch 20/50, Loss: 0.8901, Delta Acc: 0.6234, Quality MAE: 1.8901, Strategy Acc:
 Epoch 30/50, Loss: 0.5678, Delta Acc: 0.6789, Quality MAE: 1.4567, Strategy Acc: 0.6234
 ```
 
-### 4. Training Performance
+### 5. Training Performance
 - **Delta Accuracy**: ~67-70%
 - **Strategy Accuracy**: ~64-67%
 - **Quality Prediction MAE**: ~1.2-1.5
 
-### 5. Configuration Adjustment
+### 6. Configuration Adjustment
 Edit `configs/gnn.yaml`:
 
 ```yaml
@@ -427,12 +439,24 @@ indexing:
 
 GNN (Graph Neural Network) 
 
-### 1. 
+### 1. 訓練資料來源
+
+| 屬性 | 說明 |
+|------|------|
+| **資料集** | ChangeMyView (CMV) Corpus |
+| **來源** | [Cornell ConvoKit](https://convokit.cornell.edu/documentation/changemyview.html) |
+| **原始來源** | Reddit r/changemyview 子版塊 |
+| **資料檔案** | `data/raw/pairs.jsonl` |
+| **內容** | 貼文-評論配對，包含 delta 註解 |
+
+> **關於 CMV**：ChangeMyView 是一個 Reddit 社群，用戶發表觀點，他人嘗試改變其想法。當說服成功時，會授予 "delta" 標記。
+
+### 2. 
 ```bash
 python train_all.py --gnn
 ```
 
-### 2. 
+### 3. 
 - ****GraphSAGE + GAT 
 - ****
   - Delta 
@@ -441,7 +465,7 @@ python train_all.py --gnn
 - ****CMV  delta/non-delta comments
 - **** 10-15 GPU
 
-### 3. 
+### 4. 
 
 ```
 Epoch 10/50, Loss: 1.2345, Delta Acc: 0.5678, Quality MAE: 2.3456, Strategy Acc: 0.4567
@@ -449,12 +473,12 @@ Epoch 20/50, Loss: 0.8901, Delta Acc: 0.6234, Quality MAE: 1.8901, Strategy Acc:
 Epoch 30/50, Loss: 0.5678, Delta Acc: 0.6789, Quality MAE: 1.4567, Strategy Acc: 0.6234
 ```
 
-### 4. 
+### 5. 
 - **Delta ** 67-70%
 - **** 64-67%
 - ** MAE** 1.2-1.5
 
-### 5. 
+### 6. 
  `configs/gnn.yaml`
 
 ```yaml

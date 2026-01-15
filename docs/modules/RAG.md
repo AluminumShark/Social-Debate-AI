@@ -10,6 +10,15 @@
 
 The RAG (Retrieval-Augmented Generation) module retrieves relevant evidence to support debate arguments using **FAISS** vector search and **OpenAI embeddings**.
 
+### Data Source
+
+| Attribute | Description |
+|-----------|-------------|
+| **Dataset** | ChangeMyView (CMV) Corpus |
+| **Source** | [Cornell ConvoKit](https://convokit.cornell.edu/documentation/changemyview.html) |
+| **Origin** | Reddit r/changemyview subreddit |
+| **Content** | High-quality debate arguments and successful persuasion examples |
+
 ```mermaid
 %%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#4f46e5', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4338ca', 'lineColor': '#6366f1', 'secondaryColor': '#10b981', 'tertiaryColor': '#f59e0b'}}}%%
 flowchart LR
@@ -148,6 +157,15 @@ chunking:
 ## 
 
 RAG **FAISS**  **OpenAI ** 
+
+### 資料來源
+
+| 屬性 | 說明 |
+|------|------|
+| **資料集** | ChangeMyView (CMV) Corpus |
+| **來源** | [Cornell ConvoKit](https://convokit.cornell.edu/documentation/changemyview.html) |
+| **原始來源** | Reddit r/changemyview 子版塊 |
+| **內容** | 高品質辯論論點及成功說服案例 |
 
 ---
 

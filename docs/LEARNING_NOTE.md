@@ -45,6 +45,19 @@
 
 # Part 1: System Design
 
+## 1.0 Training Dataset
+
+This project uses the **ChangeMyView (CMV) Corpus** from [Cornell ConvoKit](https://convokit.cornell.edu/documentation/changemyview.html).
+
+| Attribute | Description |
+|-----------|-------------|
+| **Source** | [Cornell ConvoKit Datasets](https://convokit.cornell.edu/documentation/datasets.html) |
+| **Origin** | Reddit r/changemyview subreddit |
+| **Key Feature** | "Delta" annotations marking successful persuasion |
+| **Usage** | Training GNN (persuasion prediction), RAG (evidence retrieval), RL (strategy learning) |
+
+> **About CMV**: ChangeMyView is a Reddit community where users post opinions and others attempt to change their minds. A "delta" is awarded when someone successfully changes the poster's view.
+
 ## 1.1 High-Level Architecture
 
 We are building a **Multi-Agent System** where agents don't just "chat", they "strategize".

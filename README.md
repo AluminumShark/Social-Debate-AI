@@ -36,6 +36,22 @@
 
 ---
 
+## Dataset
+
+This project uses the **ChangeMyView (CMV) Corpus** from [Cornell ConvoKit](https://convokit.cornell.edu/documentation/changemyview.html) as training data.
+
+| Attribute | Description |
+|-----------|-------------|
+| **Source** | [Cornell ConvoKit - ChangeMyView Corpus](https://convokit.cornell.edu/documentation/changemyview.html) |
+| **Dataset Page** | [ConvoKit Datasets](https://convokit.cornell.edu/documentation/datasets.html) |
+| **Origin** | Reddit r/changemyview subreddit |
+| **Key Feature** | Contains "delta" (Δ) annotations marking successful persuasion |
+| **Usage** | Training GNN persuasion prediction, RAG evidence retrieval, RL strategy learning |
+
+> **Note**: The CMV dataset contains posts where users present their viewpoints and others attempt to change their minds. When someone's view is successfully changed, they award a "delta" (Δ) to the convincing argument.
+
+---
+
 ##  System Architecture
 
 ```mermaid
@@ -453,7 +469,23 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 ---
 
-##  
+## Dataset / 資料集
+
+本專案使用 [Cornell ConvoKit](https://convokit.cornell.edu/documentation/changemyview.html) 的 **ChangeMyView (CMV) 語料庫**作為訓練資料。
+
+| 屬性 | 說明 |
+|------|------|
+| **來源** | [Cornell ConvoKit - ChangeMyView Corpus](https://convokit.cornell.edu/documentation/changemyview.html) |
+| **資料集頁面** | [ConvoKit Datasets](https://convokit.cornell.edu/documentation/datasets.html) |
+| **原始來源** | Reddit r/changemyview 子版塊 |
+| **核心特徵** | 包含標記成功說服的 "delta" 註解 |
+| **用途** | 訓練 GNN 說服預測、RAG 證據檢索、RL 策略學習 |
+
+> **說明**：CMV 資料集包含用戶發表觀點並由他人嘗試改變其想法的貼文。當某人的觀點被成功改變時，他們會授予說服者 "delta" 標記。
+
+---
+
+## 系統架構
 
 ```mermaid
 %%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#4f46e5', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4338ca', 'lineColor': '#6366f1', 'secondaryColor': '#10b981', 'tertiaryColor': '#f59e0b'}}}%%

@@ -21,7 +21,7 @@ class DialogueManager:
         }
 
     def run(self):
-        bar = "─" * 60
+        bar = "" * 60
         print(f"\n{bar}\nTopic: {self.topic}\n{bar}")
 
         for rnd in range(1, self.rounds + 1):
@@ -31,7 +31,7 @@ class DialogueManager:
 
                 # Wrap long text
                 wrapped = textwrap.fill(reply, width=80, subsequent_indent=" " * 9)
-                print(f"{agent.name:>6} │ {wrapped}")
+                print(f"{agent.name:>6}  {wrapped}")
 
                 # Update histories
                 for ag in self.agents.values():

@@ -27,24 +27,24 @@ def load_api_key():
     """
     try:
         if ConfigLoader:
-            # 加載系統配置
+            # 
             system_config = ConfigLoader.load('system')
             openai_config = system_config.get('api', {}).get('openai', {})
             
-            # 方法1：直接從配置文件讀取
+            # 1
             api_key = openai_config.get('api_key', '').strip()
             if api_key:
                 print("Using API key from config file")
                 return api_key
             
-            # 方法2：從環境變數讀取
+            # 2
             env_var = openai_config.get('api_key_env', 'OPENAI_API_KEY')
             api_key = os.environ.get(env_var, '').strip()
             if api_key:
                 print(f"Using API key from environment variable: {env_var}")
                 return api_key
             
-            # 方法3：從文件讀取
+            # 3
             key_file = openai_config.get('api_key_file', '').strip()
             if key_file and Path(key_file).exists():
                 try:
@@ -56,7 +56,7 @@ def load_api_key():
                 except Exception as e:
                     print(f"Error reading API key file: {e}")
         
-        # 備用方案：直接從環境變數讀取
+        # 
         api_key = os.environ.get('OPENAI_API_KEY', '').strip()
         if api_key:
             print("Using API key from OPENAI_API_KEY environment variable")

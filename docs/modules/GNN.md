@@ -1,14 +1,23 @@
-# 🕸️ GNN Module Quick Reference
+#  GNN Module Quick Reference
 
-*English | [中文](#中文版本)*
+*English | [](#)*
 
-> 📚 **For detailed explanation, see [LEARNING_NOTE §2: GNN Deep Dive](../LEARNING_NOTE.md#part-2-gnn-deep-dive-)**
+>  **For detailed explanation, see [LEARNING_NOTE §2: GNN Deep Dive](../LEARNING_NOTE.md#part-2-gnn-deep-dive-)**
 
 ---
 
 ## Overview
 
 The GNN (Graph Neural Network) module analyzes social dynamics in debates using **GraphSAGE** and **GAT** architectures.
+
+### Training Data
+
+| Attribute | Description |
+|-----------|-------------|
+| **Dataset** | ChangeMyView (CMV) Corpus |
+| **Source** | [Cornell ConvoKit](https://convokit.cornell.edu/documentation/changemyview.html) |
+| **Origin** | Reddit r/changemyview subreddit |
+| **Key Feature** | Delta annotations marking successful persuasion |
 
 ```mermaid
 %%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#4f46e5', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4338ca', 'lineColor': '#6366f1', 'secondaryColor': '#10b981', 'tertiaryColor': '#f59e0b'}}}%%
@@ -18,17 +27,17 @@ flowchart LR
     classDef model fill:#f3e8ff,stroke:#9333ea,stroke-width:2px,color:#581c87;
     classDef output fill:#dcfce7,stroke:#22c55e,stroke-width:2px,color:#14532d;
 
-    subgraph Input["📥 Input"]
+    subgraph Input[" Input"]
         T["Text (768-dim BERT)"]:::input
         G["Graph Structure"]:::input
     end
 
-    subgraph GNN["🧠 GNN Encoder"]
+    subgraph GNN[" GNN Encoder"]
         S1["GraphSAGE ×3"]:::model
         S2["GAT (4 heads)"]:::model
     end
 
-    subgraph Output["📊 Multi-Task Output"]
+    subgraph Output[" Multi-Task Output"]
         D["Delta Prediction"]:::output
         Q["Quality Score"]:::output
         S["Strategy Classification"]:::output
@@ -125,23 +134,32 @@ training:
 
 ---
 
-<a name="中文版本"></a>
+<a name=""></a>
 
-# 🕸️ GNN 模組快速參考
+#  GNN 
 
-*[English](#-gnn-module-quick-reference) | 中文*
+*[English](#-gnn-module-quick-reference) | *
 
-> 📚 **詳細說明請見 [LEARNING_NOTE §2: GNN 深度解析](../LEARNING_NOTE.md#part-2-gnn-deep-dive-)**
-
----
-
-## 概述
-
-GNN（圖神經網路）模組使用 **GraphSAGE** 和 **GAT** 架構分析辯論中的社交動態。
+>  ** [LEARNING_NOTE §2: GNN ](../LEARNING_NOTE.md#part-2-gnn-deep-dive-)**
 
 ---
 
-## API 參考
+## 
+
+GNN **GraphSAGE**  **GAT** 
+
+### 
+
+| 屬性 | 說明 |
+|------|------|
+| **資料集** | ChangeMyView (CMV) Corpus |
+| **來源** | [Cornell ConvoKit](https://convokit.cornell.edu/documentation/changemyview.html) |
+| **原始來源** | Reddit r/changemyview 子版塊 |
+| **核心特徵** | 包含標記成功說服的 delta 註解 |
+
+---
+
+## API 
 
 ### `PersuasionGNN`
 
@@ -149,9 +167,9 @@ GNN（圖神經網路）模組使用 **GraphSAGE** 和 **GAT** 架構分析辯�
 from src.gnn.social_encoder import PersuasionGNN
 
 model = PersuasionGNN(
-    input_dim=768,      # BERT 嵌入維度
-    hidden_dim=256,     # 隱藏層維度
-    num_strategies=4    # 策略數量
+    input_dim=768,      # BERT 
+    hidden_dim=256,     # 
+    num_strategies=4    # 
 )
 ```
 
@@ -160,32 +178,32 @@ model = PersuasionGNN(
 ```python
 result = model.predict_persuasion(text_features, agent_id)
 
-# 返回:
+# :
 {
-    'delta_probability': 0.73,     # 說服成功率
-    'quality_score': 0.65,         # 回應品質
-    'best_strategy': 'analytical', # 建議策略
-    'strategy_scores': {...}       # 所有策略機率
+    'delta_probability': 0.73,     # 
+    'quality_score': 0.65,         # 
+    'best_strategy': 'analytical', # 
+    'strategy_scores': {...}       # 
 }
 ```
 
 ---
 
-## 架構摘要
+## 
 
-| 層級 | 維度 | 用途 |
+|  |  |  |
 |------|------|------|
-| SAGEConv 1 | 768 → 256 | 初始特徵壓縮 |
-| SAGEConv 2 | 256 → 256 | 鄰居聚合 |
-| SAGEConv 3 | 256 → 128 | 進一步壓縮 |
-| GATConv | 128 → 128 (4 頭) | 注意力加權聚合 |
-| Delta Head | 128 → 1 | 說服預測 |
-| Quality Head | 128 → 1 | 品質回歸 |
-| Strategy Head | 128 → 4 | 策略分類 |
+| SAGEConv 1 | 768 → 256 |  |
+| SAGEConv 2 | 256 → 256 |  |
+| SAGEConv 3 | 256 → 128 |  |
+| GATConv | 128 → 128 (4 ) |  |
+| Delta Head | 128 → 1 |  |
+| Quality Head | 128 → 1 |  |
+| Strategy Head | 128 → 4 |  |
 
 ---
 
-## 配置
+## 
 
 `configs/gnn.yaml`:
 
@@ -205,9 +223,9 @@ training:
 
 ---
 
-## 關鍵文件
+## 
 
-| 文件 | 說明 |
+|  |  |
 |------|------|
-| `src/gnn/social_encoder.py` | 模型定義和推理 |
-| `src/gnn/train_supervised.py` | 訓練腳本 |
+| `src/gnn/social_encoder.py` |  |
+| `src/gnn/train_supervised.py` |  |

@@ -1,8 +1,8 @@
-# 🎮 RL Module Quick Reference
+#  RL Module Quick Reference
 
-*English | [中文](#中文版本)*
+*English | [](#)*
 
-> 📚 **For detailed explanation, see [LEARNING_NOTE §3: PPO Deep Dive](../LEARNING_NOTE.md#part-3-ppo-deep-dive-)**
+>  **For detailed explanation, see [LEARNING_NOTE §3: PPO Deep Dive](../LEARNING_NOTE.md#part-3-ppo-deep-dive-)**
 
 ---
 
@@ -18,11 +18,11 @@ flowchart LR
     classDef network fill:#f3e8ff,stroke:#9333ea,stroke-width:2px,color:#581c87;
     classDef output fill:#dcfce7,stroke:#22c55e,stroke-width:2px,color:#14532d;
 
-    subgraph Input["📥 Input"]
+    subgraph Input[" Input"]
         S["State (768-dim)"]:::input
     end
 
-    subgraph Network["🧠 PPO Network"]
+    subgraph Network[" PPO Network"]
         SH["Shared Layers"]:::network
         subgraph Heads["Dual Heads"]
             A["Actor<br/>(Policy)"]:::network
@@ -31,7 +31,7 @@ flowchart LR
         SH --> A & C
     end
 
-    subgraph Output["📊 Output"]
+    subgraph Output[" Output"]
         P["Action Probs<br/>[4 strategies]"]:::output
         V["State Value"]:::output
     end
@@ -140,23 +140,23 @@ training:
 
 ---
 
-<a name="中文版本"></a>
+<a name=""></a>
 
-# 🎮 RL 模組快速參考
+#  RL 
 
-*[English](#-rl-module-quick-reference) | 中文*
+*[English](#-rl-module-quick-reference) | *
 
-> 📚 **詳細說明請見 [LEARNING_NOTE §3: PPO 深度解析](../LEARNING_NOTE.md#part-3-ppo-deep-dive-)**
-
----
-
-## 概述
-
-RL（強化學習）模組使用 **PPO（近端策略優化）** 算法和 **Actor-Critic** 架構來選擇最佳辯論策略。
+>  ** [LEARNING_NOTE §3: PPO ](../LEARNING_NOTE.md#part-3-ppo-deep-dive-)**
 
 ---
 
-## API 參考
+## 
+
+RL **PPO**  **Actor-Critic** 
+
+---
+
+## API 
 
 ### `PPONetwork`
 
@@ -164,9 +164,9 @@ RL（強化學習）模組使用 **PPO（近端策略優化）** 算法和 **Act
 from src.rl.ppo_trainer import PPONetwork
 
 network = PPONetwork(
-    state_dim=768,     # 狀態維度
-    action_dim=4,      # 策略數量
-    hidden_dim=256     # 隱藏層維度
+    state_dim=768,     # 
+    action_dim=4,      # 
+    hidden_dim=256     # 
 )
 ```
 
@@ -175,43 +175,43 @@ network = PPONetwork(
 ```python
 action, log_prob, value = network.select_action(state_tensor)
 
-# action: 0=激進, 1=防守, 2=分析, 3=同理
+# action: 0=, 1=, 2=, 3=
 ```
 
 ---
 
-## 策略
+## 
 
-| ID | 策略 | 說明 | 適用情境 |
+| ID |  |  |  |
 |----|------|------|----------|
-| 0 | `aggressive` | 直接挑戰對手 | 對手論點薄弱時 |
-| 1 | `defensive` | 鞏固自身立場 | 受到強烈攻擊時 |
-| 2 | `analytical` | 使用邏輯和證據 | 建立可信度時 |
-| 3 | `empathetic` | 尋找共同點 | 尋求共識時 |
+| 0 | `aggressive` |  |  |
+| 1 | `defensive` |  |  |
+| 2 | `analytical` |  |  |
+| 3 | `empathetic` |  |  |
 
 ---
 
-## 架構摘要
+## 
 
-| 組件 | 維度 | 用途 |
+|  |  |  |
 |------|------|------|
-| 共享層 1 | 768 → 256 | 特徵提取 |
-| 共享層 2 | 256 → 256 | 表示學習 |
-| Actor Head | 256 → 128 → 4 | 策略（動作機率）|
-| Critic Head | 256 → 128 → 1 | 價值（狀態估計）|
+|  1 | 768 → 256 |  |
+|  2 | 256 → 256 |  |
+| Actor Head | 256 → 128 → 4 | |
+| Critic Head | 256 → 128 → 1 | |
 
 ---
 
-## 配置
+## 
 
 `configs/rl.yaml`:
 
 ```yaml
 ppo:
-  gamma: 0.99           # 折扣因子
-  gae_lambda: 0.95      # GAE 參數
-  epsilon: 0.2          # 裁剪參數
-  update_epochs: 4      # PPO 更新次數
+  gamma: 0.99           # 
+  gae_lambda: 0.95      # GAE 
+  epsilon: 0.2          # 
+  update_epochs: 4      # PPO 
   
 network:
   state_dim: 768
@@ -221,10 +221,10 @@ network:
 
 ---
 
-## 關鍵文件
+## 
 
-| 文件 | 說明 |
+|  |  |
 |------|------|
-| `src/rl/policy_network.py` | 推理用策略網路 |
-| `src/rl/ppo_trainer.py` | PPO 訓練器和環境 |
-| `src/rl/train_ppo.py` | 訓練腳本 |
+| `src/rl/policy_network.py` |  |
+| `src/rl/ppo_trainer.py` | PPO  |
+| `src/rl/train_ppo.py` |  |

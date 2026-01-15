@@ -1,6 +1,6 @@
-# 🏗️ System Architecture Overview
+#  System Architecture Overview
 
-*English | [中文](#中文版本)*
+*English | [](#)*
 
 ---
 
@@ -20,27 +20,27 @@ flowchart TB
     classDef rag fill:#ecfeff,stroke:#06b6d4,stroke-width:2px,color:#164e63;
     classDef agent fill:#f5f3ff,stroke:#8b5cf6,stroke-width:2px,color:#4c1d95;
 
-    subgraph UI["🖥️ Web Interface"]
+    subgraph UI[" Web Interface"]
         direction LR
         F["Flask + Bootstrap 5"]:::ui
     end
 
-    subgraph Orchestrator["⚙️ LangGraph Orchestrator"]
+    subgraph Orchestrator[" LangGraph Orchestrator"]
         direction TB
         
         subgraph Parallel["Parallel Analysis"]
             direction LR
-            RL["🎮 RL<br/>Strategy"]:::rl
-            GNN["🕸️ GNN<br/>Social"]:::gnn
-            RAG["📚 RAG<br/>Evidence"]:::rag
+            RL[" RL<br/>Strategy"]:::rl
+            GNN[" GNN<br/>Social"]:::gnn
+            RAG[" RAG<br/>Evidence"]:::rag
         end
 
-        Fuse["🔀 Result Fusion"]:::orch
-        Gen["💬 Response Generation<br/>(LLM)"]:::orch
-        Update["📝 State Update"]:::orch
+        Fuse[" Result Fusion"]:::orch
+        Gen[" Response Generation<br/>(LLM)"]:::orch
+        Update[" State Update"]:::orch
     end
 
-    subgraph Agents["🤖 Debate Agents"]
+    subgraph Agents[" Debate Agents"]
         direction LR
         A["Agent A<br/>Support +0.8"]:::agent
         B["Agent B<br/>Oppose -0.6"]:::agent
@@ -87,17 +87,17 @@ flowchart LR
     classDef gnn fill:#f0fdf4,stroke:#22c55e,stroke-width:2px,color:#14532d;
     classDef rag fill:#ecfeff,stroke:#06b6d4,stroke-width:2px,color:#164e63;
 
-    subgraph RL["🎮 RL Module"]
+    subgraph RL[" RL Module"]
         R1["PPO Algorithm"]:::rl
         R2["4 Strategies"]:::rl
     end
 
-    subgraph GNN["🕸️ GNN Module"]
+    subgraph GNN[" GNN Module"]
         G1["GraphSAGE + GAT"]:::gnn
         G2["Social Analysis"]:::gnn
     end
 
-    subgraph RAG["📚 RAG Module"]
+    subgraph RAG[" RAG Module"]
         A1["FAISS Index"]:::rag
         A2["Evidence Retrieval"]:::rag
     end
@@ -221,17 +221,17 @@ sequenceDiagram
 
 ---
 
-<a name="中文版本"></a>
+<a name=""></a>
 
-# 🏗️ 系統架構概覽
+#  
 
-*[English](#-system-architecture-overview) | 中文*
+*[English](#-system-architecture-overview) | *
 
 ---
 
-## 高層架構
+## 
 
-Social Debate AI 是一個多 Agent 辯論模擬系統，整合三個由 LangGraph 編排的 AI/ML 模組：
+Social Debate AI  Agent  LangGraph  AI/ML 
 
 ```mermaid
 %%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#4f46e5', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4338ca', 'lineColor': '#6366f1', 'secondaryColor': '#10b981', 'tertiaryColor': '#f59e0b'}}}%%
@@ -245,31 +245,31 @@ flowchart TB
     classDef rag fill:#ecfeff,stroke:#06b6d4,stroke-width:2px,color:#164e63;
     classDef agent fill:#f5f3ff,stroke:#8b5cf6,stroke-width:2px,color:#4c1d95;
 
-    subgraph UI["🖥️ Web 介面"]
+    subgraph UI[" Web "]
         direction LR
         F["Flask + Bootstrap 5"]:::ui
     end
 
-    subgraph Orchestrator["⚙️ LangGraph 編排器"]
+    subgraph Orchestrator[" LangGraph "]
         direction TB
         
-        subgraph Parallel["並行分析"]
+        subgraph Parallel[""]
             direction LR
-            RL["🎮 RL<br/>策略"]:::rl
-            GNN["🕸️ GNN<br/>社交"]:::gnn
-            RAG["📚 RAG<br/>證據"]:::rag
+            RL[" RL<br/>"]:::rl
+            GNN[" GNN<br/>"]:::gnn
+            RAG[" RAG<br/>"]:::rag
         end
 
-        Fuse["🔀 結果融合"]:::orch
-        Gen["💬 回應生成<br/>(LLM)"]:::orch
-        Update["📝 狀態更新"]:::orch
+        Fuse[" "]:::orch
+        Gen[" <br/>(LLM)"]:::orch
+        Update[" "]:::orch
     end
 
-    subgraph Agents["🤖 辯論 Agents"]
+    subgraph Agents["  Agents"]
         direction LR
-        A["Agent A<br/>支持 +0.8"]:::agent
-        B["Agent B<br/>反對 -0.6"]:::agent
-        C["Agent C<br/>中立 0.0"]:::agent
+        A["Agent A<br/> +0.8"]:::agent
+        B["Agent B<br/> -0.6"]:::agent
+        C["Agent C<br/> 0.0"]:::agent
     end
 
     UI --> Orchestrator
@@ -283,66 +283,66 @@ flowchart TB
 
 ---
 
-## 組件概覽
+## 
 
-### 1. Web 介面層
+### 1. Web 
 
-| 組件 | 技術 | 說明 |
+|  |  |  |
 |------|------|------|
-| 前端 | Bootstrap 5 + JavaScript | 響應式 UI，即時更新 |
-| 後端 | Flask | REST API 端點 |
-| 通訊 | AJAX | 非同步辯論控制 |
+|  | Bootstrap 5 + JavaScript |  UI |
+|  | Flask | REST API  |
+|  | AJAX |  |
 
-### 2. 編排層
+### 2. 
 
-| 組件 | 用途 |
+|  |  |
 |------|------|
-| **LangGraph 編排器** | 基於 StateGraph 的工作流引擎（v0.2.0+）|
-| **舊版編排器** | 手動異步編排（備用）|
+| **LangGraph ** |  StateGraph v0.2.0+|
+| **** | |
 
-詳見 [LangGraph 架構](LANGGRAPH.md)。
+ [LangGraph ](LANGGRAPH.md)
 
-### 3. 分析模組
+### 3. 
 
-| 模組 | 架構 | 用途 |
+|  |  |  |
 |------|------|------|
-| **RAG** | FAISS + OpenAI Embeddings | 證據檢索和排序 |
-| **GNN** | GraphSAGE + GAT | 預測說服成功率，分析社交影響 |
-| **RL** | PPO (Actor-Critic) | 動態策略選擇 |
+| **RAG** | FAISS + OpenAI Embeddings |  |
+| **GNN** | GraphSAGE + GAT |  |
+| **RL** | PPO (Actor-Critic) |  |
 
-### 4. Agent 層
+### 4. Agent 
 
-每個 Agent 維護：
-- **立場** (-1.0 到 +1.0)：對主題的立場
-- **信念** (0.0 到 1.0)：信念堅定度
-- **歷史**：說服和攻擊記錄
-- **投降狀態**：被說服時可投降
+ Agent 
+- **** (-1.0  +1.0)
+- **** (0.0  1.0)
+- ****
+- ****
 
 ---
 
-## 技術棧
+## 
 
-| 層級 | 技術 |
+|  |  |
 |------|------|
-| 前端 | Bootstrap 5, JavaScript |
-| 後端 | Flask, Python 3.10+ |
-| 編排 | LangGraph, LangChain |
+|  | Bootstrap 5, JavaScript |
+|  | Flask, Python 3.10+ |
+|  | LangGraph, LangChain |
 | LLM | OpenAI GPT-3.5/4 |
-| ML 框架 | PyTorch, PyTorch Geometric |
-| 向量資料庫 | FAISS |
-| 套件管理器 | uv |
+| ML  | PyTorch, PyTorch Geometric |
+|  | FAISS |
+|  | uv |
 
 ---
 
-## 資料流
+## 
 
-1. 用戶通過 Web UI 提交辯論主題
-2. 編排器初始化 Agent 狀態
-3. 每個回合：
-   - 執行並行分析（RL + GNN + RAG）
-   - 融合分析結果
-   - 通過 LLM 生成回應
-   - 評估回應效果
-   - 更新 Agent 狀態
-4. 檢查結束條件（投降/最大回合數）
-5. 生成最終摘要和判決
+1.  Web UI 
+2.  Agent 
+3. 
+   - RL + GNN + RAG
+   - 
+   -  LLM 
+   - 
+   -  Agent 
+4. /
+5. 

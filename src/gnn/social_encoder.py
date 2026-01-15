@@ -26,26 +26,26 @@ class PersuasionGNN(nn.Module):
         # Dropout
         self.dropout = nn.Dropout(0.3)
         
-        # Multi-task heads - 調整結構以匹配檢查點 (0, 1, 2, 3)
+        # Multi-task heads -  (0, 1, 2, 3)
         self.delta_head = nn.Sequential(
-            nn.Linear(128, 64),     # 第0層
-            nn.ReLU(),              # 第1層
-            nn.Dropout(0.3),        # 第2層
-            nn.Linear(64, 1)        # 第3層
+            nn.Linear(128, 64),
+            nn.ReLU(),
+            nn.Dropout(0.3),
+            nn.Linear(64, 1)
         )
         
         self.quality_head = nn.Sequential(
-            nn.Linear(128, 64),     # 第0層
-            nn.ReLU(),              # 第1層
-            nn.Dropout(0.3),        # 第2層
-            nn.Linear(64, 1)        # 第3層
+            nn.Linear(128, 64),
+            nn.ReLU(),
+            nn.Dropout(0.3),
+            nn.Linear(64, 1)
         )
         
         self.strategy_head = nn.Sequential(
-            nn.Linear(128, 64),     # 第0層
-            nn.ReLU(),              # 第1層
-            nn.Dropout(0.3),        # 第2層
-            nn.Linear(64, num_strategies)  # 第3層
+            nn.Linear(128, 64),
+            nn.ReLU(),
+            nn.Dropout(0.3),
+            nn.Linear(64, num_strategies)
         )
     
     def forward(self, x, edge_index, batch=None):

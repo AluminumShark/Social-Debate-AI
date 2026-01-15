@@ -1,14 +1,23 @@
-# 📚 RAG Module Quick Reference
+#  RAG Module Quick Reference
 
-*English | [中文](#中文版本)*
+*English | [](#)*
 
-> 📚 **For detailed explanation, see [LEARNING_NOTE §4.1: RAG Principles](../LEARNING_NOTE.md#41-rag-principles-and-implementation)**
+>  **For detailed explanation, see [LEARNING_NOTE §4.1: RAG Principles](../LEARNING_NOTE.md#41-rag-principles-and-implementation)**
 
 ---
 
 ## Overview
 
 The RAG (Retrieval-Augmented Generation) module retrieves relevant evidence to support debate arguments using **FAISS** vector search and **OpenAI embeddings**.
+
+### Data Source
+
+| Attribute | Description |
+|-----------|-------------|
+| **Dataset** | ChangeMyView (CMV) Corpus |
+| **Source** | [Cornell ConvoKit](https://convokit.cornell.edu/documentation/changemyview.html) |
+| **Origin** | Reddit r/changemyview subreddit |
+| **Content** | High-quality debate arguments and successful persuasion examples |
 
 ```mermaid
 %%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#4f46e5', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4338ca', 'lineColor': '#6366f1', 'secondaryColor': '#10b981', 'tertiaryColor': '#f59e0b'}}}%%
@@ -18,17 +27,17 @@ flowchart LR
     classDef rag fill:#f3e8ff,stroke:#9333ea,stroke-width:2px,color:#581c87;
     classDef output fill:#dcfce7,stroke:#22c55e,stroke-width:2px,color:#14532d;
 
-    subgraph Input["📥 Input"]
+    subgraph Input[" Input"]
         Q["Query"]:::input
     end
 
-    subgraph RAG["🔍 RAG Pipeline"]
+    subgraph RAG[" RAG Pipeline"]
         E["Embed Query"]:::rag
         S["Vector Search<br/>(FAISS)"]:::rag
         R["Rerank Results"]:::rag
     end
 
-    subgraph Output["📊 Output"]
+    subgraph Output[" Output"]
         D["Top-K Evidence"]:::output
         M["Metadata"]:::output
     end
@@ -135,23 +144,32 @@ chunking:
 
 ---
 
-<a name="中文版本"></a>
+<a name=""></a>
 
-# 📚 RAG 模組快速參考
+#  RAG 
 
-*[English](#-rag-module-quick-reference) | 中文*
+*[English](#-rag-module-quick-reference) | *
 
-> 📚 **詳細說明請見 [LEARNING_NOTE §4.1: RAG 原理](../LEARNING_NOTE.md#41-rag-principles-and-implementation)**
-
----
-
-## 概述
-
-RAG（檢索增強生成）模組使用 **FAISS** 向量搜索和 **OpenAI 嵌入** 來檢索支持辯論論點的相關證據。
+>  ** [LEARNING_NOTE §4.1: RAG ](../LEARNING_NOTE.md#41-rag-principles-and-implementation)**
 
 ---
 
-## API 參考
+## 
+
+RAG **FAISS**  **OpenAI ** 
+
+### 資料來源
+
+| 屬性 | 說明 |
+|------|------|
+| **資料集** | ChangeMyView (CMV) Corpus |
+| **來源** | [Cornell ConvoKit](https://convokit.cornell.edu/documentation/changemyview.html) |
+| **原始來源** | Reddit r/changemyview 子版塊 |
+| **內容** | 高品質辯論論點及成功說服案例 |
+
+---
+
+## API 
 
 ### `SimpleRetriever`
 
@@ -159,49 +177,49 @@ RAG（檢索增強生成）模組使用 **FAISS** 向量搜索和 **OpenAI 嵌�
 from src.rag.simple_retriever import SimpleRetriever
 
 retriever = SimpleRetriever()
-results = retriever.retrieve(query="AI 監管", top_k=5)
+results = retriever.retrieve(query="AI ", top_k=5)
 
-# 返回 RetrievalResult 列表:
+#  RetrievalResult :
 # [
 #     RetrievalResult(text="...", score=0.92, metadata={...}),
 #     ...
 # ]
 ```
 
-### `rag_retrieve_evidence()` (LangGraph 工具)
+### `rag_retrieve_evidence()` (LangGraph )
 
 ```python
 from src.orchestrator.debate_tools import rag_retrieve_evidence
 
 result = rag_retrieve_evidence.invoke({
-    "query": "AI 監管的證據",
-    "topic": "AI 倫理",
+    "query": "AI ",
+    "topic": "AI ",
     "top_k": 8
 })
 
-# 返回:
+# :
 {
-    'evidence_pool': [...],      # 證據列表
-    'best_evidence': "...",      # 最佳證據文本
-    'evidence_types': {...},     # 類型分布
+    'evidence_pool': [...],      # 
+    'best_evidence': "...",      # 
+    'evidence_types': {...},     # 
     'total_evidence': 8
 }
 ```
 
 ---
 
-## 架構
+## 
 
-| 組件 | 技術 | 用途 |
+|  |  |  |
 |------|------|------|
-| 嵌入 | OpenAI `text-embedding-3-small` | 文本向量化 |
-| 向量資料庫 | FAISS | 快速相似度搜索 |
-| 存儲 | Chroma（可選）| 持久化存儲 |
-| 重排序 | Cross-encoder（可選）| 結果優化 |
+|  | OpenAI `text-embedding-3-small` |  |
+|  | FAISS |  |
+|  | Chroma|  |
+|  | Cross-encoder|  |
 
 ---
 
-## 配置
+## 
 
 `configs/rag.yaml`:
 
@@ -225,10 +243,10 @@ chunking:
 
 ---
 
-## 關鍵文件
+## 
 
-| 文件 | 說明 |
+|  |  |
 |------|------|
-| `src/rag/retriever.py` | 帶重排序的增強檢索器 |
-| `src/rag/simple_retriever.py` | 輕量級檢索器 |
-| `src/rag/build_index.py` | 索引建置腳本 |
+| `src/rag/retriever.py` |  |
+| `src/rag/simple_retriever.py` |  |
+| `src/rag/build_index.py` |  |

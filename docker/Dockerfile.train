@@ -1,0 +1,28 @@
+# Training image for Social Debate AI
+# Target GPU: NVIDIA RTX 5080 (Blackwell, sm_120) -> needs CUDA 12.8 + PyTorch cu128.
+FROM nvidia/cuda:12.8.1-cudnn-runtime-ubuntu22.04
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    HF_HOME=/app/data/hf_cache
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        python3 python3-pip git ca-certificates && \
+    ln -sf /usr/bin/python3 /usr/bin/python && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# PyTorch with Blackwell (sm_120) support — CUDA 12.8 wheels.
+RUN pip install --upgrade pip && \
+    pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128
+
+# Remaining training dependencies (no Flask/web stack needed here).
+COPY docker/requirements-train.txt /tmp/requirements-train.txt
+RUN pip install -r /tmp/requirements-train.txt
+
+# Source is mounted at runtime via compose volume; copy as fallback for standalone use.
+COPY . /app
+
+CMD ["python", "train_all.py", "--all"]

@@ -1,0 +1,29 @@
+# Web app stack for Social Debate AI.
+#   docker compose -f docker/docker-compose.app.yml up -d --build
+#
+# Uses the host's Ollama (or any OpenAI-compatible endpoint) for the default
+# backend; users can also bring their own key in the browser (BYOK).
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.app
+    image: social-debate-app:latest
+    ports:
+      - "5000:5000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      LLM_PROVIDER: ollama
+      LLM_BASE_URL: "http://host.docker.internal:11434/v1"
+      LLM_API_KEY: ollama
+      LLM_MODEL: "qwen3.6:latest"
+      LLM_EMBEDDING_MODEL: "embeddinggemma:latest"
+      ALLOW_BYOK: "true"
+      USE_LLM_JUDGE: "true"
+      FLASK_DEBUG: "false"
+      RATE_LIMIT_PER_MIN: "20"
+    volumes:
+      # Trained models + FAISS index (read-only at serve time).
+      - ../data:/app/data:ro
+    restart: unless-stopped

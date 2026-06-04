@@ -1,0 +1,33 @@
+# GPU training stack for Social Debate AI.
+# Run on the test machine (has RTX 5080 + nvidia-container-toolkit):
+#   docker compose -f docker/docker-compose.train.yml run --rm train
+#
+# Ollama (embeddings/judge) runs on the host; the container reaches it via the
+# host gateway. Data persists to ./data on the host.
+services:
+  train:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.train
+    image: social-debate-train:latest
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      LLM_PROVIDER: ollama
+      LLM_BASE_URL: "http://host.docker.internal:11434/v1"
+      LLM_API_KEY: ollama
+      LLM_EMBEDDING_MODEL: "embeddinggemma:latest"
+      LLM_MODEL: "qwen3.6:latest"
+    volumes:
+      - ../data:/app/data
+      - ../configs:/app/configs
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    # Default command trains everything; override for individual steps, e.g.
+    #   docker compose -f docker/docker-compose.train.yml run --rm train python scripts/prepare_cmv.py
+    command: ["python", "train_all.py", "--all"]

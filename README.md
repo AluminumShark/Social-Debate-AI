@@ -56,10 +56,23 @@ This project uses the **ChangeMyView (CMV) Corpus** from [Cornell ConvoKit](http
 
 ```mermaid
 flowchart TB
-    U["Browser&#160;·&#160;streaming, BYOK, demo"] <--> F["Flask + SQLite&#160;·&#160;shareable links"]
-    F -->|"stream_debate (tokens)"| O["LangGraph orchestrator — per turn:&#160;&#160;analyze (RAG + GNN* + RL*)&#160;→&#160;generate (streamed)&#160;→&#160;judge + state update"]
-    O --> S["LLM provider seam&#160;·&#160;shared 768-d embeddings"]
-    S --> B["Ollama&#160;·&#160;OpenAI-compatible&#160;·&#160;BYOK (your key)"]
+    subgraph Web ["Web layer"]
+        direction LR
+        U["Browser<br/>streaming · BYOK · demo"] <--> F["Flask + SQLite<br/>shareable links"]
+    end
+
+    subgraph Turn ["LangGraph orchestrator · per turn"]
+        direction TB
+        AN["Analyze<br/>RAG + GNN* + RL*"] --> GEN["Generate<br/>streamed tokens"] --> JU["Judge<br/>+ state update"]
+        JU -. "loop until max rounds / surrender" .-> AN
+    end
+
+    subgraph Backend ["LLM access"]
+        direction TB
+        S["Provider seam<br/>shared 768-d embeddings"] --> B["Ollama · OpenAI-compatible · BYOK"]
+    end
+
+    Web ==>|"stream_debate (tokens)"| Turn ==> Backend
 ```
 
 \* RAG is ablation-verified to help; GNN and RL are experimental — see [eval_results](docs/eval_results.md).

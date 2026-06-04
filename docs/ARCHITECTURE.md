@@ -4,6 +4,9 @@ Social Debate AI is a multi-agent debate system that combines a frontier LLM
 (for argument generation) with trained ML modules (RAG / GNN / RL) and a
 LangGraph-style turn loop. It is built as a **portfolio / engineering-skeleton
 showcase**: the emphasis is clean seams, honest measurement, and reproducibility.
+Its real subject is **measurement and diagnosis** — the ablation harness exists to
+show *whether* each module helps and, where one doesn't, *why* (see
+[Honest status](#honest-status) and [eval_results](eval_results.md)).
 
 ## System overview
 
@@ -76,16 +79,18 @@ showcase**: the emphasis is clean seams, honest measurement, and reproducibility
 | Component | State |
 |-----------|-------|
 | LLM streaming, BYOK, demo, provider seam | ✅ production-usable |
-| RAG (FAISS over CMV) | working; ablation shows +5% evidence |
+| RAG (FAISS over CMV) | best-supported module: directional +0.039 on evidence + clean mechanism, but within judge noise at this scale |
 | Judge (LLM scoring) | working, with keyword fallback |
-| GNN (graph persuasion model) | experimental; no demonstrated gain in this setup |
-| RL (PPO strategy policy) | experimental; no demonstrated gain in this setup |
+| GNN (graph persuasion model) | experimental; no measurable gain, and training collapsed to the majority class |
+| RL (PPO strategy policy) | experimental; no measurable gain; reward derived from the broken GNN, so it can't win by construction |
 
-The GNN/RL modules are integration demonstrations. Their contribution is reported
-empirically in [the ablation results](eval_results.md): RAG helps; GNN/RL show no
-demonstrated gain in this configuration. Important: that result is confounded with
-weak training (the GNN collapsed to the majority class under class imbalance, on a
-small subset), so it means "undertrained modules add nothing here", which cannot be
-cleanly separated from "the modules are inherently unhelpful". They are kept as
-labeled experiments, not oversold.
+The GNN/RL modules are diagnostic demonstrations. Their contribution is reported
+empirically in [the ablation results](eval_results.md), with the statistical caveat
+applied **evenly**: at this sample size and judge, *no* module reaches significance —
+RAG included. The harness yields a diagnosis, not certification. RAG is the only
+module with both a directional signal and a clean mechanism (so it is the one worth
+keeping, though unproven); the GNN collapsed to the majority class so its non-result
+is uninformative; and RL's reward is derived from that broken GNN, so the GNN → RL
+chain fails by construction rather than by chance. They are kept as labeled
+experiments whose failure is itself the finding, not oversold.
 See [DECISIONS.md](DECISIONS.md) for trade-offs and what would change for v2/production.

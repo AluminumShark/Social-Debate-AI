@@ -45,18 +45,27 @@ debates?" The architecture is built so that question can be *measured*, not
 assumed. Results are reported even when a module shows little gain.
 
 ## 6. Honest take on the ML modules
-- **RAG** has the clearest value: real semantic retrieval of CMV evidence.
+Applied with one consistent statistical ruler: at the ablation's scale (3 topics ×
+2 rounds, one small judge) *no* module reaches significance, so the take below is
+about evidence *strength*, not proof.
+- **RAG** is the best-supported module: it has the clearest mechanism (real semantic
+  retrieval of CMV evidence) and the only directional signal on the metric it should
+  affect (evidence, +0.039). That is "consistent with helping," not "proven" — and we
+  resist calling it a confirmed win while calling GNN/RL inconclusive on the same data.
 - **GNN** is a node-classification model over real reply trees. At inference it
-  scores a single context; calling it a "graph" neural net is accurate for
-  training but thin at serving time.
-- **RL/PPO** selects a strategy label. The reward is grounded in real CMV delta
-  outcomes blended with GNN suitability — an improvement over the original
-  (which trained on a synthetic environment with constant rewards and was never
-  even connected to inference). It still largely distills the GNN/data signal
-  rather than learning from live debate outcomes (which would require expensive
-  LLM-in-the-loop rollouts).
+  scores a single context; calling it a "graph" neural net is accurate for training
+  but thin at serving time. In practice its training collapsed to the majority class
+  (class imbalance), so it never produced a trustworthy persuasion signal — its
+  ablation non-result is uninformative rather than a clean negative.
+- **RL/PPO** selects a strategy label. Its reward is derived from the GNN's
+  suitability signal — an improvement over the original (a synthetic environment with
+  constant rewards, never even connected to inference), but the deeper problem is
+  structural: because the GNN signal is broken, the policy faithfully optimizes a
+  mis-measured target. Stacking RL on a broken estimator can't win by construction;
+  this is the project's clearest worked example of the "no clean reward signal" trap.
 - The LLM does the overwhelming majority of debate quality. The ML modules are
-  integration demonstrations whose marginal value is reported empirically.
+  diagnostic demonstrations whose marginal value — and, for GNN/RL, whose instructive
+  failure — is reported empirically.
 
 ## 7. Offline/online split with graceful degradation
 **Decision:** training runs in a CUDA Docker image on a GPU box; the web app

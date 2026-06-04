@@ -1,7 +1,7 @@
 # Social Debate AI
 
 <p align="center">
-  <strong>A multi-agent LLM debate system — LangGraph orchestration with RAG, GNN and RL</strong>
+  <strong>A multi-agent LLM debate system — and an honest harness for measuring whether RAG, GNN and RL actually help</strong>
 </p>
 
 <p align="center">
@@ -15,9 +15,9 @@
 
 ## Overview
 
-**Social Debate AI** is an intelligent multi-agent debate simulation system that leverages cutting-edge deep learning technologies. It orchestrates dynamic debates between AI agents with distinct personalities and stances, using **LangGraph** for workflow management, **RAG** for evidence retrieval, **GNN** for social dynamics modeling, and **RL** for strategic decision-making.
+**Social Debate AI** is a multi-agent debate system where three LLM agents (support / oppose / neutral) argue a topic through a **LangGraph** turn loop. Around that working system it wires three trained ML modules behind clean seams — **RAG** (evidence retrieval), **GNN** (persuasion signal) and **RL** (strategy selection) — and an **ablation harness** that *measures* whether each one improves debate quality instead of assuming it does.
 
-> **What this project is.** A **learning / portfolio / engineering-skeleton showcase** of integrating an LLM with RAG + GNN + RL behind clean seams — not a production product or a research-grade persuasion model. The LLM drives most debate quality; the trained modules are integration demonstrations whose real contribution is **measured honestly** via an ablation study, not assumed. See **[Architecture](docs/ARCHITECTURE.md)**, **[Design Decisions & Trade-offs](docs/DECISIONS.md)**, and the **[Ablation results](docs/eval_results.md)**.
+> **What this project is.** A **learning / portfolio / engineering-skeleton showcase** whose real subject is **measurement and diagnosis**, not "three cool modules integrated." The LLM drives almost all debate quality; the honest headline is what the ablation found. At this scale **RAG is the only module with a directional benefit and a clean mechanism**, while a naively stacked **GNN → RL pipeline fails for a diagnosable reason**: RL's reward is derived from a GNN that collapsed to the majority class, so the policy faithfully optimizes a mis-measured target — a worked example of the "no clean reward signal" trap. The deliverable is the skeleton + the harness that lets you *see* this, not a claim that all three modules work. See **[Architecture](docs/ARCHITECTURE.md)**, **[Design Decisions & Trade-offs](docs/DECISIONS.md)**, and the **[Ablation results](docs/eval_results.md)**.
 
 ### Key Features
 
@@ -29,9 +29,9 @@
 | **Local-first LLM** | Defaults to a local/LAN **Ollama** (OpenAI-compatible) — no cloud key required |
 | **Demo Mode** | One-click pre-recorded debate so visitors can try it with zero setup |
 | **LangGraph Orchestration** | Declarative state-graph workflow with parallel analysis pipelines |
-| **RAG Evidence Retrieval** | FAISS vector search over CMV evidence using Ollama `embeddinggemma` — ablation shows it helps (+5% evidence score) |
-| **GNN Social Modeling** *(experimental)* | GraphSAGE+GAT persuasion model on real CMV conversation graphs. No demonstrated debate-quality gain in this setup (confounded with weak/undertrained models). Kept as an integration demo. See [eval](docs/eval_results.md) |
-| **RL Strategy Learning** *(experimental)* | PPO policy over 4 strategies, reward grounded in CMV deltas + GNN. No demonstrated gain in this setup. Kept as a demo |
+| **RAG Evidence Retrieval** | FAISS vector search over CMV evidence using Ollama `embeddinggemma` — the best-supported module: a directional gain on the metric it targets (evidence, **+0.039**) with a clean mechanism, though within judge noise at this sample size. See [eval](docs/eval_results.md) |
+| **GNN Social Modeling** *(experimental)* | GraphSAGE+GAT persuasion model on real CMV conversation graphs. No measurable gain — and not cleanly testable: training collapsed to the majority class under class imbalance, so the persuasion signal is unreliable. Kept as a labeled diagnostic experiment. See [eval](docs/eval_results.md) |
+| **RL Strategy Learning** *(experimental)* | PPO policy over 4 strategies. No measurable gain, and structurally couldn't win here: its reward is *derived from the (broken) GNN*, so it optimizes a mis-measured target. Kept as a diagnostic experiment — the failure is the lesson |
 | **LLM-as-a-Judge Scoring** | Persuasion/attack/evidence scored by an LLM (keyword fallback) |
 
 ---
@@ -75,7 +75,7 @@ flowchart TB
     Web ==>|"stream_debate (tokens)"| Turn ==> Backend
 ```
 
-\* RAG is ablation-verified to help; GNN and RL are experimental — see [eval_results](docs/eval_results.md).
+\* No module reaches significance at this sample size; RAG is the only one with a directional benefit and a clean mechanism, while GNN/RL are diagnostic experiments (the GNN→RL reward chain fails by construction) — see [eval_results](docs/eval_results.md).
 
 ---
 

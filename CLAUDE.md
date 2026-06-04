@@ -56,11 +56,15 @@ Source map:
 
 ## Honest status (see docs/eval_results.md)
 
-- RAG: working; ablation shows it helps (+5% evidence).
+- Honest frame: at n=3x2 with one small judge, the ablation can't certify ANY module
+  (RAG included) — every diff is within judge noise. It yields a diagnosis, not proof.
+- RAG: best-supported module — a directional gain on the metric it targets (evidence,
+  +0.039) with a clean mechanism, though within noise at this sample size.
 - LLM judge: working (keyword fallback).
-- GNN / RL: experimental. The ablation shows no demonstrated debate-quality gain in
-  this setup; that result is confounded with weak training (GNN collapses to the
-  majority class under class imbalance). Kept as integration demonstrations.
+- GNN / RL: experimental. No measurable gain, and not cleanly testable: the GNN
+  collapsed to the majority class (class imbalance), and RL's reward is derived from
+  that broken GNN signal, so the GNN->RL chain fails by construction. Kept as labeled
+  diagnostic experiments, not oversold.
 
 ## Gotchas
 

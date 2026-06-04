@@ -93,4 +93,9 @@ keeping, though unproven); the GNN collapsed to the majority class so its non-re
 is uninformative; and RL's reward is derived from that broken GNN, so the GNN → RL
 chain fails by construction rather than by chance. They are kept as labeled
 experiments whose failure is itself the finding, not oversold.
+
+Note: the persuasion the system actually delivers comes from the LLM and is scored by
+the judge, which is **independent of the GNN**. The GNN's broken signal is a *would-be*
+add-on, not the source of the debates' persuasiveness — see the note under the table in
+[eval_results](eval_results.md).
 See [DECISIONS.md](DECISIONS.md) for trade-offs and what would change for v2/production.

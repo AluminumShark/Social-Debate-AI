@@ -13,6 +13,16 @@ increasing module sets and scored every turn with the LLM judge
 | +RAG+GNN | 0.711 | 0.800 | 0.500 |
 | full (RAG+GNN+RL) | 0.717 | 0.744 | 0.533 |
 
+> **What "Persuasion" here means (and what it does *not*).** This column is scored by
+> the **LLM judge reading the generated argument text** (`evaluate_response_effects`,
+> prompt: *"how likely it is to move a reasonable opponent"*). It is **independent of
+> the GNN.** The GNN has its own, separate `persuasion_prediction` — a would-be signal
+> fed into the analysis/RL reward — and *that* is the part the ablation finds empty.
+> So the debates are genuinely persuasive, but that quality is the **LLM's**: what is
+> hollow is the **GNN's claimed contribution** to persuasion, not persuasion itself,
+> and not the CMV delta labels it was trained on (real data; the model just failed to
+> learn from it under class imbalance).
+
 ## Verdict
 
 First, the honest statistical frame, applied **evenly**: at 3 topics × 2 rounds

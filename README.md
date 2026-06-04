@@ -55,49 +55,14 @@ This project uses the **ChangeMyView (CMV) Corpus** from [Cornell ConvoKit](http
 ## System Architecture
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#4f46e5', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4338ca', 'lineColor': '#6366f1'}}}%%
 flowchart TB
-    classDef web fill:#e0f2fe,stroke:#0ea5e9,stroke-width:2px,color:#0c4a6e;
-    classDef orch fill:#f3e8ff,stroke:#9333ea,stroke-width:2px,color:#581c87;
-    classDef good fill:#dcfce7,stroke:#22c55e,stroke-width:2px,color:#14532d;
-    classDef exp fill:#fef9c3,stroke:#ca8a04,stroke-width:2px,color:#713f12;
-    classDef seam fill:#ffedd5,stroke:#f97316,stroke-width:2px,color:#7c2d12;
-    classDef ext fill:#e2e8f0,stroke:#64748b,stroke-width:2px,color:#1e293b;
-
-    subgraph Presentation["Presentation"]
-        direction TB
-        UI["Browser UI<br/>SSE streaming · BYOK"]:::web
-        API["Flask app<br/>+ SQLite (share links)"]:::web
-        UI <--> API
-    end
-
-    subgraph Core["Single LangGraph orchestrator (per turn)"]
-        direction LR
-        RAG["RAG evidence<br/>FAISS — helps"]:::good
-        GNN["GNN persuasion<br/>(experimental)"]:::exp
-        RL["RL strategy<br/>(experimental)"]:::exp
-        JUDGE["LLM judge<br/>scoring"]:::good
-    end
-
-    SEAM["LLM provider seam<br/>(src/llm) · shared 768-d embeddings"]:::seam
-
-    subgraph Backends["LLM backends"]
-        direction LR
-        OLL["Ollama (local)"]:::ext
-        OAI["OpenAI-compatible"]:::ext
-        BYOK["BYOK (user key)"]:::ext
-    end
-
-    API <==>|"stream_debate (tokens)"| Core
-    Core ==> SEAM
-    SEAM --> OLL
-    SEAM --> OAI
-    SEAM --> BYOK
-
-    style Presentation fill:#f0f9ff,stroke:#bae6fd,color:#0369a1
-    style Core fill:#faf5ff,stroke:#e9d5ff,color:#6b21a8
-    style Backends fill:#f8fafc,stroke:#cbd5e1,color:#334155
+    U["Browser — streaming + BYOK"] <--> F["Flask + SQLite"]
+    F -->|"stream_debate (tokens)"| O["LangGraph orchestrator<br/>per turn: RAG + GNN* + RL* + LLM judge"]
+    O --> S["LLM provider seam<br/>shared 768-d embeddings"]
+    S --> B["Ollama · OpenAI-compatible · BYOK"]
 ```
+
+\* RAG is ablation-verified to help; GNN/RL are experimental — see [eval_results](docs/eval_results.md).
 
 ---
 
@@ -368,49 +333,11 @@ uv run python train_all.py --rag    # Build RAG index
 
 ## Tech Stack
 
-```mermaid
-%%{init: {'theme': 'base'}}%%
-block-beta
-    columns 5
-
-    block:orch:1
-        columns 1
-        A["LangGraph"]
-        B["LangChain"]
-    end
-
-    block:ml:1
-        columns 1
-        C["PyTorch"]
-        D["PyG"]
-        E["FAISS"]
-    end
-
-    block:llm:1
-        columns 1
-        F["LLM via provider seam<br/>Ollama / OpenAI / BYOK"]
-        K["embeddinggemma"]
-    end
-
-    block:web:1
-        columns 1
-        G["Flask + gunicorn"]
-        H["Bootstrap 5"]
-        L["SQLite"]
-    end
-
-    block:tools:1
-        columns 1
-        I["uv / Docker"]
-        J["pytest / ruff"]
-    end
-
-    style orch fill:#818cf8,color:#fff
-    style ml fill:#fb923c,color:#fff
-    style llm fill:#4ade80,color:#fff
-    style web fill:#22d3ee,color:#fff
-    style tools fill:#f472b6,color:#fff
-```
+- **Orchestration:** LangGraph + LangChain
+- **ML:** PyTorch, PyG (GNN), FAISS, embeddinggemma
+- **LLM:** provider seam — Ollama / OpenAI-compatible / BYOK
+- **Web:** Flask + gunicorn, Bootstrap 5, SQLite
+- **Tooling:** uv, Docker, pytest, ruff
 
 ---
 

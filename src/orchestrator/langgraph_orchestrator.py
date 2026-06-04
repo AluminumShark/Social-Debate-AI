@@ -3,20 +3,27 @@ LangGraph-based Debate Orchestrator
 Replaces the manual parallel_orchestrator with a declarative graph-based approach
 """
 
+import sys
 import time
-from typing import Dict, List, Literal
+from pathlib import Path
+from typing import Dict, Iterator, List, Literal, Optional
 from concurrent.futures import ThreadPoolExecutor
 
 from langgraph.graph import StateGraph, END
-from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, SystemMessage
 
-from .debate_state import DebateState, create_initial_state
-from .debate_tools import (
+# Allow `from llm import ...` when running from project root or src/
+_SRC = Path(__file__).resolve().parent.parent
+if str(_SRC) not in sys.path:
+    sys.path.insert(0, str(_SRC))
+from llm import LLMConfig, resolve_config, get_langchain_chat, chat_stream  # noqa: E402
+
+from .debate_state import DebateState, create_initial_state  # noqa: E402
+from .debate_tools import (  # noqa: E402
     rl_select_strategy,
-    gnn_analyze_social, 
+    gnn_analyze_social,
     rag_retrieve_evidence,
-    evaluate_response_effects
+    evaluate_response_effects,
 )
 
 # Strategy guidance templates
@@ -40,14 +47,43 @@ class LangGraphDebateOrchestrator:
     5. Check end conditions
     """
     
-    def __init__(self, model_name: str = "gpt-3.5-turbo", temperature: float = 0.7):
-        self.llm = ChatOpenAI(model=model_name, temperature=temperature)
+    def __init__(
+        self,
+        llm_config: Optional[LLMConfig] = None,
+        model_name: Optional[str] = None,
+        temperature: Optional[float] = None,
+    ):
+        # Resolve LLM config from env defaults (Ollama/OpenAI/compatible),
+        # allowing legacy model_name/temperature overrides for compatibility.
+        self.llm_config = llm_config or resolve_config()
+        if model_name or temperature is not None:
+            from dataclasses import replace as _replace
+
+            self.llm_config = _replace(
+                self.llm_config,
+                **{
+                    k: v
+                    for k, v in {"model": model_name, "temperature": temperature}.items()
+                    if v is not None
+                },
+            )
+        self.llm = get_langchain_chat(self.llm_config)
         self.executor = ThreadPoolExecutor(max_workers=4)
         self.graph = self._build_graph()
-        self.compiled_graph = self.graph.compile()
-        
+        # Compile with a checkpointer so batch runs are resumable/inspectable
+        # (genuinely uses LangGraph state persistence, not just as a container).
+        self.checkpointer = None
+        try:
+            from langgraph.checkpoint.memory import MemorySaver
+            self.checkpointer = MemorySaver()
+            self.compiled_graph = self.graph.compile(checkpointer=self.checkpointer)
+        except Exception as e:  # noqa: BLE001
+            print(f"[LangGraph] checkpointer unavailable ({e}); compiling without it")
+            self.compiled_graph = self.graph.compile()
+
         print("[LangGraph] Debate orchestrator initialized")
-        print(f"[LangGraph] Model: {model_name}")
+        print(f"[LangGraph] LLM: {self.llm_config.provider}/{self.llm_config.model} "
+              f"@ {self.llm_config.base_url}")
     
     def _build_graph(self) -> StateGraph:
         """Build the debate workflow graph"""
@@ -101,39 +137,52 @@ class LangGraphDebateOrchestrator:
             context += f"{h['agent_id']}: {h['content'][:200]}...\n"
         
         print(f"[Analysis] Agent {current_speaker} analyzing...")
-        
-        # Run tools in parallel using ThreadPoolExecutor (synchronous, no asyncio needed)
+
+        # Ablation switches (for A/B evaluation). Default: all modules ON.
+        import os
+        _on = lambda k: os.environ.get(k, 'true').lower() in ('1', 'true', 'yes')  # noqa: E731
+        use_rl, use_gnn, use_rag = _on('USE_RL'), _on('USE_GNN'), _on('USE_RAG')
+
+        # Neutral defaults used when a module is disabled or fails.
+        rl_result = {'strategy': 'analytical', 'quality_score': 0.5, 'confidence': 0.3, 'source': 'off'}
+        gnn_result = {'influence_score': 0.5, 'stance_trend': 0.0, 'current_stance': 0.0,
+                      'persuasion_prediction': {'best_strategy': 'analytical', 'delta_probability': 0.5}}
+        rag_result = {'evidence_pool': [], 'best_evidence': 'No evidence available', 'total_evidence': 0}
+
+        # Run enabled tools in parallel using ThreadPoolExecutor
         try:
-            # Submit tasks to thread pool
             rl_future = self.executor.submit(
                 rl_select_strategy.invoke,
                 {"context": context, "social_context": agent_state.get('social_context')}
-            )
-            
+            ) if use_rl else None
+
             gnn_future = self.executor.submit(
                 gnn_analyze_social.invoke,
                 {
                     "agent_id": current_speaker,
                     "current_stance": agent_state.get('current_stance', 0.0),
                     "conviction": agent_state.get('conviction', 0.7),
-                    "persuasion_history": agent_state.get('persuasion_history', [])
+                    "persuasion_history": agent_state.get('persuasion_history', []),
+                    "context_text": context,
                 }
-            )
-            
+            ) if use_gnn else None
+
             rag_future = self.executor.submit(
                 rag_retrieve_evidence.invoke,
                 {"query": context, "topic": topic, "top_k": 8}
-            )
-            
-            # Wait for results
-            rl_result = rl_future.result(timeout=30)
-            gnn_result = gnn_future.result(timeout=30)
-            rag_result = rag_future.result(timeout=30)
-            
-            print(f"[Analysis] RL strategy: {rl_result.get('strategy')}")
-            print(f"[Analysis] GNN influence: {gnn_result.get('influence_score', 0):.2f}")
-            print(f"[Analysis] RAG evidence: {rag_result.get('total_evidence', 0)} items")
-            
+            ) if use_rag else None
+
+            if rl_future:
+                rl_result = rl_future.result(timeout=30)
+            if gnn_future:
+                gnn_result = gnn_future.result(timeout=30)
+            if rag_future:
+                rag_result = rag_future.result(timeout=30)
+
+            print(f"[Analysis] RL={'on' if use_rl else 'off'}:{rl_result.get('strategy')} "
+                  f"GNN={'on' if use_gnn else 'off'}:{gnn_result.get('influence_score', 0):.2f} "
+                  f"RAG={'on' if use_rag else 'off'}:{rag_result.get('total_evidence', 0)}")
+
         except Exception as e:
             print(f"[Analysis] Error: {e}")
             rl_result = {'strategy': 'analytical', 'quality_score': 0.5, 'confidence': 0.3}
@@ -190,23 +239,21 @@ class LangGraphDebateOrchestrator:
         
         return {"fused_result": fused_result}
     
-    def _generate_response_node(self, state: DebateState) -> Dict:
-        """Generate debate response using LLM"""
-        
+    def _build_generation_prompt(self, state: DebateState) -> str:
+        """Build the system prompt for the current speaker (shared by node + stream)."""
         current_speaker = state["agent_order"][state["current_speaker_index"]]
         agent_state = state["agent_states"][current_speaker]
         topic = state["topic"]
         fused_result = state["fused_result"] or {}
         history = state["history"]
-        
+
         strategy = fused_result.get('final_strategy', 'analytical')
         evidence = fused_result.get('evidence', '')
-        
-        # Build prompt
+
         is_first_round = len(history) == 0 and state["current_speaker_index"] == 0
-        
+
         if is_first_round:
-            system_prompt = f"""You are participating in a public issue debate about "{topic}".
+            return f"""You are participating in a public issue debate about "{topic}".
 
 Your role settings:
 - Position tendency: {agent_state.get('current_stance', 0):.2f} (positive=support, negative=oppose)
@@ -221,13 +268,12 @@ Requirements:
 5. Complete your full argument
 
 Available evidence: {evidence[:500] if evidence else 'None'}"""
-        else:
-            history_text = "\n".join([
-                f"{h['agent_id']}: {h['content'][:150]}..." 
-                for h in history[-4:]
-            ])
-            
-            system_prompt = f"""You are participating in a public issue debate about "{topic}".
+
+        history_text = "\n".join([
+            f"{h['agent_id']}: {h['content'][:150]}..."
+            for h in history[-4:]
+        ])
+        return f"""You are participating in a public issue debate about "{topic}".
 
 Your role settings:
 - Position tendency: {agent_state.get('current_stance', 0):.2f}
@@ -248,27 +294,34 @@ Requirements:
 
 Available evidence: {evidence[:500] if evidence else 'None'}"""
 
+    def _generate_response_node(self, state: DebateState) -> Dict:
+        """Generate debate response using LLM"""
+
+        current_speaker = state["agent_order"][state["current_speaker_index"]]
+        topic = state["topic"]
+        system_prompt = self._build_generation_prompt(state)
+
         print(f"[Generate] Agent {current_speaker} generating response...")
-        
+
         try:
             messages = [
                 SystemMessage(content=system_prompt),
                 HumanMessage(content="Please express your viewpoint:")
             ]
-            
+
             response = self.llm.invoke(messages)
             response_text = response.content.strip()
-            
+
             # Check if truncated
             if not response_text.endswith(('.', '!', '?', '', '', '')):
                 response_text += ". In conclusion, I maintain my position based on the above analysis."
-            
+
             print(f"[Generate] Response generated ({len(response_text.split())} words)")
-            
+
         except Exception as e:
             print(f"[Generate] Error: {e}")
             response_text = f"I understand the various perspectives on {topic}. Based on my analysis, I believe we should consider multiple factors before reaching a conclusion."
-        
+
         return {"current_response": response_text}
     
     def _update_states_node(self, state: DebateState) -> Dict:
@@ -459,8 +512,14 @@ Available evidence: {evidence[:500] if evidence else 'None'}"""
         # Run the graph
         start_time = time.time()
         final_state = None
-        
-        for event in self.compiled_graph.stream(initial_state):
+
+        # A unique thread id is required when a checkpointer is attached.
+        import os as _os
+        stream_kwargs = {}
+        if getattr(self, "checkpointer", None) is not None:
+            stream_kwargs["config"] = {"configurable": {"thread_id": _os.urandom(6).hex()}}
+
+        for event in self.compiled_graph.stream(initial_state, **stream_kwargs):
             # Log progress
             for node_name, node_state in event.items():
                 if 'current_response' in node_state and node_state['current_response']:
@@ -487,6 +546,114 @@ Available evidence: {evidence[:500] if evidence else 'None'}"""
             'elapsed_time': elapsed_time
         }
     
+    def stream_debate(
+        self,
+        topic: str,
+        agent_configs: List[Dict],
+        max_rounds: int = 5,
+        llm_config: Optional[LLMConfig] = None,
+    ) -> Iterator[Dict]:
+        """
+        Drive the debate manually (reusing the graph node helpers) and yield
+        fine-grained events for a streaming UI (SSE):
+          start | turn_start | analysis | token | turn_end | summary | error
+        Token events stream the LLM response as it is generated.
+
+        `llm_config` lets a single shared orchestrator serve per-request BYOK
+        configs without rebuilding the graph.
+        """
+        gen_config = llm_config or self.llm_config
+        state = create_initial_state(topic, agent_configs, max_rounds)
+        yield {
+            "type": "start",
+            "topic": topic,
+            "agents": [c["id"] for c in agent_configs],
+            "max_rounds": max_rounds,
+        }
+
+        while True:
+            speaker = state["agent_order"][state["current_speaker_index"]]
+            rnd = state["current_round"]
+            yield {"type": "turn_start", "agent": speaker, "round": rnd}
+
+            # Analysis + fusion (RL/GNN/RAG)
+            state.update(self._parallel_analysis_node(state))
+            state.update(self._fuse_results_node(state))
+            fused = state["fused_result"] or {}
+            rag = state.get("rag_result") or {}
+            # Top evidence snippets for UI citations
+            citations = [
+                (item.get("content", "") or "")[:200]
+                for item in (rag.get("evidence_pool") or [])[:2]
+                if item.get("content")
+            ]
+            yield {
+                "type": "analysis",
+                "agent": speaker,
+                "round": rnd,
+                "strategy": fused.get("final_strategy"),
+                "evidence_confidence": round(fused.get("evidence_confidence", 0.0), 2),
+                "delta_probability": round(fused.get("delta_probability", 0.0), 2),
+                "citations": citations,
+            }
+
+            # Stream generation token-by-token
+            prompt = self._build_generation_prompt(state)
+            messages = [
+                {"role": "system", "content": prompt},
+                {"role": "user", "content": "Please express your viewpoint:"},
+            ]
+            parts: List[str] = []
+            try:
+                for tok in chat_stream(messages, gen_config):
+                    parts.append(tok)
+                    yield {"type": "token", "agent": speaker, "round": rnd, "text": tok}
+            except Exception as e:  # noqa: BLE001
+                print(f"[Stream] generation error: {e}")
+                yield {"type": "error", "agent": speaker, "round": rnd, "message": str(e)}
+
+            response_text = "".join(parts).strip()
+            if not response_text:
+                response_text = (
+                    f"I understand the various perspectives on {topic}. "
+                    "Based on my analysis, multiple factors deserve consideration."
+                )
+            if not response_text.endswith((".", "!", "?")):
+                response_text += "."
+            state["current_response"] = response_text
+
+            # Update agent states (persuasion/attack/surrender)
+            upd = self._update_states_node(state)
+            new_hist = upd.pop("history", None)
+            state.update(upd)
+            if new_hist:
+                state["history"] = list(state.get("history", [])) + new_hist
+
+            yield {
+                "type": "turn_end",
+                "agent": speaker,
+                "round": rnd,
+                "content": response_text,
+                "effects": state.get("response_effects", {}),
+                "agent_states": {
+                    aid: {
+                        "stance": round(s.get("current_stance", 0.0), 2),
+                        "conviction": round(s.get("conviction", 0.7), 2),
+                        "has_surrendered": s.get("has_surrendered", False),
+                    }
+                    for aid, s in state["agent_states"].items()
+                },
+            }
+
+            # Decide whether to continue
+            if self._should_continue(state) == "end":
+                break
+            state.update(self._advance_turn_node(state))
+            if self._check_round_complete(state) == "end":
+                break
+
+        yield {"type": "summary", "summary": self._generate_summary(state)}
+
     async def run_single_round(
         self,
         state: DebateState
@@ -495,8 +662,13 @@ Available evidence: {evidence[:500] if evidence else 'None'}"""
         
         # Run until round changes or debate ends
         initial_round = state["current_round"]
-        
-        for event in self.compiled_graph.stream(state):
+
+        import os as _os
+        stream_kwargs = {}
+        if getattr(self, "checkpointer", None) is not None:
+            stream_kwargs["config"] = {"configurable": {"thread_id": _os.urandom(6).hex()}}
+
+        for event in self.compiled_graph.stream(state, **stream_kwargs):
             for node_name, node_state in event.items():
                 state = {**state, **node_state}
             
@@ -629,10 +801,13 @@ Available evidence: {evidence[:500] if evidence else 'None'}"""
 
 # Convenience function
 def create_langgraph_orchestrator(
-    model_name: str = "gpt-3.5-turbo",
-    temperature: float = 0.7
+    llm_config: Optional[LLMConfig] = None,
+    model_name: Optional[str] = None,
+    temperature: Optional[float] = None,
 ) -> LangGraphDebateOrchestrator:
-    """Create a LangGraph-based debate orchestrator"""
-    return LangGraphDebateOrchestrator(model_name=model_name, temperature=temperature)
+    """Create a LangGraph-based debate orchestrator (defaults to env LLM config)."""
+    return LangGraphDebateOrchestrator(
+        llm_config=llm_config, model_name=model_name, temperature=temperature
+    )
 
 

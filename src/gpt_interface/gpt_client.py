@@ -1,135 +1,75 @@
 """
-GPT client interface
+GPT/LLM client interface.
+
+Thin backward-compatible wrapper over `src/llm` (provider abstraction).
+Defaults come from environment variables (.env) — by default a local/LAN
+Ollama exposing an OpenAI-compatible API. See env.example.
 """
 
-from openai import OpenAI
-import time
-import random
-import os
-from pathlib import Path
 import sys
+from pathlib import Path
+from typing import List, Dict, Optional
 
-# Add src to path for imports
-sys.path.append(str(Path(__file__).parent.parent))
+# Allow `from llm import ...` when imported from project root or src/
+_SRC = Path(__file__).resolve().parent.parent
+if str(_SRC) not in sys.path:
+    sys.path.insert(0, str(_SRC))
 
-try:
-    from utils.config_loader import ConfigLoader
-except ImportError:
-    print("Warning: Could not import ConfigLoader")
-    ConfigLoader = None
+from llm import LLMConfig, resolve_config, chat as _chat, chat_stream as _chat_stream  # noqa: E402
 
-def load_api_key():
+# Resolved default config (provider/model/base_url/key from env)
+_DEFAULT = resolve_config()
+DEFAULT_MODEL = _DEFAULT.model
+DEFAULT_MAX_TOKENS = _DEFAULT.max_tokens
+DEFAULT_TEMPERATURE = _DEFAULT.temperature
+
+print(f"[LLM] Default backend: {_DEFAULT.provider}/{_DEFAULT.model} @ {_DEFAULT.base_url}")
+
+
+def _config_for(
+    model: Optional[str], max_tokens: Optional[int], temperature: Optional[float]
+) -> LLMConfig:
+    from dataclasses import replace
+
+    overrides = {}
+    if model:
+        overrides["model"] = model
+    if max_tokens:
+        overrides["max_tokens"] = max_tokens
+    if temperature is not None:
+        overrides["temperature"] = temperature
+    return replace(_DEFAULT, **overrides) if overrides else _DEFAULT
+
+
+def chat(
+    prompt: str,
+    model: str = None,
+    max_tokens: int = None,
+    temperature: float = None,
+) -> str:
     """
-    Load OpenAI API key from multiple sources in order of priority:
-    1. Direct config file setting (api_key)
-    2. Environment variable (api_key_env)
-    3. API key file (api_key_file)
+    Single-prompt chat completion against the configured LLM backend.
+
+    Kept for backward compatibility with the legacy orchestrator. New code
+    should use `src.llm.chat(messages, config)` directly.
     """
+    cfg = _config_for(model, max_tokens, temperature)
     try:
-        if ConfigLoader:
-            # 
-            system_config = ConfigLoader.load('system')
-            openai_config = system_config.get('api', {}).get('openai', {})
-            
-            # 1
-            api_key = openai_config.get('api_key', '').strip()
-            if api_key:
-                print("Using API key from config file")
-                return api_key
-            
-            # 2
-            env_var = openai_config.get('api_key_env', 'OPENAI_API_KEY')
-            api_key = os.environ.get(env_var, '').strip()
-            if api_key:
-                print(f"Using API key from environment variable: {env_var}")
-                return api_key
-            
-            # 3
-            key_file = openai_config.get('api_key_file', '').strip()
-            if key_file and Path(key_file).exists():
-                try:
-                    with open(key_file, 'r', encoding='utf-8') as f:
-                        api_key = f.read().strip()
-                    if api_key:
-                        print(f"Using API key from file: {key_file}")
-                        return api_key
-                except Exception as e:
-                    print(f"Error reading API key file: {e}")
-        
-        # 
-        api_key = os.environ.get('OPENAI_API_KEY', '').strip()
-        if api_key:
-            print("Using API key from OPENAI_API_KEY environment variable")
-            return api_key
-            
-    except Exception as e:
-        print(f"Error loading API key: {e}")
-    
-    print("No API key configured")
-    return None
-
-def get_openai_config():
-    """Get OpenAI configuration from config file"""
-    if ConfigLoader:
-        system_config = ConfigLoader.load('system')
-        return system_config.get('api', {}).get('openai', {})
-    return {}
-
-# Initialize OpenAI client
-api_key = load_api_key()
-client = None
-
-if api_key:
-    try:
-        client = OpenAI(api_key=api_key)
-        print("OpenAI client initialized successfully")
-    except Exception as e:
-        print(f"Failed to initialize OpenAI client: {e}")
-        client = None
-else:
-    print("Warning: No OpenAI API key configured")
-
-# Get configuration
-openai_config = get_openai_config()
-DEFAULT_MODEL = openai_config.get('default_model', 'gpt-3.5-turbo')
-DEFAULT_MAX_TOKENS = openai_config.get('max_tokens', 1000)
-DEFAULT_TEMPERATURE = openai_config.get('temperature', 0.7)
-
-def chat(prompt: str, model: str = None, max_tokens: int = None, temperature: float = None) -> str:
-    """
-    Chat with OpenAI GPT model
-    
-    Args:
-        prompt: The input prompt
-        model: Model name (defaults to config setting)
-        max_tokens: Maximum tokens (defaults to config setting)
-        temperature: Temperature for randomness (defaults to config setting)
-    """
-    if not client:
-        print("Warning: No OpenAI client available, using fallback response")
-        return "I understand your point. Let me think about this issue from a different perspective."
-    
-    # Use provided values or defaults from config
-    model = model or DEFAULT_MODEL
-    max_tokens = max_tokens or DEFAULT_MAX_TOKENS
-    temperature = temperature if temperature is not None else DEFAULT_TEMPERATURE
-    
-    try:
-        response = client.chat.completions.create(
-            model=model,
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=max_tokens,
-            temperature=temperature
-        )
-        
-        # Add some variance
-        time.sleep(random.uniform(0.5, 1.5))
-        
-        return response.choices[0].message.content.strip()
-    
-    except Exception as e:
-        print(f"GPT API failed: {e}")
-        # Simple fallback response
+        return _chat([{"role": "user", "content": prompt}], cfg)
+    except Exception as e:  # noqa: BLE001
+        print(f"LLM call failed: {e}")
         return "I understand your point. Let me think about this issue from a different perspective."
 
 
+def chat_messages(messages: List[Dict[str, str]], config: Optional[LLMConfig] = None) -> str:
+    """Multi-message chat completion (role/content dicts)."""
+    try:
+        return _chat(messages, config or _DEFAULT)
+    except Exception as e:  # noqa: BLE001
+        print(f"LLM call failed: {e}")
+        return "I understand your point. Let me think about this issue from a different perspective."
+
+
+def chat_stream(messages: List[Dict[str, str]], config: Optional[LLMConfig] = None):
+    """Streaming chat completion (yields content deltas)."""
+    return _chat_stream(messages, config or _DEFAULT)

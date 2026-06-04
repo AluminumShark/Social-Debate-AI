@@ -4,17 +4,17 @@ Simple retriever for RAG system
 
 import json
 import os
-from typing import List, Dict
+from typing import List, Dict, Optional
 from dataclasses import dataclass
 
 @dataclass
 class RetrievalResult:
     text: str
     score: float
-    metadata: Dict = None
+    metadata: Optional[Dict] = None
 
 class SimpleRetriever:
-    def __init__(self, index_path: str = None):
+    def __init__(self, index_path: Optional[str] = None):
         self.index_path = index_path or "src/rag/data/rag/simple_index.json"
         self.documents = []
         self._load_index()

@@ -11,6 +11,7 @@ import sqlite3
 import threading
 import time
 from pathlib import Path
+from typing import Optional
 
 _DB_PATH = Path(os.environ.get("DEBATE_DB", "data/debates.db"))
 _lock = threading.Lock()
@@ -31,7 +32,7 @@ def _short_id() -> str:
     return os.urandom(4).hex()
 
 
-def save_debate(topic: str, rounds, summary, created_at: float = None) -> str:
+def save_debate(topic: str, rounds, summary, created_at: Optional[float] = None) -> str:
     """Persist a debate and return its share id."""
     created_at = created_at if created_at is not None else time.time()
     payload = json.dumps({"topic": topic, "rounds": rounds, "summary": summary},

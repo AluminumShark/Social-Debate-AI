@@ -43,9 +43,9 @@ def _config_for(
 
 def chat(
     prompt: str,
-    model: str = None,
-    max_tokens: int = None,
-    temperature: float = None,
+    model: Optional[str] = None,
+    max_tokens: Optional[int] = None,
+    temperature: Optional[float] = None,
 ) -> str:
     """
     Single-prompt chat completion against the configured LLM backend.

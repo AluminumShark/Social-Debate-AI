@@ -177,7 +177,7 @@ def predict_persuasion(text_features, agent_id=None):
     with torch.no_grad():
         # Match the feature vector to the model's actual input dimension
         # (trained on embeddinggemma 768-d; pad/truncate defensively).
-        expected = _PERSUASION_MODEL.conv1.in_channels
+        expected = int(_PERSUASION_MODEL.conv1.in_channels)
         feats = np.asarray(text_features, dtype=np.float32).ravel()
         if feats.shape[0] < expected:
             padded = np.zeros(expected, dtype=np.float32)
@@ -200,7 +200,7 @@ def predict_persuasion(text_features, agent_id=None):
         strategy_probs = torch.softmax(strategy_logits, dim=0).numpy()
         
         # Get best strategy
-        best_strategy_idx = np.argmax(strategy_probs)
+        best_strategy_idx = int(np.argmax(strategy_probs))
         best_strategy = STRATEGY_NAMES[best_strategy_idx]
         
         # Create strategy score dictionary

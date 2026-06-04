@@ -155,8 +155,5 @@ def predict_quality(text):
     return min(length_score * 0.4 + complexity_score * 0.3 + evidence_score * 0.3, 1.0)
 
 
-PPONetwork.predict_quality = staticmethod(predict_quality)
-
-
 def get_policy_network(model_path=None):
     return _load_model()

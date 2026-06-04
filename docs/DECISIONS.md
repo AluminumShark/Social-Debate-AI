@@ -71,6 +71,19 @@ benefiting from training when available.
 - Use LangGraph's checkpointer or remove it; consolidate the legacy orchestrator.
 - Add persistence (SQLite) + shareable debate links; cache per-turn embeddings.
 
+## Security notes (known, by design for a showcase)
+
+- **BYOK is server-side request forgery (SSRF)-adjacent.** A request may override
+  `base_url`, and the server then makes outbound calls to it. That is intended
+  (users point at their own endpoint), but on an untrusted public deployment you
+  should allowlist `base_url` (or disable the override). Keys are used per-request
+  and never stored or logged.
+- **BYOK covers generation only.** Embeddings (RAG/GNN context) and the LLM judge
+  use the server's default backend, not the per-request key — so the host still
+  bears that cost. Routing every call through the per-request config is a v2 item.
+- **Rate limiting is per-process and in-memory.** With multiple gunicorn workers the
+  effective limit is per-worker; use a shared store (e.g. Redis) for a real limit.
+
 ## What was deliberately *not* done
 Production ops (k8s, autoscaling), squeezing model accuracy, and multi-tenant
 concerns — out of scope for a portfolio/showcase whose value is clean seams,

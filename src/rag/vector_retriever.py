@@ -72,7 +72,7 @@ class VectorRetriever:
         scores, idxs = self.index.search(q, min(top_k, len(self.docs)))
         out: List[Dict] = []
         for score, i in zip(scores[0], idxs[0]):
-            if i < 0:
+            if i < 0 or int(i) >= len(self.docs):
                 continue
             d = self.docs[int(i)]
             out.append({

@@ -56,31 +56,10 @@ resources:
     max_usage_gb: 16
     cache_size_gb: 2
 
-# API 
-api:
-  # OpenAI API
-  openai:
-    # API Key 
-    api_key: ""  #  API key
-    api_key_env: "OPENAI_API_KEY"  # 
-    api_key_file: ""  #  API key
-    
-    # 
-    max_retries: 3
-    timeout: 30
-    base_url: "https://api.openai.com/v1"  # API  URL
-    
-    # 
-    default_model: "gpt-3.5-turbo"
-    max_tokens: 2048
-    temperature: 0.7
-    
-  #  API
-  huggingface:
-    enabled: false
-    api_key: ""
-    api_key_env: "HF_API_KEY"
-    api_key_file: ""
+# LLM configuration lives in .env and is read via src/llm/provider.py.
+# Provider / model / base_url / api_key (and per-request BYOK) are resolved there;
+# this file no longer holds LLM credentials or model names.
+# See env.example: LLM_PROVIDER / LLM_MODEL / LLM_BASE_URL / LLM_API_KEY / LLM_EMBEDDING_MODEL
 
 # 
 paths:

@@ -10,6 +10,9 @@ dependencies = [
     "torch-geometric>=2.3.0",
     "numpy>=1.24.0",
     "scipy>=1.10.0",
+    # Text encoders / dataset (training + GNN features)
+    "transformers>=4.40.0",
+    "convokit>=3.0.0",
     # LangChain & LangGraph
     "langchain>=0.3.0",
     "langchain-openai>=0.2.0",

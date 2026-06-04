@@ -55,9 +55,9 @@ debate:
     evidence_bonus: 0.3          # 
     social_influence: 0.2        # 
 
-# GPT 
+# LLM generation params (model/provider/keys are configured in .env via src/llm).
 gpt:
-  model: "gpt-3.5-turbo"
+  model: ""   # unused: see .env LLM_MODEL (defaults to local Ollama)
   temperature: 0.7
   max_tokens: 500
   system_prompt: |

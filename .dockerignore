@@ -1,0 +1,12 @@
+.venv/
+.git/
+__pycache__/
+*.pyc
+data/
+*.tgz
+node_modules/
+memory/
+.pytest_cache/
+htmlcov/
+.coverage
+docs/_build/

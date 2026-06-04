@@ -1,7 +1,7 @@
 # Social Debate AI
 
 <p align="center">
-  <strong>A multi-agent LLM debate system — and an honest harness for measuring whether RAG, GNN and RL actually help</strong>
+  <strong>A multi-agent LLM debate system, built as an instrument to test — not assume — whether RAG, GNN and RL improve persuasion</strong>
 </p>
 
 <p align="center">
@@ -316,6 +316,7 @@ uv run python train_all.py --rag    # Build RAG index
 - [Architecture](docs/ARCHITECTURE.md) — system design, layers, data flow
 - [Design Decisions & Trade-offs](docs/DECISIONS.md) — why, and honest limits
 - [Ablation Results](docs/eval_results.md) — does each ML module actually help?
+- [Positioning & Framing](docs/POSITIONING.md) — how to read the result: a measurement/diagnosis, not a failed integration
 - [Training Guide](docs/guides/TRAINING.md) — CMV data pipeline + model training
 - [Learning Notes](docs/LEARNING_NOTE.md) — study notes (GNN, PPO, RAG, LangGraph)
 

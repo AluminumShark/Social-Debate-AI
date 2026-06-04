@@ -17,16 +17,22 @@
 
 **Social Debate AI** is an intelligent multi-agent debate simulation system that leverages cutting-edge deep learning technologies. It orchestrates dynamic debates between AI agents with distinct personalities and stances, using **LangGraph** for workflow management, **RAG** for evidence retrieval, **GNN** for social dynamics modeling, and **RL** for strategic decision-making.
 
+> **What this project is.** A **learning / portfolio / engineering-skeleton showcase** of integrating an LLM with RAG + GNN + RL behind clean seams — not a production product or a research-grade persuasion model. The LLM drives most debate quality; the trained modules are integration demonstrations whose real contribution is **measured honestly** via an ablation study, not assumed. See **[Architecture](docs/ARCHITECTURE.md)**, **[Design Decisions & Trade-offs](docs/DECISIONS.md)**, and the **[Ablation results](docs/eval_results.md)**.
+
 ### Key Features
 
 | Feature | Description |
 |---------|-------------|
 | **Multi-Agent Debate** | 3 AI agents with unique stances (Support / Oppose / Neutral) engage in dynamic debates |
+| **Token-Streaming UI** | Watch each agent's argument generate live via Server-Sent Events |
+| **Bring-Your-Own-Key (BYOK)** | Users supply their own LLM key in the browser; the server never stores it |
+| **Local-first LLM** | Defaults to a local/LAN **Ollama** (OpenAI-compatible) — no cloud key required |
+| **Demo Mode** | One-click pre-recorded debate so visitors can try it with zero setup |
 | **LangGraph Orchestration** | Declarative state-graph workflow with parallel analysis pipelines |
-| **RAG Evidence Retrieval** | FAISS-powered vector search for relevant evidence and citations |
-| **GNN Social Modeling** | Graph neural networks predict persuasion success and social influence |
-| **RL Strategy Learning** | PPO-based reinforcement learning with 4 adaptive debate strategies |
-| **Modern Web Interface** | Flask + Bootstrap 5 responsive UI for real-time debate visualization |
+| **RAG Evidence Retrieval** | FAISS vector search over CMV evidence using Ollama `embeddinggemma` — ablation shows it helps (+5% evidence score) |
+| **GNN Social Modeling** *(experimental)* | GraphSAGE+GAT persuasion model on real CMV conversation graphs. No demonstrated debate-quality gain in this setup (confounded with weak/undertrained models). Kept as an integration demo. See [eval](docs/eval_results.md) |
+| **RL Strategy Learning** *(experimental)* | PPO policy over 4 strategies, reward grounded in CMV deltas + GNN. No demonstrated gain in this setup. Kept as a demo |
+| **LLM-as-a-Judge Scoring** | Persuasion/attack/evidence scored by an LLM (keyword fallback) |
 
 ---
 
@@ -190,9 +196,13 @@ graph TB
 ### Prerequisites
 
 - **Python** 3.10+
-- **CUDA** 11.8+ (optional, for GPU acceleration)
 - **RAM** 8GB+
-- **OpenAI API Key**
+- **An LLM backend** — one of:
+  - **Ollama** (recommended, free, local/LAN) running an OpenAI-compatible API, with a chat model (e.g. `qwen3`, `gemma3`) and an embedding model (`embeddinggemma`). This is the default.
+  - **or any OpenAI-compatible cloud key** (OpenAI, etc.) — supplied via `.env` or per-user in the browser (BYOK).
+- **CUDA 12.8+ GPU** — only needed to *train* the GNN/RL models (RTX 50-series/Blackwell needs cu128). Not required to run debates.
+
+> No API key? Click **"Try demo (no key)"** in the UI to replay a pre-recorded debate.
 
 ### Installation (using uv - Recommended)
 
@@ -241,45 +251,53 @@ Open http://localhost:5000 to start debating!
 
 ---
 
+## Reproduce (fork & run)
+
+Everything is driven by a `Makefile` (or `scripts/reproduce.sh`). You need
+Python 3.10+ and an LLM backend — point `.env` (`LLM_BASE_URL` / `LLM_API_KEY`)
+at a local [Ollama](https://ollama.com) or any OpenAI-compatible endpoint.
+
+```bash
+make setup            # install deps + create .env from template
+make reproduce        # deps -> RAG index (seed if no CMV) -> ablation. No GPU needed.
+make run              # launch the web app
+
+# Full pipeline (downloads the CMV corpus and trains GNN/RL; GPU recommended):
+make reproduce-full   # = data + train + eval
+```
+
+Individual steps: `make data` (download/clean CMV), `make index` (build FAISS),
+`make train` (GNN + PPO), `make eval` (ablation -> `docs/eval_results.md`),
+`make test`, `make lint`, `make docker-app`, `make docker-train`.
+
+No `make`? Use `bash scripts/reproduce.sh [full]`, or run the underlying
+`python scripts/*.py` / `python train_all.py --all` commands directly.
+
+Models and the FAISS index live under `data/` (gitignored). Without them the app
+still runs with graceful fallbacks; train them (or drop pre-trained files into
+`data/`) to enable the full stack.
+
+---
+
 ## Project Structure
 
 ```
 Social-Debate-AI/
-├── src/                          # Core source code
-│   ├── agents/                   # Agent implementations
-│   │   ├── base_agent.py         # Base agent class
-│   │   ├── agent_a.py            # Support agent
-│   │   ├── agent_b.py            # Oppose agent
-│   │   └── agent_c.py            # Neutral agent
-│   ├── orchestrator/             # LangGraph orchestration
-│   │   ├── langgraph_orchestrator.py  # Main orchestrator
-│   │   ├── debate_state.py       # State schema
-│   │   └── debate_tools.py       # Tool wrappers
-│   ├── rag/                      # Retrieval-Augmented Generation
-│   │   ├── retriever.py          # Enhanced retriever
-│   │   └── simple_retriever.py   # Lightweight retriever
-│   ├── gnn/                      # Graph Neural Network
-│   │   ├── social_encoder.py     # Social graph encoder
-│   │   └── train_supervised.py   # Training script
-│   ├── rl/                       # Reinforcement Learning
-│   │   ├── policy_network.py     # PPO policy network
-│   │   └── ppo_trainer.py        # PPO trainer
-│   └── dialogue/                 # Dialogue management
-├── ui/                           # Web application
-│   ├── app.py                    # Flask server
-│   ├── static/                   # CSS & JavaScript
-│   └── templates/                # HTML templates
-├── tests/                        # Test suite
-│   ├── unit/                     # Unit tests
-│   └── integration/              # Integration tests
-├── configs/                      # Configuration files
-│   ├── debate.yaml               # Debate parameters
-│   ├── rag.yaml                  # RAG settings
-│   ├── gnn.yaml                  # GNN settings
-│   └── rl.yaml                   # RL settings
-├── docs/                         # Documentation
-├── pyproject.toml                # Project configuration
-└── uv.lock                       # Dependency lock file
+├── src/
+│   ├── llm/                # provider.py — the single LLM/embedding seam (Ollama/OpenAI/BYOK)
+│   ├── orchestrator/       # langgraph_orchestrator.py, debate_state.py, debate_tools.py
+│   ├── rag/                # vector_retriever.py (FAISS) + simple_retriever.py (fallback)
+│   ├── gnn/                # social_encoder.py, train_graph.py, strategy_label.py
+│   ├── rl/                 # policy_network.py, ppo_trainer.py, train_ppo.py
+│   ├── storage/            # debate_store.py — SQLite persistence + shareable links
+│   └── utils/              # config_loader.py
+├── ui/                     # app.py (Flask), wsgi entry, templates/, static/
+├── scripts/                # prepare_cmv.py, build_rag_index.py, eval_ab.py, make_demo.py
+├── docker/                 # Dockerfile.app / Dockerfile.train + compose files
+├── tests/                  # unit/ + integration/
+├── configs/                # debate/rag/gnn/rl/system yaml
+├── docs/                   # ARCHITECTURE, DECISIONS, eval_results, REFACTOR, PLAN, ...
+├── wsgi.py  train_all.py  pyproject.toml  uv.lock
 ```
 
 ---
@@ -306,12 +324,30 @@ uv run pytest --cov=src
 
 ### Environment Variables
 
-```bash
-# Required
-OPENAI_API_KEY=sk-...
+Copy `env.example` to `.env` and adjust. Defaults target a local/LAN Ollama — no cloud key needed.
 
-# Optional
-USE_LANGGRAPH=true    # Enable LangGraph orchestrator (default: true)
+```bash
+# LLM backend (default: local/LAN Ollama, OpenAI-compatible)
+LLM_PROVIDER=ollama
+LLM_MODEL=qwen3.6:latest
+LLM_BASE_URL=http://localhost:11434/v1
+LLM_API_KEY=ollama
+LLM_EMBEDDING_MODEL=embeddinggemma:latest
+
+# Let users supply their own key in the browser (recommended)
+ALLOW_BYOK=true
+
+# Use an LLM to score persuasion/attack/evidence (else keyword heuristic)
+USE_LLM_JUDGE=true
+
+# Flask
+FLASK_DEBUG=false          # never enable in production
+
+# To use a cloud model instead of Ollama:
+# LLM_PROVIDER=openai
+# LLM_MODEL=gpt-5.5
+# LLM_BASE_URL=https://api.openai.com/v1
+# LLM_API_KEY=sk-...
 ```
 
 ### Configuration Files
@@ -388,26 +424,13 @@ block-beta
 
 ## Documentation
 
-### Core Learning Resource
-- **[LEARNING_NOTE.md](docs/LEARNING_NOTE.md)** — Comprehensive deep learning study notes (GNN, PPO, RAG, LangGraph)
-
-### Architecture
-- [System Overview](docs/architecture/OVERVIEW.md) - High-level architecture
-- [LangGraph Orchestration](docs/architecture/LANGGRAPH.md) - Workflow engine
-- [Data Flow](docs/architecture/DATA_FLOW.md) - State management
-
-### Guides
-- [Quick Start Guide](docs/guides/QUICKSTART.md) - Get running in 5 minutes
-- [Configuration Guide](docs/guides/CONFIGURATION.md) - System configuration
-- [Training Guide](docs/guides/TRAINING.md) - Model training
-- [Deployment Guide](docs/guides/DEPLOYMENT.md) - Production deployment
-
-### API & Modules
-- [REST API Reference](docs/api/REST_API.md) - Flask API endpoints
-- [RAG Module](docs/modules/RAG.md) - Evidence retrieval
-- [GNN Module](docs/modules/GNN.md) - Social analysis
-- [RL Module](docs/modules/RL.md) - Strategy selection
-- [Scoring System](docs/modules/SCORING.md) - Victory determination
+- [Architecture](docs/ARCHITECTURE.md) — system design, layers, data flow
+- [Design Decisions & Trade-offs](docs/DECISIONS.md) — why, and honest limits
+- [Ablation Results](docs/eval_results.md) — does each ML module actually help?
+- [Refactor Plan](docs/REFACTOR.md) — codebase structure
+- [Training Guide](docs/guides/TRAINING.md) — CMV data pipeline + model training
+- [Roadmap](docs/PLAN.md) — v1/v2 scope and backlog
+- [Learning Notes](docs/LEARNING_NOTE.md) — study notes (GNN, PPO, RAG, LangGraph)
 
 ---
 

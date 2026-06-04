@@ -4,6 +4,27 @@
 
 This guide provides detailed instructions on how to train the three core models of Social Debate AI: RAG, GNN, and RL.
 
+> **Updated pipeline (2026).** Training now uses a single entry point and local
+> embeddings (Ollama `embeddinggemma`) so **no OpenAI key is required**:
+>
+> ```bash
+> python train_all.py --all          # data (CMV) + FAISS RAG + GNN + RL
+> python train_all.py --data         # download + convert CMV -> data/raw/pairs.jsonl
+> python train_all.py --rag          # build FAISS index (Ollama embeddings)
+> python train_all.py --gnn --rl     # train models only
+> ```
+>
+> - Data: `scripts/prepare_cmv.py` downloads the CMV corpus via **ConvoKit**.
+> - RAG: `scripts/build_rag_index.py` builds a **FAISS** index (real vector
+>   search), replacing the old keyword index and the OpenAI-key Chroma path.
+> - GNN: embeddings come from the LLM provider (same encoder at train and
+>   inference), not distilbert. Output checkpoint: `data/models/gnn_persuasion.pt`.
+> - GPU training on RTX 50-series (Blackwell) needs **CUDA 12.8 / PyTorch cu128** —
+>   use the provided Docker image: `docker/Dockerfile.train` +
+>   `docker/docker-compose.train.yml`. See also `scripts/deploy_testbox.ps1`.
+>
+> The sections below describe the original design and remain useful background.
+
 ## Table of Contents
 
 - [Environment Setup](#environment-setup)

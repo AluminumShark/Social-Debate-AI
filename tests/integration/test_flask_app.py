@@ -1,85 +1,49 @@
 """
-Integration tests for Flask web application
+Integration tests for the Flask web app (consolidated LangGraph-only API).
 """
 
-import pytest
 import sys
 from pathlib import Path
+import pytest
 
-# Add project paths
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 
-class TestFlaskAppImport:
-    """Test Flask app can be imported"""
-    
+class TestFlaskApp:
     def test_import_app(self):
-        """Test app module imports"""
-        from ui import app
-        assert app is not None
-    
-    def test_flask_app_exists(self):
-        """Test Flask app instance exists"""
         from ui.app import app
         assert app is not None
 
-
-class TestFlaskRoutes:
-    """Test Flask routes exist"""
-    
     @pytest.fixture
     def client(self):
-        """Create test client"""
         from ui.app import app
-        app.config['TESTING'] = True
+        app.config["TESTING"] = True
         with app.test_client() as client:
             yield client
-    
-    def test_index_route(self, client):
-        """Test index route returns 200"""
-        response = client.get('/')
-        assert response.status_code == 200
-    
-    def test_health_route(self, client):
-        """Test health check route"""
-        response = client.get('/api/health')
-        assert response.status_code == 200
-        
-        data = response.get_json()
-        assert 'status' in data
-    
-    def test_debug_route(self, client):
-        """Test debug info route"""
-        response = client.get('/debug')
-        assert response.status_code == 200
 
+    def test_index(self, client):
+        assert client.get("/").status_code == 200
 
-class TestAPIEndpoints:
-    """Test API endpoints structure"""
-    
-    @pytest.fixture
-    def client(self):
-        """Create test client"""
-        from ui.app import app
-        app.config['TESTING'] = True
-        with app.test_client() as client:
-            yield client
-    
-    def test_debate_endpoint_requires_topic(self, client):
-        """Test debate endpoint requires topic"""
-        response = client.post('/api/debate', json={})
-        assert response.status_code == 400
-    
-    def test_set_topic_endpoint(self, client):
-        """Test set topic endpoint structure"""
-        response = client.post('/api/set_topic', json={'topic': ''})
-        # Should return 400 for empty topic or 500 if not initialized
-        assert response.status_code in [400, 500]
-    
-    def test_reset_endpoint(self, client):
-        """Test reset endpoint structure"""
-        response = client.post('/api/reset')
-        # May return 500 if not initialized, which is expected
-        assert response.status_code in [200, 500]
+    def test_health(self, client):
+        r = client.get("/api/health")
+        assert r.status_code == 200
+        assert r.get_json().get("status") == "ok"
 
+    def test_config(self, client):
+        r = client.get("/api/config")
+        assert r.status_code == 200
+        assert "default_model" in r.get_json()
+
+    def test_stream_requires_topic(self, client):
+        # Empty topic -> 400 (no LLM call made)
+        r = client.post("/api/debate/stream", json={"topic": ""})
+        assert r.status_code in (400, 503)
+
+    def test_recent_debates(self, client):
+        r = client.get("/api/debates")
+        assert r.status_code == 200
+        assert "debates" in r.get_json()
+
+    def test_missing_debate_404(self, client):
+        assert client.get("/api/debate/deadbeef").status_code == 404

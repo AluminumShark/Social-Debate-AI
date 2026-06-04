@@ -155,7 +155,8 @@ We don't train separate models. We use **one encoder, multiple heads**.
 
 ### Tech Stack
 *   **Framework**: `PyTorch Geometric` (PyG) for efficient graph operations.
-*   **Embedding**: `DistilBERT` (768-dim) from `HuggingFace Transformers` for node features.
+*   **Embedding**: `embeddinggemma` (768-dim) via the project's LLM provider, used for
+    node features at both training and inference (same encoder everywhere).
 
 ### Specific Configurations
 *   **Layers**: 3x SAGEConv + 1x GATConv (4 heads).
@@ -168,7 +169,7 @@ We don't train separate models. We use **one encoder, multiple heads**.
     *Reasoning*: Persuasion prediction (delta) is the primary goal, hence highest weight.
 
 ### Data Flow
-1.  **Raw Text** → DistilBERT Tokenizer → Model → `[CLS]` Token Vector (768-dim).
+1.  **Raw Text** → `embeddinggemma` (via the LLM provider) → 768-dim vector.
 2.  **Graph Construction**:
     *   Node Features `x`: `[num_nodes, 768]`.
     *   Edge Index `edge_index`: `[2, num_edges]` (sparse adjacency matrix).
@@ -319,7 +320,8 @@ RL is only as good as the reward.
 
 ### Tech Stack
 *   **Custom PPO Implementation**: Built from scratch using PyTorch (no `stable-baselines3`).
-    *   *Why?* To handle custom `DebateState` encoding and integrating `DistilBERT` embeddings directly into the state space.
+    *   *Why?* To handle custom `DebateState` encoding and integrate the
+        `embeddinggemma` context embeddings directly into the state space.
 
 ### Key Hyperparameters
 *   **Learning Rate**: `3e-4` (Standard Adam default).

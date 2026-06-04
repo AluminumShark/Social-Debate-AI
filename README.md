@@ -252,7 +252,7 @@ Social-Debate-AI/
 ├── docker/                 # Dockerfile.app / Dockerfile.train + compose files
 ├── tests/                  # unit/ + integration/
 ├── configs/                # debate/rag/gnn/rl/system yaml
-├── docs/                   # ARCHITECTURE, DECISIONS, eval_results, REFACTOR, PLAN, ...
+├── docs/                   # ARCHITECTURE, DECISIONS, eval_results, TRAINING, LEARNING_NOTE
 ├── wsgi.py  train_all.py  pyproject.toml  uv.lock
 ```
 
@@ -347,9 +347,7 @@ uv run python train_all.py --rag    # Build RAG index
 - [Architecture](docs/ARCHITECTURE.md) — system design, layers, data flow
 - [Design Decisions & Trade-offs](docs/DECISIONS.md) — why, and honest limits
 - [Ablation Results](docs/eval_results.md) — does each ML module actually help?
-- [Refactor Plan](docs/REFACTOR.md) — codebase structure
 - [Training Guide](docs/guides/TRAINING.md) — CMV data pipeline + model training
-- [Roadmap](docs/PLAN.md) — v1/v2 scope and backlog
 - [Learning Notes](docs/LEARNING_NOTE.md) — study notes (GNN, PPO, RAG, LangGraph)
 
 ---

@@ -56,50 +56,27 @@ This project uses the **ChangeMyView (CMV) Corpus** from [Cornell ConvoKit](http
 
 ```mermaid
 flowchart TB
-    U["Browser — streaming + BYOK"] <--> F["Flask + SQLite"]
-    F -->|"stream_debate (tokens)"| O["LangGraph orchestrator<br/>per turn: RAG + GNN* + RL* + LLM judge"]
+    U["Browser<br/>streaming · BYOK · demo"] <--> F["Flask + SQLite<br/>shareable links"]
+    F -->|"stream_debate (tokens)"| O
+
+    subgraph O["LangGraph orchestrator — per debate turn"]
+        direction LR
+        AN["analyze<br/>RAG + GNN* + RL*"] --> GEN["generate<br/>(streamed)"] --> JU["LLM judge<br/>+ state update"]
+    end
+
     O --> S["LLM provider seam<br/>shared 768-d embeddings"]
-    S --> B["Ollama · OpenAI-compatible · BYOK"]
+    S --> B["Ollama · OpenAI-compatible · BYOK (your key)"]
 ```
 
-\* RAG is ablation-verified to help; GNN/RL are experimental — see [eval_results](docs/eval_results.md).
+\* RAG is ablation-verified to help; GNN and RL are experimental — see [eval_results](docs/eval_results.md).
 
 ---
 
 ## LangGraph Workflow
 
-The debate flow is managed by a declarative **StateGraph**:
-
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#4f46e5', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4338ca', 'lineColor': '#818cf8'}}}%%
-flowchart TB
-    classDef start fill:#10b981,stroke:#059669,stroke-width:2px,color:white;
-    classDef process fill:#eff6ff,stroke:#3b82f6,stroke-width:2px,color:#1e3a8a;
-    classDef decision fill:#fff7ed,stroke:#f97316,stroke-width:2px,color:#9a3412;
-    classDef endNode fill:#ef4444,stroke:#b91c1c,stroke-width:2px,color:white;
-
-    Start(("Start")):::start
-    End(("End")):::endNode
-
-    subgraph Cycle["Debate Cycle"]
-        direction TB
-        Analyze["Parallel Analysis<br/>(RL + GNN + RAG)"]:::process
-        Fuse["Result Fusion"]:::process
-        Gen["Response Generation"]:::process
-        Update["State Update"]:::process
-
-        Analyze --> Fuse --> Gen --> Update
-    end
-
-    Check{"Continue?"}:::decision
-
-    Start --> Analyze
-    Update --> Check
-    Check -->|"Yes (Next Turn)"| Analyze
-    Check -->|"No (Max Rounds/Surrender)"| End
-
-    linkStyle default stroke:#6366f1,stroke-width:2px;
-```
+The debate is a declarative **StateGraph**. Each turn runs:
+**parallel analysis** (RL + GNN + RAG) → **fuse** → **generate** (streamed token by
+token) → **judge + state update** → **continue?** (loop until max rounds or a surrender).
 
 ### State Schema
 
@@ -113,36 +90,15 @@ flowchart TB
 
 ## Debate Strategies
 
-The RL module selects from **4 adaptive strategies**:
+The strategy selector chooses one of **4 strategies** per turn (trained PPO policy,
+or a heuristic fallback):
 
-```mermaid
-%%{init: {'theme': 'base'}}%%
-graph TB
-    subgraph Matrix["Strategy Matrix"]
-        direction TB
-
-        subgraph Row1[" "]
-            direction LR
-            S1["Aggressive<br/>(Challenge & Critique)"]:::red
-            S2["Defensive<br/>(Consolidate & Protect)"]:::blue
-        end
-
-        subgraph Row2[" "]
-            direction LR
-            S3["Analytical<br/>(Logic & Evidence)"]:::purple
-            S4["Empathetic<br/>(Connect & Persuade)"]:::green
-        end
-    end
-
-    classDef red fill:#fee2e2,stroke:#ef4444,stroke-width:2px,color:#7f1d1d;
-    classDef blue fill:#dbeafe,stroke:#3b82f6,stroke-width:2px,color:#1e3a8a;
-    classDef purple fill:#f3e8ff,stroke:#9333ea,stroke-width:2px,color:#581c87;
-    classDef green fill:#dcfce7,stroke:#22c55e,stroke-width:2px,color:#14532d;
-
-    style Matrix fill:#ffffff,stroke:#e5e7eb,color:#374151
-    style Row1 fill:transparent,stroke:transparent
-    style Row2 fill:transparent,stroke:transparent
-```
+| Strategy | Intent |
+|----------|--------|
+| Aggressive | Challenge and critique the opponent's argument |
+| Defensive | Consolidate and protect the current position |
+| Analytical | Lead with logic, data and evidence |
+| Empathetic | Find common ground and connect |
 
 ---
 

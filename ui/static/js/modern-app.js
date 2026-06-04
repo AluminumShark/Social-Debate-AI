@@ -351,7 +351,7 @@ async function loadServerConfig() {
 }
 
 function showStats() { showMessage('See the ablation results in docs/eval_results.md', 'info'); }
-function showAbout() { showMessage('Social Debate AI — LLM + RAG/GNN/RL integration showcase', 'info'); }
+function showAbout() { showMessage('Social Debate AI — an LLM debate system built to measure (not assume) whether RAG/GNN/RL help. See docs/eval_results.md', 'info'); }
 function toggleTheme() {
   document.body.classList.toggle('dark-theme');
   const icon = document.getElementById('themeIcon');

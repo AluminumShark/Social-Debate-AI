@@ -37,6 +37,7 @@
                     <span class="brand-text">Social Debate AI</span>
                 </div>
                 <div class="nav-actions">
+                    <span class="badge bg-secondary" id="llmBadge" title="Active LLM backend">llm</span>
                     <button class="nav-btn" onclick="showAbout()">
                         <i class="fas fa-info-circle"></i>
                         <span></span>
@@ -75,20 +76,49 @@
                                 </div>
                             </div>
                             
+                            <!-- Rounds -->
+                            <div class="control-section">
+                                <label class="control-label">Rounds</label>
+                                <input type="number" id="roundsInput" class="form-control form-control-sm"
+                                       min="1" max="10" value="3">
+                            </div>
+
                             <!--  -->
                             <div class="control-actions">
                                 <button class="action-btn primary" onclick="startDebate()" id="startBtn">
                                     <i class="fas fa-play"></i>
-                                    <span></span>
+                                    <span>Start (streaming)</span>
                                 </button>
-                                <button class="action-btn secondary" onclick="nextRound()" id="nextBtn" disabled>
-                                    <i class="fas fa-forward"></i>
-                                    <span></span>
+                                <button class="action-btn secondary" onclick="runDemo()" id="demoBtn">
+                                    <i class="fas fa-wand-magic-sparkles"></i>
+                                    <span>Try demo (no key)</span>
                                 </button>
                                 <button class="action-btn danger" onclick="resetDebate()">
                                     <i class="fas fa-redo"></i>
-                                    <span></span>
+                                    <span>Reset</span>
                                 </button>
+                            </div>
+
+                            <!-- BYOK: bring your own LLM key (stored in browser only) -->
+                            <div class="control-section">
+                                <details>
+                                    <summary class="control-label" style="cursor:pointer">
+                                        <i class="fas fa-key"></i> LLM settings (optional — use your own key)
+                                    </summary>
+                                    <div class="mt-2">
+                                        <input class="form-control form-control-sm mb-1" id="byokProvider" placeholder="provider (openai / ollama)">
+                                        <input class="form-control form-control-sm mb-1" id="byokModel" placeholder="model (e.g. gpt-5.5)">
+                                        <input class="form-control form-control-sm mb-1" id="byokBaseUrl" placeholder="base_url (e.g. https://api.openai.com/v1)">
+                                        <input class="form-control form-control-sm mb-1" id="byokApiKey" type="password" placeholder="api key (kept in your browser only)">
+                                        <div class="d-flex gap-2">
+                                            <button class="btn btn-sm btn-primary" onclick="saveByok()">Save</button>
+                                            <button class="btn btn-sm btn-outline-secondary" onclick="clearByok()">Clear</button>
+                                        </div>
+                                        <small class="text-muted d-block mt-1">
+                                            Your key never leaves your browser except to call the model for your own debates. It is not stored on the server.
+                                        </small>
+                                    </div>
+                                </details>
                             </div>
                             
                             <!--  -->

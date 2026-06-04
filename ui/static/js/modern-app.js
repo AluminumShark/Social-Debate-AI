@@ -1,586 +1,359 @@
-// Modern Social Debate AI - 
+// Social Debate AI - frontend (streaming debate + BYOK + demo + shareable links)
 
-// 
-let state = {
-    initialized: false,
-    topic: '',
-    currentRound: 0,
-    debating: false,
-    loading: false
-};
-
-// DOM 
+const state = { topic: '', currentRound: 0, loading: false };
 let elements = {};
 
-// 
-document.addEventListener('DOMContentLoaded', function() {
-    console.log(' Social Debate AI...');
-    
-    //  DOM 
-    elements = {
-        topicInput: document.getElementById('topicInput'),
-        topicDisplay: document.getElementById('topicDisplay'),
-        currentRound: document.getElementById('currentRound'),
-        debateStatus: document.getElementById('debateStatus'),
-        debateContent: document.getElementById('debateContent'),
-        loadingOverlay: document.getElementById('loadingOverlay'),
-        loadingText: document.getElementById('loadingText'),
-        startBtn: document.getElementById('startBtn'),
-        nextBtn: document.getElementById('nextBtn')
-    };
-    
-    //  Enter 
-    elements.topicInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            setTopic();
-        }
-    });
-    
-    // 
-    initSystem();
+const AGENT_META = {
+  Agent_A: { type: 'support', name: 'Agent A (Support)', icon: 'fa-user-tie' },
+  Agent_B: { type: 'oppose',  name: 'Agent B (Oppose)',  icon: 'fa-user-shield' },
+  Agent_C: { type: 'neutral', name: 'Agent C (Neutral)', icon: 'fa-user-graduate' },
+};
+const agentMeta = (id) => AGENT_META[id] || { type: 'neutral', name: id, icon: 'fa-user' };
+
+document.addEventListener('DOMContentLoaded', () => {
+  elements = {
+    topicInput: document.getElementById('topicInput'),
+    topicDisplay: document.getElementById('topicDisplay'),
+    currentRound: document.getElementById('currentRound'),
+    debateStatus: document.getElementById('debateStatus'),
+    debateContent: document.getElementById('debateContent'),
+    loadingOverlay: document.getElementById('loadingOverlay'),
+    loadingText: document.getElementById('loadingText'),
+    startBtn: document.getElementById('startBtn'),
+  };
+  if (elements.topicInput) {
+    elements.topicInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') setTopic(); });
+  }
+  loadServerConfig();
+  // If on /d/<id>, replay the shared debate.
+  const m = window.location.pathname.match(/^\/d\/([a-f0-9]+)/);
+  if (m) loadSharedDebate(m[1]);
 });
 
-// /
-function showLoading(text = '...') {
-    console.log(':', text);
-    elements.loadingText.textContent = text;
-    elements.loadingOverlay.style.display = 'flex';
+// ---------- UI helpers ----------
+function showLoading(text = 'Loading…') {
+  if (!elements.loadingOverlay) return;
+  elements.loadingText.textContent = text;
+  elements.loadingOverlay.style.display = 'flex';
 }
+function hideLoading() { if (elements.loadingOverlay) elements.loadingOverlay.style.display = 'none'; }
 
-function hideLoading() {
-    console.log('');
-    elements.loadingOverlay.style.display = 'none';
-}
-
-// 
 function showMessage(message, type = 'info') {
-    console.log(`[${type}] ${message}`);
-    
-    // 
-    const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show`;
-    alertDiv.style.cssText = 'position: fixed; top: 80px; right: 20px; z-index: 1050; min-width: 300px;';
-    alertDiv.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
-    
-    document.body.appendChild(alertDiv);
-    
-    // 
-    setTimeout(() => {
-        alertDiv.remove();
-    }, 5000);
+  const div = document.createElement('div');
+  div.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show`;
+  div.style.cssText = 'position:fixed;top:80px;right:20px;z-index:1050;min-width:300px;';
+  div.innerHTML = `${message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+  document.body.appendChild(div);
+  setTimeout(() => div.remove(), 5000);
 }
 
-// 
-async function initSystem() {
-    try {
-        showLoading('...');
-        
-        const response = await fetch('/api/init', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'}
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            state.initialized = true;
-            showMessage('', 'success');
-            updateUI();
-        } else {
-            throw new Error(data.message || '');
-        }
-    } catch (error) {
-        console.error(':', error);
-        showMessage(': ' + error.message, 'error');
-    } finally {
-        hideLoading();
-    }
-}
-
-// 
-async function setTopic() {
-    const topic = elements.topicInput.value.trim();
-    
-    if (!topic) {
-        showMessage('', 'warning');
-        return;
-    }
-    
-    if (!state.initialized) {
-        showMessage('', 'warning');
-        return;
-    }
-    
-    try {
-        showLoading('...');
-        
-        const response = await fetch('/api/set_topic', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ topic: topic })
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            state.topic = topic;
-            state.currentRound = 0;
-            elements.topicDisplay.textContent = topic;
-            showMessage('', 'success');
-            
-            // 
-            elements.debateContent.innerHTML = `
-                <div class="text-center py-5">
-                    <h4>${topic}</h4>
-                    <p class="text-muted">""</p>
-                </div>
-            `;
-            
-            updateUI();
-        } else {
-            throw new Error(data.message || '');
-        }
-    } catch (error) {
-        console.error(':', error);
-        showMessage(': ' + error.message, 'error');
-    } finally {
-        hideLoading();
-    }
-}
-
-// 
-async function startDebate() {
-    if (!state.topic) {
-        showMessage('', 'warning');
-        return;
-    }
-    
-    state.currentRound = 0;
-    elements.debateContent.innerHTML = '';
-    await runDebateRound();
-}
-
-// 
-async function nextRound() {
-    await runDebateRound();
-}
-
-// 
-async function runDebateRound() {
-    if (!state.initialized || !state.topic) {
-        showMessage('', 'warning');
-        return;
-    }
-    
-    if (state.loading) {
-        showMessage('', 'info');
-        return;
-    }
-    
-    try {
-        state.loading = true;
-        state.debating = true;
-        updateUI();
-        
-        showLoading(state.currentRound === 0 ? 
-            '10-30...' : 
-            '...'
-        );
-        
-        const response = await fetch('/api/debate_round', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                topic: state.topic || ''
-            }),
-            // 
-            signal: AbortSignal.timeout(60000)  // 60
-        });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            state.currentRound = data.round;
-            elements.currentRound.textContent = data.round;
-            
-            // 
-            displayDebateRound(data);
-            
-            //  Agent 
-            if (data.agent_states) {
-                updateAgentStates(data.agent_states);
-            }
-            
-            // 
-            if (data.debate_ended) {
-                state.debating = false;
-                console.log('Debate ended, summary:', data.summary);
-                if (data.summary) {
-                    showDebateResult(data.summary);
-                } else {
-                    // 
-                    const endDiv = document.createElement('div');
-                    endDiv.className = 'debate-result text-center py-5';
-                    endDiv.innerHTML = `
-                        <h3></h3>
-                        <p class="lead"></p>
-                    `;
-                    elements.debateContent.appendChild(endDiv);
-                }
-                showMessage('', 'info');
-            } else {
-                showMessage(` ${data.round} `, 'success');
-            }
-        } else {
-            throw new Error(data.message || '');
-        }
-    } catch (error) {
-        console.error(':', error);
-        
-        // 
-        if (error.name === 'AbortError') {
-            showMessage('', 'error');
-        } else if (error.message.includes('fetch')) {
-            showMessage('', 'error');
-        } else {
-            showMessage(': ' + error.message, 'error');
-        }
-        
-        // 
-        if (state.currentRound === 0) {
-            state.debating = false;
-        }
-    } finally {
-        state.loading = false;
-        updateUI();
-        hideLoading();
-    }
-}
-
-// 
-function displayDebateRound(data) {
-    // 
-    if (!data || !data.round) {
-        console.error(':', data);
-        showMessage('', 'error');
-        return;
-    }
-    
-    const roundDiv = document.createElement('div');
-    roundDiv.className = 'debate-round';
-    roundDiv.innerHTML = `
-        <div class="round-header">
-            <div class="round-number">${data.round}</div>
-            <h4> ${data.round} </h4>
-        </div>
-    `;
-    
-    //  responses 
-    if (data.responses && Array.isArray(data.responses) && data.responses.length > 0) {
-        //  AI 
-        data.responses.forEach(response => {
-            if (!response || !response.agent_id) {
-                console.warn(':', response);
-                return;
-            }
-            
-            const agentType = response.agent_id === 'Agent_A' ? 'support' : 
-                             response.agent_id === 'Agent_B' ? 'oppose' : 'neutral';
-            const agentName = response.agent_id === 'Agent_A' ? ' A' :
-                             response.agent_id === 'Agent_B' ? ' B' : ' C';
-            
-            const responseDiv = document.createElement('div');
-            responseDiv.className = `ai-response ${agentType}`;
-            
-            // 
-            const persuasion = response.effects?.persuasion_score || 0;
-            const attack = response.effects?.attack_score || 0;
-            
-            responseDiv.innerHTML = `
-                <div class="response-header">
-                    <div class="agent-avatar ${agentType}">
-                        <i class="fas ${agentType === 'support' ? 'fa-user-tie' : 
-                                       agentType === 'oppose' ? 'fa-user-shield' : 'fa-user-graduate'}"></i>
-                    </div>
-                    <div>
-                        <h5>${agentName}</h5>
-                        <small class="text-muted">
-                            : ${(persuasion * 100).toFixed(0)}% | 
-                            : ${(attack * 100).toFixed(0)}%
-                        </small>
-                    </div>
-                </div>
-                <div class="response-content">
-                    ${response.content || '()'}
-                </div>
-            `;
-            
-            roundDiv.appendChild(responseDiv);
-        });
-    } else {
-        // 
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'alert alert-warning';
-        errorDiv.textContent = '';
-        roundDiv.appendChild(errorDiv);
-    }
-    
-    elements.debateContent.appendChild(roundDiv);
-    
-    // 
-    elements.debateContent.scrollTop = elements.debateContent.scrollHeight;
-}
-
-//  Agent 
-function updateAgentStates(states) {
-    //  states 
-    if (!states || typeof states !== 'object') {
-        console.warn('Agent :', states);
-        return;
-    }
-    
-    Object.entries(states).forEach(([agentId, state]) => {
-        try {
-            const suffix = agentId.split('_')[1];
-            
-            // 
-            const stanceBar = document.getElementById(`stance${suffix}`);
-            if (stanceBar && state.stance !== undefined) {
-                const stancePercent = ((state.stance + 1) / 2 * 100).toFixed(0);
-                stanceBar.style.width = stancePercent + '%';
-                const stanceSpan = stanceBar.querySelector('span');
-                if (stanceSpan) {
-                    stanceSpan.textContent = 
-                        state.stance > 0 ? `+${state.stance.toFixed(2)}` : state.stance.toFixed(2);
-                }
-            }
-            
-            // 
-            const convictionBar = document.getElementById(`conviction${suffix}`);
-            if (convictionBar && state.conviction !== undefined) {
-                const convictionPercent = (state.conviction * 100).toFixed(0);
-                convictionBar.style.width = convictionPercent + '%';
-                const convictionSpan = convictionBar.querySelector('span');
-                if (convictionSpan) {
-                    convictionSpan.textContent = state.conviction.toFixed(2);
-                }
-            }
-            
-            // 
-            if (state.has_surrendered) {
-                const agentCard = document.getElementById(`agent${suffix}`);
-                if (agentCard) {
-                    agentCard.style.opacity = '0.6';
-                    showMessage(`${agentId.replace('_', ' ')} `, 'warning');
-                }
-            }
-        } catch (error) {
-            console.error(` ${agentId} :`, error);
-        }
-    });
-}
-
-// 
-function showDebateResult(summary) {
-    //  summary 
-    if (!summary) {
-        console.error('');
-        return;
-    }
-    
-    const resultDiv = document.createElement('div');
-    resultDiv.className = 'debate-result text-center py-5';
-    
-    //  HTML
-    let scoresHtml = '';
-    if (summary.scores && typeof summary.scores === 'object') {
-        scoresHtml = Object.entries(summary.scores)
-            .sort(([,a], [,b]) => b - a)
-            .map(([agent, score]) => `
-                <div class="mb-2">
-                    ${agent}: ${(score || 0).toFixed(1)} 
-                    ${agent === summary.winner ? '<span class="badge bg-warning ms-2"></span>' : ''}
-                </div>
-            `).join('');
-    }
-    
-    resultDiv.innerHTML = `
-        <h3></h3>
-        <p class="lead">${summary.verdict || ''}</p>
-        <div class="mt-4">
-            <h5></h5>
-            ${scoresHtml || '<p class="text-muted"></p>'}
-        </div>
-    `;
-    
-    elements.debateContent.appendChild(resultDiv);
-}
-
-// 
-async function resetDebate() {
-    if (state.loading) {
-        showMessage('', 'info');
-        return;
-    }
-    
-    if (!confirm('')) {
-        return;
-    }
-    
-    try {
-        showLoading('...');
-        
-        const response = await fetch('/api/reset', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'}
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            //  -  initialized  true
-            state.topic = '';
-            state.currentRound = 0;
-            state.debating = false;
-            state.loading = false;  //  loading 
-            
-            //  UI
-            elements.topicInput.value = '';
-            elements.topicDisplay.textContent = '';
-            elements.currentRound.textContent = '0';
-            elements.debateContent.innerHTML = `
-                <div class="welcome-screen">
-                    <div class="welcome-icon">
-                        <i class="fas fa-robot"></i>
-                    </div>
-                    <h3> Social Debate AI</h3>
-                    <p> AI </p>
-                </div>
-            `;
-            
-            // 
-            resetAgentStates();
-            
-            showMessage('', 'success');
-            updateUI();
-        } else {
-            throw new Error(data.message || '');
-        }
-    } catch (error) {
-        console.error(':', error);
-        showMessage(': ' + error.message, 'error');
-        //  loading 
-        state.loading = false;
-        updateUI();
-    } finally {
-        hideLoading();
-    }
-}
-
-//  Agent 
-function resetAgentStates() {
-    // Agent A
-    document.getElementById('stanceA').style.width = '80%';
-    document.getElementById('stanceA').querySelector('span').textContent = '+0.8';
-    document.getElementById('convictionA').style.width = '70%';
-    document.getElementById('convictionA').querySelector('span').textContent = '0.7';
-    
-    // Agent B
-    document.getElementById('stanceB').style.width = '30%';
-    document.getElementById('stanceB').querySelector('span').textContent = '-0.6';
-    document.getElementById('convictionB').style.width = '60%';
-    document.getElementById('convictionB').querySelector('span').textContent = '0.6';
-    
-    // Agent C
-    document.getElementById('stanceC').style.width = '50%';
-    document.getElementById('stanceC').querySelector('span').textContent = '0.0';
-    document.getElementById('convictionC').style.width = '50%';
-    document.getElementById('convictionC').querySelector('span').textContent = '0.5';
-    
-    // 
-    document.querySelectorAll('.agent-card').forEach(card => {
-        card.style.opacity = '1';
-    });
-}
-
-//  UI 
 function updateUI() {
-    // 
-    elements.startBtn.disabled = !state.initialized || !state.topic || state.loading || state.debating;
-    elements.nextBtn.disabled = !state.initialized || !state.topic || state.loading || !state.debating || state.currentRound === 0;
-    
-    // 
-    if (state.debating) {
-        elements.debateStatus.textContent = '';
-        elements.debateStatus.style.color = 'var(--success-color)';
-    } else if (state.topic) {
-        elements.debateStatus.textContent = '';
-        elements.debateStatus.style.color = 'var(--info-color)';
-    } else {
-        elements.debateStatus.textContent = '';
-        elements.debateStatus.style.color = 'var(--warning-color)';
-    }
+  if (elements.startBtn) elements.startBtn.disabled = state.loading || !state.topic;
+  if (elements.debateStatus) {
+    elements.debateStatus.textContent = state.loading ? 'Debating' : (state.topic ? 'Ready' : 'Idle');
+  }
 }
 
-// 
-async function exportDebate() {
-    if (state.currentRound === 0) {
-        showMessage('', 'warning');
-        return;
+// ---------- Controls ----------
+function setTopic() {
+  const topic = (elements.topicInput.value || '').trim();
+  if (!topic) { showMessage('Please enter a topic', 'warning'); return; }
+  state.topic = topic;
+  elements.topicDisplay.textContent = topic;
+  elements.debateContent.innerHTML =
+    `<div class="text-center py-5"><h4>${topic}</h4>
+     <p class="text-muted">Click "Start" to begin the debate.</p></div>`;
+  updateUI();
+}
+
+async function startDebate() {
+  const topic = (elements.topicInput.value || state.topic || '').trim();
+  if (!topic) { showMessage('Please enter a debate topic first', 'warning'); return; }
+  state.topic = topic;
+  elements.topicDisplay.textContent = topic;
+  elements.debateContent.innerHTML = '';
+  await streamDebate(topic);
+}
+
+function resetDebate() {
+  state.topic = ''; state.currentRound = 0; state.loading = false;
+  if (elements.topicInput) elements.topicInput.value = '';
+  if (elements.topicDisplay) elements.topicDisplay.textContent = '';
+  if (elements.currentRound) elements.currentRound.textContent = '0';
+  elements.debateContent.innerHTML =
+    `<div class="welcome-screen"><div class="welcome-icon"><i class="fas fa-robot"></i></div>
+     <h3>Social Debate AI</h3><p>Enter a topic and start a streaming debate.</p></div>`;
+  resetAgentStates();
+  updateUI();
+}
+
+// ---------- BYOK (stored in the browser only) ----------
+function byokPayload() {
+  try {
+    const v = JSON.parse(localStorage.getItem('sdai_byok') || '{}');
+    const out = {};
+    ['provider', 'model', 'base_url', 'api_key'].forEach((k) => { if (v[k]) out[k] = v[k]; });
+    return Object.keys(out).length ? out : null;
+  } catch { return null; }
+}
+function saveByok() {
+  const v = ['Provider', 'Model', 'BaseUrl', 'ApiKey'].reduce((o, k) => {
+    const el = document.getElementById('byok' + k);
+    o[k === 'BaseUrl' ? 'base_url' : (k === 'ApiKey' ? 'api_key' : k.toLowerCase())] = el ? el.value : '';
+    return o;
+  }, {});
+  localStorage.setItem('sdai_byok', JSON.stringify(v));
+  showMessage('LLM settings saved in your browser only', 'success');
+}
+function clearByok() {
+  localStorage.removeItem('sdai_byok');
+  ['byokProvider', 'byokModel', 'byokBaseUrl', 'byokApiKey'].forEach((id) => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  showMessage('LLM settings cleared', 'info');
+}
+
+// ---------- Streaming ----------
+function ensureRound(round) {
+  let el = document.getElementById('round-' + round);
+  if (!el) {
+    el = document.createElement('div');
+    el.className = 'debate-round'; el.id = 'round-' + round;
+    el.innerHTML = `<div class="round-header"><div class="round-number">${round}</div><h4>Round ${round}</h4></div>`;
+    elements.debateContent.appendChild(el);
+  }
+  return el;
+}
+
+function ensureBubble(round, agentId) {
+  const id = `resp-${round}-${agentId}`;
+  let el = document.getElementById(id);
+  if (!el) {
+    const meta = agentMeta(agentId);
+    el = document.createElement('div');
+    el.className = `ai-response ${meta.type}`; el.id = id;
+    el.innerHTML = `
+      <div class="response-header">
+        <div class="agent-avatar ${meta.type}"><i class="fas ${meta.icon}"></i></div>
+        <div><h5>${meta.name}</h5>
+          <small class="text-muted" id="${id}-meta"><i class="fas fa-circle-notch fa-spin"></i> analyzing…</small></div>
+      </div>
+      <div class="response-content" id="${id}-content"></div>`;
+    ensureRound(round).appendChild(el);
+  }
+  return el;
+}
+
+async function streamDebate(topic) {
+  if (state.loading) { showMessage('A debate is already running', 'info'); return; }
+  state.loading = true; updateUI();
+
+  const body = { topic };
+  const roundsEl = document.getElementById('roundsInput');
+  if (roundsEl && roundsEl.value) body.max_rounds = parseInt(roundsEl.value, 10);
+  const byok = byokPayload();
+  if (byok) body.llm = byok;
+
+  try {
+    const resp = await fetch('/api/debate/stream', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.error || ('HTTP ' + resp.status));
     }
-    
-    try {
-        showLoading('...');
-        
-        const response = await fetch('/api/export');
-        const data = await response.json();
-        
-        if (data.success) {
-            // 
-            const blob = new Blob([JSON.stringify(data.data, null, 2)], 
-                                 { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `debate_${new Date().toISOString().slice(0, 10)}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            
-            showMessage('', 'success');
-        } else {
-            throw new Error(data.message || '');
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const frames = buffer.split('\n\n');
+      buffer = frames.pop();
+      for (const frame of frames) {
+        const line = frame.split('\n').find((l) => l.startsWith('data:'));
+        if (!line) continue;
+        try { handleStreamEvent(JSON.parse(line.slice(5).trim())); } catch { /* ignore */ }
+      }
+    }
+  } catch (e) {
+    showMessage('Debate failed: ' + e.message, 'error');
+  } finally {
+    state.loading = false; updateUI();
+  }
+}
+
+function handleStreamEvent(ev) {
+  switch (ev.type) {
+    case 'start':
+      elements.debateContent.innerHTML = '';
+      break;
+    case 'turn_start':
+      state.currentRound = ev.round;
+      if (elements.currentRound) elements.currentRound.textContent = ev.round;
+      ensureBubble(ev.round, ev.agent);
+      break;
+    case 'analysis': {
+      const meta = document.getElementById(`resp-${ev.round}-${ev.agent}-meta`);
+      if (meta) meta.innerHTML =
+        `strategy: <b>${ev.strategy || '—'}</b> · evidence: ${(ev.evidence_confidence * 100).toFixed(0)}% · Δ-prob: ${(ev.delta_probability * 100).toFixed(0)}%`;
+      if (ev.citations && ev.citations.length) {
+        const id = `resp-${ev.round}-${ev.agent}`;
+        const bubble = document.getElementById(id);
+        if (bubble && !document.getElementById(id + '-cite')) {
+          const cd = document.createElement('div');
+          cd.id = id + '-cite';
+          cd.className = 'evidence-citations small text-muted mt-2';
+          cd.innerHTML = '<b>Evidence (RAG):</b><ul style="margin:.25rem 0 0 1rem">' +
+            ev.citations.map((c) => `<li>${c.replace(/</g, '&lt;')}…</li>`).join('') + '</ul>';
+          bubble.appendChild(cd);
         }
-    } catch (error) {
-        console.error(':', error);
-        showMessage(': ' + error.message, 'error');
-    } finally {
-        hideLoading();
+      }
+      break;
     }
+    case 'token': {
+      const c = document.getElementById(`resp-${ev.round}-${ev.agent}-content`);
+      if (c) { c.textContent += ev.text; elements.debateContent.scrollTop = elements.debateContent.scrollHeight; }
+      break;
+    }
+    case 'turn_end': {
+      const c = document.getElementById(`resp-${ev.round}-${ev.agent}-content`);
+      if (c && ev.content) c.textContent = ev.content;
+      if (ev.agent_states) updateAgentStates(ev.agent_states);
+      break;
+    }
+    case 'summary':
+      showDebateResult(ev.summary);
+      showMessage('Debate complete', 'info');
+      break;
+    case 'saved': {
+      const url = `${window.location.origin}/d/${ev.id}`;
+      const div = document.createElement('div');
+      div.className = 'alert alert-success mt-3';
+      div.innerHTML = `Shareable link: <a href="${url}">${url}</a>`;
+      elements.debateContent.appendChild(div);
+      break;
+    }
+    case 'error':
+      showMessage('LLM error: ' + (ev.message || 'unknown'), 'error');
+      break;
+  }
 }
 
-// 
-function showStats() {
-    showMessage('...', 'info');
+// ---------- Agent state bars + result ----------
+function updateAgentStates(states) {
+  if (!states || typeof states !== 'object') return;
+  Object.entries(states).forEach(([agentId, st]) => {
+    const suffix = agentId.split('_')[1];
+    const stance = document.getElementById(`stance${suffix}`);
+    if (stance && st.stance !== undefined) {
+      stance.style.width = (((st.stance + 1) / 2) * 100).toFixed(0) + '%';
+      const s = stance.querySelector('span');
+      if (s) s.textContent = st.stance > 0 ? `+${st.stance.toFixed(2)}` : st.stance.toFixed(2);
+    }
+    const conv = document.getElementById(`conviction${suffix}`);
+    if (conv && st.conviction !== undefined) {
+      conv.style.width = (st.conviction * 100).toFixed(0) + '%';
+      const s = conv.querySelector('span');
+      if (s) s.textContent = st.conviction.toFixed(2);
+    }
+    if (st.has_surrendered) {
+      const card = document.getElementById(`agent${suffix}`);
+      if (card) card.style.opacity = '0.6';
+    }
+  });
 }
 
-// 
-function showAbout() {
-    showMessage('Social Debate AI -  v1.0', 'info');
+function resetAgentStates() {
+  const d = { A: ['80%', '+0.8', '70%', '0.7'], B: ['30%', '-0.6', '60%', '0.6'], C: ['50%', '0.0', '50%', '0.5'] };
+  Object.entries(d).forEach(([k, v]) => {
+    const st = document.getElementById('stance' + k), cv = document.getElementById('conviction' + k);
+    if (st) { st.style.width = v[0]; st.querySelector('span').textContent = v[1]; }
+    if (cv) { cv.style.width = v[2]; cv.querySelector('span').textContent = v[3]; }
+  });
+  document.querySelectorAll('.agent-card').forEach((c) => { c.style.opacity = '1'; });
 }
 
-// 
+function showDebateResult(summary) {
+  if (!summary) return;
+  let scores = '';
+  if (summary.scores) {
+    scores = Object.entries(summary.scores).sort(([, a], [, b]) => b - a)
+      .map(([a, s]) => `<div class="mb-2">${a}: ${(s || 0).toFixed(1)}${a === summary.winner ? ' <span class="badge bg-warning ms-2">Winner</span>' : ''}</div>`)
+      .join('');
+  }
+  const div = document.createElement('div');
+  div.className = 'debate-result text-center py-5';
+  div.innerHTML = `<h3>Result</h3><p class="lead">${summary.verdict || ''}</p>
+    <div class="mt-4"><h5>Scores</h5>${scores}</div>`;
+  elements.debateContent.appendChild(div);
+}
+
+// ---------- Demo + shared replay ----------
+async function replayRounds(data) {
+  state.topic = data.topic || 'Debate';
+  if (elements.topicDisplay) elements.topicDisplay.textContent = state.topic;
+  elements.debateContent.innerHTML = '';
+  for (const round of (data.rounds || [])) {
+    for (const r of (round.responses || [])) {
+      ensureBubble(round.round, r.agent_id);
+      const c = document.getElementById(`resp-${round.round}-${r.agent_id}-content`);
+      if (c) c.textContent = r.content || '';
+    }
+    if (round.agents) updateAgentStates(round.agents);
+  }
+  if (data.summary) showDebateResult(data.summary);
+}
+
+async function runDemo() {
+  try {
+    showLoading('Loading demo…');
+    const resp = await fetch('/api/demo');
+    if (!resp.ok) throw new Error('Demo not available');
+    const data = await resp.json();
+    hideLoading();
+    await replayRounds(data);
+  } catch (e) { hideLoading(); showMessage('Demo failed: ' + e.message, 'error'); }
+}
+
+async function loadSharedDebate(id) {
+  try {
+    showLoading('Loading shared debate…');
+    const resp = await fetch('/api/debate/' + id);
+    if (!resp.ok) throw new Error('Debate not found');
+    const data = await resp.json();
+    hideLoading();
+    await replayRounds(data);
+  } catch (e) { hideLoading(); showMessage('Could not load shared debate: ' + e.message, 'error'); }
+}
+
+// ---------- Misc ----------
+async function exportDebate() {
+  try {
+    const resp = await fetch('/api/export');
+    const data = await resp.json();
+    const blob = new Blob([JSON.stringify(data.data, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'debates.json';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    showMessage('Exported recent debates', 'success');
+  } catch (e) { showMessage('Export failed: ' + e.message, 'error'); }
+}
+
+async function loadServerConfig() {
+  try {
+    const cfg = await (await fetch('/api/config')).json();
+    const badge = document.getElementById('llmBadge');
+    if (badge) badge.textContent = `${cfg.provider}/${cfg.default_model}`;
+  } catch { /* non-fatal */ }
+}
+
+function showStats() { showMessage('See the ablation results in docs/eval_results.md', 'info'); }
+function showAbout() { showMessage('Social Debate AI — LLM + RAG/GNN/RL integration showcase', 'info'); }
 function toggleTheme() {
-    document.body.classList.toggle('dark-theme');
-    const icon = document.getElementById('themeIcon');
-    icon.className = document.body.classList.contains('dark-theme') ? 
-                     'fas fa-sun' : 'fas fa-moon';
-} 
+  document.body.classList.toggle('dark-theme');
+  const icon = document.getElementById('themeIcon');
+  if (icon) icon.className = document.body.classList.contains('dark-theme') ? 'fas fa-sun' : 'fas fa-moon';
+}

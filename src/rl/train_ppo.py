@@ -8,21 +8,28 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from src.rl.ppo_trainer import PPOTrainer
 import numpy as np
-import matplotlib.pyplot as plt
 import argparse
 import json
 
 def plot_training(rewards, save_path):
+    try:
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+    except Exception as e:  # noqa: BLE001
+        print(f"[RL] Skipping training plot (matplotlib unavailable: {e})")
+        return
+
     plt.figure(figsize=(10, 6))
     plt.plot(rewards, alpha=0.7)
-    
+
     if len(rewards) >= 20:
         window = min(20, len(rewards) // 5)
         avg = np.convolve(rewards, np.ones(window)/window, mode='valid')
         plt.plot(range(window-1, len(rewards)), avg, 'r-', linewidth=2)
-    
-    plt.xlabel('Episode')
-    plt.ylabel('Reward')
+
+    plt.xlabel('Iteration')
+    plt.ylabel('Loss')
     plt.title('Training Progress')
     plt.grid(True)
     plt.savefig(save_path)

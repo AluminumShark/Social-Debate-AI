@@ -1,149 +1,161 @@
 """
-RL policy network interface
+RL policy network + inference interface.
+
+Single canonical Actor-Critic (PPONetwork, 768-d state = context embedding from
+the same encoder used everywhere). `select_strategy` runs the *trained* policy
+on the real debate context and falls back to a keyword heuristic only if no
+model is available or an error occurs.
 """
+
+import sys
+from pathlib import Path
 
 import torch
 import torch.nn as nn
-from pathlib import Path
+
+_SRC = Path(__file__).resolve().parent.parent
+if str(_SRC) not in sys.path:
+    sys.path.insert(0, str(_SRC))
 
 # Strategy mappings
 STRATEGIES = ['aggressive', 'defensive', 'analytical', 'empathetic']
 STRATEGY_TO_ID = {s: i for i, s in enumerate(STRATEGIES)}
 
-class PolicyNetwork(nn.Module):
-    def __init__(self, state_dim=901, hidden_size=256, num_strategies=4):
+MODEL_PATH = Path("data/models/ppo_policy.pt")
+STATE_DIM = 768
+
+
+class PPONetwork(nn.Module):
+    """Actor-Critic policy used for BOTH training and inference."""
+
+    def __init__(self, state_dim=STATE_DIM, action_dim=4, hidden_dim=256):
         super().__init__()
-        
         self.shared = nn.Sequential(
-            nn.Linear(state_dim, hidden_size),
+            nn.Linear(state_dim, hidden_dim),
             nn.ReLU(),
-            nn.Dropout(0.2),
-            nn.Linear(hidden_size, hidden_size//2),
+            nn.Linear(hidden_dim, hidden_dim),
             nn.ReLU(),
-            nn.Dropout(0.2)
+            nn.Dropout(0.1),
         )
-        
-        self.policy_head = nn.Sequential(
-            nn.Linear(hidden_size//2, hidden_size//4),
+        self.actor = nn.Sequential(
+            nn.Linear(hidden_dim, hidden_dim // 2),
             nn.ReLU(),
-            nn.Linear(hidden_size//4, num_strategies),
-            nn.Softmax(dim=-1)
+            nn.Linear(hidden_dim // 2, action_dim),
+            nn.Softmax(dim=-1),
         )
-        
-        self.value_head = nn.Sequential(
-            nn.Linear(hidden_size//2, hidden_size//4),
+        self.critic = nn.Sequential(
+            nn.Linear(hidden_dim, hidden_dim // 2),
             nn.ReLU(),
-            nn.Linear(hidden_size//4, 1)
+            nn.Linear(hidden_dim // 2, 1),
         )
-    
+
     def forward(self, state):
-        features = self.shared(state)
-        action_probs = self.policy_head(features)
-        state_value = self.value_head(features)
-        return action_probs, state_value
+        feats = self.shared(state)
+        return self.actor(feats), self.critic(feats)
+
+    def select_action(self, state):
+        from torch.distributions import Categorical
+        probs, value = self.forward(state)
+        dist = Categorical(probs)
+        action = dist.sample()
+        return action.item(), dist.log_prob(action), value.squeeze()
+
 
 # Global model instance
 _policy_model = None
+
 
 def _load_model():
     global _policy_model
     if _policy_model is not None:
         return _policy_model
-        
-    model_path = Path("data/models/policy/pytorch_model.bin")
-    
     try:
-        _policy_model = PolicyNetwork()
-        if model_path.exists():
-            state_dict = torch.load(model_path, map_location='cpu')
-            _policy_model.load_state_dict(state_dict)
+        if MODEL_PATH.exists():
+            ckpt = torch.load(str(MODEL_PATH), map_location='cpu')
+            cfg = ckpt.get('config', {})
+            _policy_model = PPONetwork(
+                state_dim=cfg.get('state_dim', STATE_DIM),
+                action_dim=cfg.get('action_dim', 4),
+                hidden_dim=cfg.get('hidden_dim', 256),
+            )
+            _policy_model.load_state_dict(ckpt['network_state_dict'])
             _policy_model.eval()
-            print(f"Loaded policy model from {model_path}")
+            print(f"[RL] Loaded trained policy from {MODEL_PATH}")
         else:
-            print("No trained model found, using random initialization")
-    except Exception as e:
-        print(f"Failed to load model: {e}")
-        _policy_model = PolicyNetwork()  # Fallback to random
-    
+            _policy_model = "untrained"
+            print("[RL] No trained policy found; using heuristic strategy selection")
+    except Exception as e:  # noqa: BLE001
+        print(f"[RL] Failed to load policy ({e}); using heuristic")
+        _policy_model = "untrained"
     return _policy_model
 
-def select_strategy(query, context="", social_context=None):
-    # Simple heuristic-based strategy selection
-    query_lower = query.lower()
-    
-    # Check for aggressive indicators
-    aggressive_words = ['wrong', 'stupid', 'ridiculous', 'nonsense', 'absurd']
-    if any(word in query_lower for word in aggressive_words):
+
+def _keyword_strategy(query: str) -> str:
+    q = (query or "").lower()
+    if any(w in q for w in ['wrong', 'stupid', 'ridiculous', 'nonsense', 'absurd']):
         return 'aggressive'
-    
-    # Check for analytical indicators  
-    analytical_words = ['research', 'study', 'data', 'evidence', 'statistics']
-    if any(word in query_lower for word in analytical_words):
+    if any(w in q for w in ['research', 'study', 'data', 'evidence', 'statistics']):
         return 'analytical'
-    
-    # Check for empathetic indicators
-    empathetic_words = ['understand', 'feel', 'experience', 'perspective', 'concern']
-    if any(word in query_lower for word in empathetic_words):
+    if any(w in q for w in ['understand', 'feel', 'experience', 'perspective', 'concern']):
         return 'empathetic'
-    
-    # Default to defensive for neutral cases
     return 'defensive'
+
+
+def select_strategy(query, context="", social_context=None):
+    """Pick a debate strategy.
+
+    Uses the trained PPO policy on the real context embedding when available;
+    otherwise falls back to a keyword heuristic.
+    """
+    model = _load_model()
+    if model == "untrained":
+        return _keyword_strategy(query)
+
+    try:
+        from llm import embed, resolve_config
+        text = (context or query or "").strip()
+        if not text:
+            return _keyword_strategy(query)
+        vec = embed([text[:2000]], resolve_config())[0]
+        state = torch.tensor(vec, dtype=torch.float32).unsqueeze(0)
+        with torch.no_grad():
+            probs, _ = model(state)
+        return STRATEGIES[int(torch.argmax(probs, dim=-1).item())]
+    except Exception as e:  # noqa: BLE001
+        print(f"[RL] policy inference failed ({e}); using heuristic")
+        return _keyword_strategy(query)
+
 
 def choose_snippet(state_text, pool):
     if not pool:
         return "No evidence available"
-    
-    # Simple scoring based on text overlap
     state_words = set(state_text.lower().split())
-    
-    best_snippet = ""
-    best_score = 0
-    
+    best_snippet, best_score = "", 0
     for item in pool:
         content = item.get('content', '')
         content_words = set(content.lower().split())
-        
-        # Calculate overlap score
         overlap = len(state_words & content_words)
         score = overlap / max(len(state_words), 1)
-        
         if score > best_score:
-            best_score = score
-            best_snippet = content
-    
+            best_score, best_snippet = score, content
     return best_snippet if best_snippet else pool[0].get('content', 'No evidence available')
 
 
 def predict_quality(text):
+    """Lightweight heuristic quality estimate (0..1).
+
+    Response quality at debate time is scored by the LLM judge; this remains a
+    cheap prior used by the RL tool wrapper.
     """
-    Simple heuristic-based quality predictor.
-    
-    Args:
-        text: The text to evaluate
-        
-    Returns:
-        Quality score between 0.0 and 1.0
-    """
-    # Simple quality estimation based on text features
     words = text.split()
-    
-    # Length factor (prefer moderate length)
     length_score = min(len(words) / 50, 1.0) if len(words) < 100 else 0.8
-    
-    # Complexity factor (sentence variety)
-    sentences = text.split('.')
-    complexity_score = min(len(sentences) / 5, 1.0)
-    
-    # Evidence factor (keywords)
+    complexity_score = min(len(text.split('.')) / 5, 1.0)
     evidence_words = ['research', 'study', 'data', 'according', 'evidence']
-    evidence_score = sum(1 for word in evidence_words if word in text.lower()) / 10
-    
-    quality = (length_score * 0.4 + complexity_score * 0.3 + evidence_score * 0.3)
-    return min(quality, 1.0)
+    evidence_score = sum(1 for w in evidence_words if w in text.lower()) / 10
+    return min(length_score * 0.4 + complexity_score * 0.3 + evidence_score * 0.3, 1.0)
 
 
-# Add predict_quality to PolicyNetwork for backward compatibility
-PolicyNetwork.predict_quality = staticmethod(predict_quality)
+PPONetwork.predict_quality = staticmethod(predict_quality)
 
 
 def get_policy_network(model_path=None):

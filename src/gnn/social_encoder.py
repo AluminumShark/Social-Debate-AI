@@ -175,15 +175,17 @@ def predict_persuasion(text_features, agent_id=None):
         }
     
     with torch.no_grad():
-        # Prepare input - add placeholder for argument features
-        # Model expects 770-dimensional input (768 text features + 2 argument features)
-        if len(text_features) == 768:
-            # Add default argument features
-            argument_features = np.array([0.5, 0.5])  # Placeholder values
-            full_features = np.concatenate([text_features, argument_features])
+        # Match the feature vector to the model's actual input dimension
+        # (trained on embeddinggemma 768-d; pad/truncate defensively).
+        expected = _PERSUASION_MODEL.conv1.in_channels
+        feats = np.asarray(text_features, dtype=np.float32).ravel()
+        if feats.shape[0] < expected:
+            padded = np.zeros(expected, dtype=np.float32)
+            padded[:feats.shape[0]] = feats
+            full_features = padded
         else:
-            full_features = text_features
-            
+            full_features = feats[:expected]
+
         # Create single-node graph
         x = torch.tensor(full_features, dtype=torch.float32).unsqueeze(0)
         edge_index = torch.tensor([[0], [0]], dtype=torch.long)

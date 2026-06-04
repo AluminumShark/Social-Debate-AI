@@ -1,350 +1,257 @@
 """
-PPO trainer for debate strategies
+PPO trainer for debate strategy selection.
+
+Grounded (not synthetic):
+- States are REAL context embeddings sampled from the CMV corpus
+  (embeddinggemma, 768-d) — the same encoder used at inference.
+- Rewards come from the trained GNN's per-strategy persuasion prediction for
+  that state (data-grounded), so the policy learns "which strategy suits this
+  context" rather than memorizing a constant. No live LLM calls per step, so
+  training stays cheap. Falls back to a mild prior if no GNN/data is present.
 """
 
-import torch
-import torch.nn as nn
-import torch.optim as optim
-import torch.nn.functional as F
-import numpy as np
-from collections import deque
+import json
 import random
+import sys
+from collections import deque
 from dataclasses import dataclass
+from pathlib import Path
+
+import numpy as np
+import torch
+import torch.nn.functional as F
+import torch.optim as optim
 from torch.distributions import Categorical
-import matplotlib.pyplot as plt
+
+_SRC = Path(__file__).resolve().parent.parent
+if str(_SRC) not in sys.path:
+    sys.path.insert(0, str(_SRC))
+
+from rl.policy_network import PPONetwork, STRATEGIES  # noqa: E402
+
 
 @dataclass
 class DebateTransition:
-    """Debate transition record"""
-    state: torch.Tensor  # Current state
-    action: int  # Selected strategy
-    reward: float  # Received reward
-    next_state: torch.Tensor  # Next state
-    done: bool  # Whether finished
-    log_prob: float  # Log probability of action
-    value: float  # State value
+    state: torch.Tensor
+    action: int
+    reward: float
+    next_state: torch.Tensor
+    done: bool
+    log_prob: float
+    value: float
 
-class PPONetwork(nn.Module):
-    """PPO network architecture (Actor-Critic)"""
-    
-    def __init__(self, state_dim=768, action_dim=4, hidden_dim=256):
-        super().__init__()
-        
-        # Shared layers
-        self.shared = nn.Sequential(
-            nn.Linear(state_dim, hidden_dim),
-            nn.ReLU(),
-            nn.Linear(hidden_dim, hidden_dim),
-            nn.ReLU(),
-            nn.Dropout(0.1)
-        )
-        
-        # Actor head (policy network)
-        self.actor = nn.Sequential(
-            nn.Linear(hidden_dim, hidden_dim // 2),
-            nn.ReLU(),
-            nn.Linear(hidden_dim // 2, action_dim),
-            nn.Softmax(dim=-1)
-        )
-        
-        # Critic head (value network)
-        self.critic = nn.Sequential(
-            nn.Linear(hidden_dim, hidden_dim // 2),
-            nn.ReLU(),
-            nn.Linear(hidden_dim // 2, 1)
-        )
-    
-    def forward(self, state):
-        """Forward propagation"""
-        shared_features = self.shared(state)
-        action_probs = self.actor(shared_features)
-        state_value = self.critic(shared_features)
-        return action_probs, state_value
-    
-    def select_action(self, state):
-        """Select action"""
-        action_probs, state_value = self.forward(state)
-        
-        # Create action distribution
-        dist = Categorical(action_probs)
-        action = dist.sample()
-        
-        return action.item(), dist.log_prob(action), state_value.squeeze()
 
 class DebateEnvironment:
-    """Debate environment"""
-    
-    def __init__(self):
-        self.strategies = ['aggressive', 'defensive', 'analytical', 'empathetic']
-        self.reset()
-    
-    def reset(self):
-        """Reset environment"""
-        # Debate state
-        self.current_stance = 0.0  # -1 to 1
-        self.conviction = 0.7  # 0 to 1
+    """Debate environment backed by real CMV embeddings + GNN reward."""
+
+    def __init__(self, threads_path="data/raw/threads.jsonl",
+                 pairs_path="data/raw/pairs.jsonl", pool_size=600, max_rounds=5):
+        self.strategies = STRATEGIES
+        self.max_rounds = max_rounds
         self.round = 0
-        self.max_rounds = 5
-        
-        # Initialize state vector (simplified)
-        self.state = torch.randn(768)  # Simulated BERT embedding
-        
+        self._gnn = self._load_gnn()
+        # pool entries: (embedding_tensor, delta_outcome in {0.0,1.0})
+        self.pool = self._build_state_pool(Path(threads_path), Path(pairs_path), pool_size)
+        self.state, self.outcome = self.pool[0]
+
+    def _load_gnn(self):
+        try:
+            from gnn import social_encoder
+            if getattr(social_encoder, "_PERSUASION_MODEL", None) is not None:
+                print("[RL] Reward source: trained GNN persuasion model")
+                return social_encoder
+            print("[RL] GNN model not trained; using prior reward")
+        except Exception as e:  # noqa: BLE001
+            print(f"[RL] GNN unavailable ({e}); using prior reward")
+        return None
+
+    def _build_state_pool(self, threads_path, pairs_path, pool_size):
+        from llm import embed, resolve_config
+
+        # Prefer real conversation nodes (carry real delta outcome labels).
+        items = []  # (text, delta_outcome)
+        if threads_path.exists():
+            with open(threads_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    try:
+                        c = json.loads(line)
+                    except json.JSONDecodeError:
+                        continue
+                    for nd in c.get("nodes", []):
+                        if (nd.get("text") or "").strip():
+                            items.append((nd["text"][:2000], 1.0 if nd.get("is_delta") else 0.0))
+                    if len(items) >= pool_size:
+                        break
+        elif pairs_path.exists():
+            with open(pairs_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    try:
+                        p = json.loads(line)
+                    except json.JSONDecodeError:
+                        continue
+                    dc = p.get("delta_comment", {})
+                    if dc.get("body"):
+                        items.append((dc["body"][:2000], 1.0))  # pairs are all delta
+                    if len(items) >= pool_size:
+                        break
+
+        if not items:
+            print("[RL] No CMV data found; using random state pool")
+            return [(torch.randn(768), 0.5) for _ in range(64)]
+
+        items = items[:pool_size]
+        print(f"[RL] Embedding {len(items)} CMV states (with delta outcomes)...")
+        cfg = resolve_config()
+        texts = [t for t, _ in items]
+        vecs = []
+        for i in range(0, len(texts), 64):
+            vecs.extend(embed(texts[i:i + 64], cfg))
+        return [(torch.tensor(v, dtype=torch.float32), out)
+                for v, (_, out) in zip(vecs, items)]
+
+    def reset(self):
+        self.round = 0
+        self.state, self.outcome = random.choice(self.pool)
         return self.state
-    
+
     def step(self, action):
-        """Execute action"""
-        # Get strategy name for potential logging/debugging
-        _ = self.strategies[action]  # noqa: F841
-        
-        # Simulate opponent response and debate outcome
-        reward = self._calculate_reward(action)
-        
-        # Update state
+        reward = self._reward(self.state, self.outcome, action)
         self.round += 1
-        self.state = torch.randn(768)  # New state after opponent response
-        
+        self.state, self.outcome = random.choice(self.pool)
         done = self.round >= self.max_rounds
-        
         return self.state, reward, done
-    
-    def _calculate_reward(self, action):
-        """Calculate reward based on strategy effectiveness"""
+
+    def _reward(self, state, outcome, action):
+        """Outcome-grounded reward.
+
+        Combines (a) the REAL delta outcome of this context with (b) the GNN's
+        predicted suitability of the chosen strategy. High reward = pick the
+        strategy the data associates with success, in contexts that actually
+        succeeded.
+        """
         strategy = self.strategies[action]
-        
-        # Simplified reward calculation
-        base_reward = 0.0
-        
-        if strategy == 'analytical':
-            # Analytical strategy generally effective
-            base_reward = 0.8
-        elif strategy == 'empathetic':
-            # Empathetic strategy good for building rapport
-            base_reward = 0.7
-        elif strategy == 'defensive':
-            # Defensive strategy maintains position
-            base_reward = 0.5
-        elif strategy == 'aggressive':
-            # Aggressive strategy risky but potentially high reward
-            base_reward = random.choice([0.3, 0.9])
-        
-        # Add some noise
-        noise = np.random.normal(0, 0.1)
-        reward = base_reward + noise
-        
-        return np.clip(reward, 0, 1)
+        suitability = 0.25
+        if self._gnn is not None:
+            try:
+                pred = self._gnn.predict_persuasion(state.numpy())
+                suitability = pred.get("strategy_scores", {}).get(strategy, 0.25)
+            except Exception:  # noqa: BLE001
+                pass
+        # 0.5 weight on real outcome, 0.5 on strategy suitability.
+        reward = 0.5 * outcome + 0.5 * suitability
+        return float(np.clip(reward, 0.0, 1.0))
+
 
 class PPOTrainer:
-    """PPO trainer"""
-    
     def __init__(self, state_dim=768, action_dim=4, lr=3e-4):
         self.network = PPONetwork(state_dim, action_dim)
         self.optimizer = optim.Adam(self.network.parameters(), lr=lr)
-        
         self.env = DebateEnvironment()
         self.memory = deque(maxlen=10000)
-        
-        # PPO hyperparameters
-        self.epsilon = 0.2  # Clipping parameter
-        self.gamma = 0.99   # Discount factor
-        self.gae_lambda = 0.95  # GAE parameter
+        self.epsilon = 0.2
+        self.gamma = 0.99
+        self.gae_lambda = 0.95
         self.update_epochs = 4
-        
-        # Statistics
         self.episode_rewards = []
         self.episode_lengths = []
-    
+
     def collect_trajectory(self, num_episodes=10):
-        """Collect trajectory data"""
         trajectories = []
-        
-        for episode in range(num_episodes):
+        for _ in range(num_episodes):
             state = self.env.reset()
-            episode_rewards = []
-            episode_transitions = []
-            
+            ep_rewards, ep_trans = [], []
             done = False
             while not done:
-                # Select action
                 action, log_prob, value = self.network.select_action(state.unsqueeze(0))
-                
-                # Execute action
                 next_state, reward, done = self.env.step(action)
-                
-                # Store transition
-                transition = DebateTransition(
-                    state=state,
-                    action=action,
-                    reward=reward,
-                    next_state=next_state,
-                    done=done,
-                    log_prob=log_prob.item(),
-                    value=value.item()
-                )
-                
-                episode_transitions.append(transition)
-                episode_rewards.append(reward)
-                
+                ep_trans.append(DebateTransition(
+                    state=state, action=action, reward=reward, next_state=next_state,
+                    done=done, log_prob=log_prob.item(), value=value.item()))
+                ep_rewards.append(reward)
                 state = next_state
-            
-            # Calculate returns and advantages
-            self._calculate_advantages(episode_transitions)
-            trajectories.extend(episode_transitions)
-            
-            self.episode_rewards.append(sum(episode_rewards))
-            self.episode_lengths.append(len(episode_rewards))
-        
+            self._calculate_advantages(ep_trans)
+            trajectories.extend(ep_trans)
+            self.episode_rewards.append(sum(ep_rewards))
+            self.episode_lengths.append(len(ep_rewards))
         return trajectories
-    
+
     def _calculate_advantages(self, transitions):
-        """Calculate GAE advantages"""
-        returns = []
-        advantages = []
-        
-        # Calculate returns
-        G = 0
-        for transition in reversed(transitions):
-            G = transition.reward + self.gamma * G
+        returns, G = [], 0
+        for t in reversed(transitions):
+            G = t.reward + self.gamma * G
             returns.insert(0, G)
-        
-        # Calculate advantages using GAE
-        values = [t.value for t in transitions] + [0]  # Add terminal value
-        advantages = []
-        
-        gae = 0
+        values = [t.value for t in transitions] + [0]
+        advantages, gae = [], 0
         for i in reversed(range(len(transitions))):
-            delta = (transitions[i].reward + 
-                    self.gamma * values[i + 1] * (1 - transitions[i].done) - 
-                    values[i])
+            delta = (transitions[i].reward
+                     + self.gamma * values[i + 1] * (1 - transitions[i].done)
+                     - values[i])
             gae = delta + self.gamma * self.gae_lambda * (1 - transitions[i].done) * gae
             advantages.insert(0, gae)
-        
-        # Normalize advantages
-        advantages = torch.tensor(advantages, dtype=torch.float32)
-        advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
-        
-        # Store in transitions
-        for i, transition in enumerate(transitions):
-            transition.return_value = returns[i]
-            transition.advantage = advantages[i].item()
-    
+        adv = torch.tensor(advantages, dtype=torch.float32)
+        adv = (adv - adv.mean()) / (adv.std() + 1e-8)
+        for i, t in enumerate(transitions):
+            t.return_value = returns[i]
+            t.advantage = adv[i].item()
+
     def update_policy(self, trajectories):
-        """Update policy using PPO"""
-        # Convert to tensors
         states = torch.stack([t.state for t in trajectories])
         actions = torch.tensor([t.action for t in trajectories], dtype=torch.long)
         old_log_probs = torch.tensor([t.log_prob for t in trajectories])
-        returns = torch.tensor([t.return_value for t in trajectories])
-        advantages = torch.tensor([t.advantage for t in trajectories])
-        
+        returns = torch.tensor([t.return_value for t in trajectories], dtype=torch.float32)
+        advantages = torch.tensor([t.advantage for t in trajectories], dtype=torch.float32)
+
         total_losses = []
-        # PPO update
         for _ in range(self.update_epochs):
-            # Forward pass
             action_probs, values = self.network(states)
             dist = Categorical(action_probs)
-            
-            # Calculate new log probabilities
             new_log_probs = dist.log_prob(actions)
-            
-            # Calculate probability ratio
             ratio = torch.exp(new_log_probs - old_log_probs)
-            
-            # Calculate surrogate losses
             surr1 = ratio * advantages
             surr2 = torch.clamp(ratio, 1 - self.epsilon, 1 + self.epsilon) * advantages
             actor_loss = -torch.min(surr1, surr2).mean()
-            
-            # Critic loss
             critic_loss = F.mse_loss(values.squeeze(), returns)
-            
-            # Entropy bonus for exploration
             entropy = dist.entropy().mean()
-            
-            # Total loss
             total_loss = actor_loss + 0.5 * critic_loss - 0.01 * entropy
             total_losses.append(total_loss.item())
-            
-            # Update
             self.optimizer.zero_grad()
             total_loss.backward()
             torch.nn.utils.clip_grad_norm_(self.network.parameters(), 0.5)
             self.optimizer.step()
-        
-        return np.mean(total_losses)
-    
+        return float(np.mean(total_losses))
+
     def train(self, num_iterations=1000, episodes_per_iteration=10):
-        """Training main loop"""
         print("Starting PPO training...")
-        
         losses = []
         for iteration in range(num_iterations):
-            # Collect data
             trajectories = self.collect_trajectory(episodes_per_iteration)
-            
-            # Update policy and get loss
-            loss = self.update_policy(trajectories)
-            losses.append(loss)
-            
-            # Print progress
+            losses.append(self.update_policy(trajectories))
             if iteration % 50 == 0:
                 avg_reward = np.mean(self.episode_rewards[-episodes_per_iteration:])
-                avg_length = np.mean(self.episode_lengths[-episodes_per_iteration:])
-                print(f"Iteration {iteration}: Avg Reward = {avg_reward:.3f}, Avg Length = {avg_length:.1f}")
-        
+                print(f"Iteration {iteration}: Avg Reward = {avg_reward:.3f}")
         print("Training completed!")
         return losses
-    
+
     def save_model(self, path):
-        """Save model"""
         torch.save({
             'network_state_dict': self.network.state_dict(),
-            'optimizer_state_dict': self.optimizer.state_dict(),
+            'config': {'state_dim': 768, 'action_dim': 4, 'hidden_dim': 256},
             'episode_rewards': self.episode_rewards,
-            'episode_lengths': self.episode_lengths
+            'episode_lengths': self.episode_lengths,
         }, path)
         print(f"Model saved to {path}")
-    
+
     def save(self, path):
-        """Save model (backward compatibility alias)"""
         self.save_model(path)
-    
+
     def load_model(self, path):
-        """Load model"""
-        checkpoint = torch.load(path)
-        self.network.load_state_dict(checkpoint['network_state_dict'])
-        self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-        self.episode_rewards = checkpoint.get('episode_rewards', [])
-        self.episode_lengths = checkpoint.get('episode_lengths', [])
-        print(f"Model loaded from {path}")
-    
-    def plot_training_progress(self):
-        """Plot training progress"""
-        plt.figure(figsize=(12, 4))
-        
-        plt.subplot(1, 2, 1)
-        plt.plot(self.episode_rewards)
-        plt.title('Episode Rewards')
-        plt.xlabel('Episode')
-        plt.ylabel('Reward')
-        
-        plt.subplot(1, 2, 2)
-        plt.plot(self.episode_lengths)
-        plt.title('Episode Lengths')
-        plt.xlabel('Episode')
-        plt.ylabel('Length')
-        
-        plt.tight_layout()
-        plt.show()
+        ckpt = torch.load(path, map_location='cpu')
+        self.network.load_state_dict(ckpt['network_state_dict'])
+        self.episode_rewards = ckpt.get('episode_rewards', [])
+        self.episode_lengths = ckpt.get('episode_lengths', [])
+
 
 if __name__ == "__main__":
-    # Create trainer
     trainer = PPOTrainer()
-    
-    # Train
-    trainer.train(num_iterations=500, episodes_per_iteration=5)
-    
-    # Save model
-    trainer.save_model("models/ppo_debate_strategy.pt")
-    
-    # Plot results
-    trainer.plot_training_progress() 
+    trainer.train(num_iterations=200, episodes_per_iteration=5)
+    trainer.save_model("data/models/ppo_policy.pt")

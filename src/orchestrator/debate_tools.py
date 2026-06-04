@@ -50,13 +50,27 @@ def _get_gnn_module():
 
 
 def _get_rag_retriever():
-    """Lazy load RAG retriever"""
+    """Lazy load RAG retriever.
+
+    Prefer the FAISS vector retriever (real semantic search via Ollama
+    embeddings). Fall back to the keyword SimpleRetriever if no vector index
+    has been built yet.
+    """
     global _rag_retriever
     if _rag_retriever is None:
+        # 1) Try the FAISS vector retriever
+        try:
+            from rag.vector_retriever import VectorRetriever
+            _rag_retriever = VectorRetriever()
+            print("[Tools] RAG: FAISS vector retriever loaded")
+            return _rag_retriever
+        except Exception as e:
+            print(f"[Tools] RAG: vector index unavailable ({e}); trying SimpleRetriever")
+        # 2) Fall back to keyword overlap retriever
         try:
             from rag.simple_retriever import SimpleRetriever
             _rag_retriever = SimpleRetriever()
-            print("[Tools] RAG retriever loaded")
+            print("[Tools] RAG: SimpleRetriever (keyword) loaded")
         except ImportError as e:
             print(f"[Tools] RAG retriever not available: {e}")
             _rag_retriever = "unavailable"
@@ -112,12 +126,33 @@ def rl_select_strategy(
         }
 
 
+def _embed_context(context_text: Optional[str]) -> np.ndarray:
+    """Embed the debate context to real 768-d features for the GNN.
+
+    Returns a deterministic zero vector when no text/embeddings are available
+    (never random noise — that would make GNN output meaningless).
+    """
+    if context_text:
+        try:
+            from llm import embed, resolve_config
+            vec = np.asarray(embed([context_text[:2000]], resolve_config())[0], dtype="float32")
+            if vec.shape[0] >= 768:
+                return vec[:768]
+            out = np.zeros(768, dtype="float32")
+            out[: vec.shape[0]] = vec
+            return out
+        except Exception as e:  # noqa: BLE001
+            print(f"[Tools] GNN context embed failed ({e}); using zero features")
+    return np.zeros(768, dtype="float32")
+
+
 @tool
 def gnn_analyze_social(
     agent_id: str,
     current_stance: float = 0.0,
     conviction: float = 0.7,
-    persuasion_history: Optional[List[float]] = None
+    persuasion_history: Optional[List[float]] = None,
+    context_text: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Analyze social influence and persuasion dynamics using GNN.
@@ -156,8 +191,8 @@ def gnn_analyze_social(
         # Get influence score
         influence_score = gnn.get_social_influence_score(agent_id)
         
-        # Predict persuasion
-        text_features = np.random.randn(768)  # Placeholder
+        # Predict persuasion from REAL context embeddings (not random noise)
+        text_features = _embed_context(context_text)
         persuasion_pred = gnn.predict_persuasion(text_features, agent_id)
         
         # Calculate stance trend
@@ -272,22 +307,8 @@ def rag_retrieve_evidence(
         }
 
 
-@tool
-def evaluate_response_effects(
-    response: str,
-    target_agents: List[str]
-) -> Dict[str, Any]:
-    """
-    Evaluate the persuasiveness and attack strength of a debate response.
-    
-    Args:
-        response: The generated debate response
-        target_agents: List of target agent IDs
-    
-    Returns:
-        Dict with persuasion_score, attack_score, evidence_score, and length_score
-    """
-    # Keyword-based evaluation
+def _keyword_effects(response: str, target_agents: List[str]) -> Dict[str, Any]:
+    """Fast keyword-based effect estimate (fallback when LLM judge is off)."""
     persuasion_indicators = [
         'however', 'consider', 'understand', 'perspective', 'common',
         'but', 'agree', 'acknowledge', 'point', 'valid'
@@ -322,8 +343,68 @@ def evaluate_response_effects(
         'evidence_score': evidence_score,
         'length_score': length_score,
         'word_count': word_count,
-        'target_agents': target_agents
+        'target_agents': target_agents,
+        'source': 'keyword',
     }
+
+
+_JUDGE_PROMPT = """You are an impartial debate judge. Rate the following debate \
+turn on three axes, each from 0.0 to 1.0:
+- persuasion: how likely it is to move a reasonable opponent toward the speaker
+- attack: how strongly it challenges/refutes the opponents' arguments
+- evidence: how well it uses facts, data, studies, or concrete examples
+
+Respond with ONLY a compact JSON object, e.g.:
+{"persuasion": 0.6, "attack": 0.3, "evidence": 0.5}
+
+Debate turn:
+\"\"\"%s\"\"\""""
+
+
+@tool
+def evaluate_response_effects(
+    response: str,
+    target_agents: List[str]
+) -> Dict[str, Any]:
+    """
+    Evaluate the persuasiveness and attack strength of a debate response.
+
+    Uses an LLM-as-a-judge by default (set USE_LLM_JUDGE=false to disable),
+    falling back to a fast keyword heuristic on any error.
+
+    Returns dict with persuasion_score, attack_score, evidence_score,
+    length_score, word_count, target_agents.
+    """
+    import os
+    import json as _json
+    import re as _re
+
+    word_count = len(response.split())
+    length_score = min(1.0, word_count / 80)
+
+    use_judge = os.environ.get("USE_LLM_JUDGE", "true").lower() in ("1", "true", "yes")
+    if use_judge and response.strip():
+        try:
+            from llm import chat, resolve_config
+            raw = chat(
+                [{"role": "user", "content": _JUDGE_PROMPT % response[:2000]}],
+                resolve_config(),
+            )
+            m = _re.search(r"\{.*\}", raw, _re.DOTALL)
+            data = _json.loads(m.group(0)) if m else {}
+            return {
+                "persuasion_score": float(max(0.0, min(1.0, data.get("persuasion", 0.4)))),
+                "attack_score": float(max(0.0, min(1.0, data.get("attack", 0.3)))),
+                "evidence_score": float(max(0.0, min(1.0, data.get("evidence", 0.3)))),
+                "length_score": length_score,
+                "word_count": word_count,
+                "target_agents": target_agents,
+                "source": "llm_judge",
+            }
+        except Exception as e:  # noqa: BLE001
+            print(f"[Tools] LLM judge failed ({e}); using keyword fallback")
+
+    return _keyword_effects(response, target_agents)
 
 
 # Export all tools

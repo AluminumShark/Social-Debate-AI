@@ -55,58 +55,48 @@ This project uses the **ChangeMyView (CMV) Corpus** from [Cornell ConvoKit](http
 ## System Architecture
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#4f46e5', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4338ca', 'lineColor': '#6366f1', 'secondaryColor': '#10b981', 'tertiaryColor': '#f59e0b'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#4f46e5', 'primaryTextColor': '#fff', 'primaryBorderColor': '#4338ca', 'lineColor': '#6366f1'}}}%%
 flowchart TB
     classDef web fill:#e0f2fe,stroke:#0ea5e9,stroke-width:2px,color:#0c4a6e;
     classDef orch fill:#f3e8ff,stroke:#9333ea,stroke-width:2px,color:#581c87;
-    classDef brain fill:#dcfce7,stroke:#22c55e,stroke-width:2px,color:#14532d;
-    classDef gen fill:#ffedd5,stroke:#f97316,stroke-width:2px,color:#7c2d12;
-    classDef agent fill:#fee2e2,stroke:#ef4444,stroke-width:2px,color:#7f1d1d;
+    classDef good fill:#dcfce7,stroke:#22c55e,stroke-width:2px,color:#14532d;
+    classDef exp fill:#fef9c3,stroke:#ca8a04,stroke-width:2px,color:#713f12;
+    classDef seam fill:#ffedd5,stroke:#f97316,stroke-width:2px,color:#7c2d12;
+    classDef ext fill:#e2e8f0,stroke:#64748b,stroke-width:2px,color:#1e293b;
 
-    subgraph Presentation["Presentation Layer"]
+    subgraph Presentation["Presentation"]
         direction TB
-        UI["Bootstrap 5 UI"]:::web
-        API["Flask API"]:::web
+        UI["Browser UI<br/>SSE streaming · BYOK"]:::web
+        API["Flask app<br/>+ SQLite (share links)"]:::web
         UI <--> API
     end
 
-    subgraph Core["Orchestration Core"]
-        direction TB
-        LG["LangGraph Engine<br/>(State Management)"]:::orch
-    end
-
-    subgraph Intelligence["Intelligence Modules"]
+    subgraph Core["Single LangGraph orchestrator (per turn)"]
         direction LR
-        RL["RL Strategy<br/>(PPO Policy)"]:::brain
-        GNN["GNN Social<br/>(GraphSAGE)"]:::brain
-        RAG["RAG Evidence<br/>(FAISS)"]:::brain
+        RAG["RAG evidence<br/>FAISS — helps"]:::good
+        GNN["GNN persuasion<br/>(experimental)"]:::exp
+        RL["RL strategy<br/>(experimental)"]:::exp
+        JUDGE["LLM judge<br/>scoring"]:::good
     end
 
-    subgraph Generation["Generation Layer"]
-        direction TB
-        Fusion["Result Fusion"]:::gen
-        LLM["LLM Inference<br/>(GPT-3.5/4)"]:::gen
-        Fusion --> LLM
-    end
+    SEAM["LLM provider seam<br/>(src/llm) · shared 768-d embeddings"]:::seam
 
-    subgraph Agents["Debate Agents"]
+    subgraph Backends["LLM backends"]
         direction LR
-        A1["Agent A<br/>(Support)"]:::agent
-        A2["Agent B<br/>(Oppose)"]:::agent
-        A3["Agent C<br/>(Neutral)"]:::agent
+        OLL["Ollama (local)"]:::ext
+        OAI["OpenAI-compatible"]:::ext
+        BYOK["BYOK (user key)"]:::ext
     end
 
-    API <==> LG
-    LG ==> Intelligence
-    Intelligence ==> Fusion
-    LLM ==> Agents
-    Agents -.->|"State Update"| LG
+    API <==>|"stream_debate (tokens)"| Core
+    Core ==> SEAM
+    SEAM --> OLL
+    SEAM --> OAI
+    SEAM --> BYOK
 
     style Presentation fill:#f0f9ff,stroke:#bae6fd,color:#0369a1
     style Core fill:#faf5ff,stroke:#e9d5ff,color:#6b21a8
-    style Intelligence fill:#f0fdf4,stroke:#bbf7d0,color:#15803d
-    style Generation fill:#fff7ed,stroke:#fed7aa,color:#c2410c
-    style Agents fill:#fef2f2,stroke:#fecaca,color:#b91c1c
+    style Backends fill:#f8fafc,stroke:#cbd5e1,color:#334155
 ```
 
 ---
@@ -398,19 +388,21 @@ block-beta
 
     block:llm:1
         columns 1
-        F["OpenAI<br/>GPT-3.5/4"]
+        F["LLM via provider seam<br/>Ollama / OpenAI / BYOK"]
+        K["embeddinggemma"]
     end
 
     block:web:1
         columns 1
-        G["Flask"]
+        G["Flask + gunicorn"]
         H["Bootstrap 5"]
+        L["SQLite"]
     end
 
     block:tools:1
         columns 1
-        I["uv"]
-        J["pytest"]
+        I["uv / Docker"]
+        J["pytest / ruff"]
     end
 
     style orch fill:#818cf8,color:#fff

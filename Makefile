@@ -4,7 +4,7 @@
 
 PY ?= python
 
-.PHONY: help setup data index train eval demo run serve test lint \
+.PHONY: help setup models data index train eval demo run serve test lint \
         docker-app docker-train reproduce reproduce-full clean
 
 help:  ## Show this help
@@ -15,6 +15,9 @@ setup:  ## Install dependencies and create .env from the template
 	uv sync || pip install -e ".[dev]"
 	@test -f .env || cp env.example .env
 	@echo "Edit .env to point LLM_BASE_URL/LLM_API_KEY at your backend."
+
+models:  ## Download pre-trained models + FAISS index from the GitHub release
+	bash scripts/fetch_models.sh
 
 data:  ## Download + clean the CMV corpus -> data/raw/{pairs,threads}.jsonl
 	$(PY) scripts/prepare_cmv.py

@@ -192,9 +192,15 @@ Individual steps: `make data` (download/clean CMV), `make index` (build FAISS),
 No `make`? Use `bash scripts/reproduce.sh [full]`, or run the underlying
 `python scripts/*.py` / `python train_all.py --all` commands directly.
 
-Models and the FAISS index live under `data/` (gitignored). Without them the app
-still runs with graceful fallbacks; train them (or drop pre-trained files into
-`data/`) to enable the full stack.
+Pre-trained models and the FAISS index are not in the repo (they live under
+`data/`, which is gitignored). Get the full trained stack without retraining:
+
+```bash
+make models   # downloads models + FAISS index from the GitHub release into data/
+```
+
+Without them the app still runs with graceful fallbacks (GNN → neutral prior,
+RL → keyword strategy, RAG → seed index). Or train from scratch with `make reproduce-full`.
 
 ---
 

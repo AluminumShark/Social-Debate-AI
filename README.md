@@ -1,7 +1,7 @@
 # Social Debate AI
 
 <p align="center">
-  <strong>A Multi-Agent Debate System Powered by Deep Learning</strong>
+  <strong>A multi-agent LLM debate system — LangGraph orchestration with RAG, GNN and RL</strong>
 </p>
 
 <p align="center">
@@ -155,7 +155,7 @@ graph TB
 - **An LLM backend** — one of:
   - **Ollama** (recommended, free, local/LAN) running an OpenAI-compatible API, with a chat model (e.g. `qwen3`, `gemma3`) and an embedding model (`embeddinggemma`). This is the default.
   - **or any OpenAI-compatible cloud key** (OpenAI, etc.) — supplied via `.env` or per-user in the browser (BYOK).
-- **CUDA 12.8+ GPU** — only needed to *train* the GNN/RL models (RTX 50-series/Blackwell needs cu128). Not required to run debates.
+- **(optional) a GPU** — only to *train* the GNN/RL models; CPU works too. RTX 50-series/Blackwell needs CUDA 12.8 / PyTorch cu128. Not needed to run debates.
 
 > No API key? Click **"Try demo (no key)"** in the UI to replay a pre-recorded debate.
 
@@ -177,7 +177,8 @@ uv sync
 
 # 4. Configure environment
 cp env.example .env
-# Edit .env and add your OPENAI_API_KEY
+# Defaults to a local Ollama (no cloud key). To use a hosted model instead,
+# set LLM_BASE_URL / LLM_API_KEY in .env (or let users supply their own via BYOK).
 ```
 
 ### Alternative: pip Installation
